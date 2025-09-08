@@ -1,18 +1,20 @@
 from fastapi import FastAPI
+from Book import *
+from BookRequest import *
 
 app = FastAPI()
 
 BOOKS = [
-    { "title": "Python Programming", "author": "Code With Me", "category": "Programming" },
-    { "title": "Terraform from scratch", "author": "Code With Me", "category": "Programming" },
-    { "title": "Python for Scientist", "author": "Code With Me", "category": "Programming" },
-    { "title": "Python for Beginners", "author": "Code With Me", "category": "Programming" },
-    { "title": "DevOps - An AI Approach", "author": "Code With Me", "category": "Programming" },
-    { "title": "Python and Pytorch", "author": "Code With Me", "category": "Programming" },
-    { "title": "C#", "author": "Code With Me", "category": "Programming" },
-    { "title": "Math for Machine Learning", "author": "Lee", "category": "Math" },
-    { "title": "Calculus for NN", "author": "Lee", "category": "Math" },
-    { "title": "C++", "author": "Code With Me", "category": "Programming" },
+    Book(1, "Python Programming", "Code With Me", "Programming", 4),
+    Book(2, "Terraform from scratch", "Code With Me", "Programming", 2),
+    Book(3, "Python for Scientist", "Code With Me", "Programming", 5),
+    Book(4, "Python for Beginners", "Code With Me", "Programming", 2),
+    Book(5, "DevOps - An AI Approach", "Code With Me", "Programming", 2),
+    Book(6, "Python and Pytorch", "Code With Me", "Programming", 4),
+    Book(7, "C#", "Code With Me", "Programming", 2),
+    Book(8, "Math for Machine Learning", "Lee", "Math", 4),
+    Book(9, "Calculus for NN", "Lee", "Math", 1),
+    Book(10, "C++", "Code With Me", "Programming", 4)
 ]
 
 @app.get("/books")
@@ -34,3 +36,15 @@ async def read_books_by_author(author: str, category: str):
         if book.get("author").casefold() == author.casefold() and book.get("category").casefold() == category.casefold():
             included_books.append(book)
     return included_books
+
+@app.post("/books")
+async def create_book(book_request: BookRequest):
+    new_book = Book(**book_request.model_dump())
+    BOOKS.append(find_book_id(new_book))
+
+def find_book_id(book: Book):
+    if len(BOOKS) > 0:
+        book.id = BOOKS[-1].id + 1
+    else:
+        book.id = 1
+    return book
