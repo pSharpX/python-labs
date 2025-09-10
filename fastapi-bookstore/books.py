@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, Path, Query, HTTPException
 from Book import *
 from BookRequest import *
 
@@ -37,6 +37,13 @@ async def read_books_by_published_date(published_date: int = Path(gt=0)):
             included_books.append(book)
     return included_books
 
+@app.get("/books/{book_id}")
+async def read_by_book_id(book_id: int = Path(gt=0)):
+    for book in BOOKS:
+        if book.id == book_id:
+            return book
+    raise HTTPException(status_code=404, detail="Book not found")
+
 @app.get("/books/{book_title}")
 async def read_book(book_title: str):
     for book in BOOKS:
@@ -54,15 +61,28 @@ async def read_books_by_author(author: str, category: str):
 
 @app.put("/books")
 async def update_book(book_request: BookRequest):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_request.id:
             BOOKS[i] = Book(**book_request.model_dump())
+            book_change = True
+            break
+
+    if not book_changed:
+        raise HTTPException(status_code=404, detail="Book not found")
+
 
 @app.delete("/books/{book_id}")
 async def delete_book(book_id: int = Path(gt=0)):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_id:
             BOOKS.pop(i)
+            book_changed = True
+            break
+
+    if not book_changed:
+        raise HTTPException(status_code=404, detail="Book not found")
 
 @app.post("/books")
 async def create_book(book_request: BookRequest):
