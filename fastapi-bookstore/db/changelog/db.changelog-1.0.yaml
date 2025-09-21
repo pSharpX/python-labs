@@ -1,0 +1,154 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-authors-table
+      author: christian.rivera
+      comment: add authors table definition
+      changes:
+        - createTable:
+            tableName: authors
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fullname
+                  type: varchar(100)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: create-categories-table
+      author: christian.rivera
+      comment: add categories table definition
+      changes:
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(1000)
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: create-books-table
+      author: christian.rivera
+      comment: add books table definition
+      changes:
+        - createTable:
+            tableName: books
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: author_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(1000)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: rating
+                  type: float
+                  constraints:
+                    nullable: false
+              - column:
+                  name: published_date
+                  type: date
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: add-books-foreign-keys
+      author: christian.rivera
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: books
+            baseColumnNames: author_id
+            referencedTableName: authors
+            referencedColumnNames: id
+            constraintName: fk_books_authors
+        - addForeignKeyConstraint:
+            baseTableName: books
+            baseColumnNames: category_id
+            referencedTableName: categories
+            referencedColumnNames: id
+            constraintName: fk_books_categories
+  - changeSet:
+      id: default-author-record
+      author: christian.rivera
+      comment: insert default author record for testing
+      changes:
+        - insert:
+            tableName: authors
+            columns:
+              - column:
+                  name: name
+                  value: 'John'
+              - column:
+                  name: fullname
+                  value: 'Code With John'
+  - changeSet:
+      id: default-category-record
+      author: christian.rivera
+      comment: insert default category record for testing
+      changes:
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: name
+                  value: 'Software Development'
+              - column:
+                  name: description
+                  value: 'Software Development and Computer Science'
+  - changeSet:
+      id: default-book-record
+      author: christian.rivera
+      comment: insert default book record for testing
+      changes:
+        - sql:
+            dbms: postgresql, mysql
+            comment: 'Insert a book referencing the author ID and category ID'
+            splitStatements: true
+            endDelimiter: ';'
+            stripComments: true
+            sql: |
+              INSERT INTO books (title, description, rating, published_date, author_id, category_id)
+              VALUES ('Python Programming', 'Python Programming', 4, "2020-09-20", (SELECT id FROM authors WHERE name = 'John'),(SELECT id FROM categories WHERE name = 'Software Development'));
