@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Path, Query, HTTPException
+from fastapi import FastAPI, Depends, Path, Query, HTTPException
 from Book import *
 from BookRequest import *
-
+from database import SessionLocal
+from sqlalchemy.orm import Session
+from repositories.BookRepository import get_all_books
 app = FastAPI()
 
 BOOKS = [
@@ -17,9 +19,16 @@ BOOKS = [
     Book(10, "C++", "Code With Me", "Programming", 4, 2009)
 ]
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 @app.get("/books")
-async def read_all_books():
-    return BOOKS
+async def read_all_books(db: Session = Depends(get_db)):
+    return get_all_books(db)
 
 @app.get("/books/")
 async def read_book_by_rating(book_rating: int = Query(ge=1, le=5)):
