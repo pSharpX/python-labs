@@ -26,6 +26,10 @@ def get_db():
     finally:
         db.close()
 
+@app.get("/")
+async def health_check():
+    return {"status": "up"}
+
 @app.get("/books")
 async def read_all_books(db: Session = Depends(get_db)):
     return get_all_books(db)
