@@ -1,9 +1,9 @@
-from fastapi import FastAPI, Depends, Path, Query, HTTPException
+from fastapi import FastAPI, Depends, Path, Query, HTTPException, status
 from Book import *
 from BookRequest import *
 from database import SessionLocal
 from sqlalchemy.orm import Session
-from repositories.BookRepository import get_all_books
+from repositories.BookRepository import get_all_books, find_by_id, find_by_title
 app = FastAPI()
 
 BOOKS = [
@@ -72,20 +72,20 @@ async def read_books_by_author(author: str, category: str):
             included_books.append(book)
     return included_books
 
-@app.put("/books")
+@app.put("/books", status_code=status.HTTP_204_NO_CONTENT)
 async def update_book(book_request: BookRequest):
     book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_request.id:
             BOOKS[i] = Book(**book_request.model_dump())
-            book_change = True
+            book_changed = True
             break
 
     if not book_changed:
         raise HTTPException(status_code=404, detail="Book not found")
 
 
-@app.delete("/books/{book_id}")
+@app.delete("/books/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(book_id: int = Path(gt=0)):
     book_changed = False
     for i in range(len(BOOKS)):
@@ -97,7 +97,7 @@ async def delete_book(book_id: int = Path(gt=0)):
     if not book_changed:
         raise HTTPException(status_code=404, detail="Book not found")
 
-@app.post("/books")
+@app.post("/books", status_code=status.HTTP_201_CREATED)
 async def create_book(book_request: BookRequest):
     new_book = Book(**book_request.model_dump())
     BOOKS.append(find_book_id(new_book))
