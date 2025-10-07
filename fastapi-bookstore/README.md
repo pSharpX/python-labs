@@ -9,6 +9,10 @@ or
 ```bash
 fastapi run books.py
 ```
+or (Preferred for deployment)
+```bash
+python books.py
+```
 
 ## Run a database container locally
 

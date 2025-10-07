@@ -4,6 +4,8 @@ from BookRequest import *
 from database import SessionLocal
 from sqlalchemy.orm import Session
 from repositories.BookRepository import get_all_books, find_by_id, find_by_title
+import uvicorn
+import os
 app = FastAPI()
 
 BOOKS = [
@@ -108,3 +110,14 @@ def find_book_id(book: Book):
     else:
         book.id = 1
     return book
+
+
+def run_server():
+    port = int(os.getenv('PORT', '3000'))
+    host = os.getenv('HOST', '0.0.0.0')
+
+    print(f"=🚀 Starting bookstore server on {host}:{port}")
+    uvicorn.run(app, host=host, port=port)
+
+if __name__ == "__main__":
+    run_server()
