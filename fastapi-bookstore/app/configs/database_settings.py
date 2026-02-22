@@ -8,7 +8,7 @@ class DatabaseSettings(BaseSettings, case_sensitive=False):
     port: int = Field("3306", alias="database_port") # when alias set env_prefix will be ignored.
     user: str = Field()
     password: str = Field()
-    db_name: str = Field("bookstore-db", alias="name")
+    db_name: str = Field("bookstore-db", alias="database_name")
 
     def connection_url(self):
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.db_name}"#?charset = utf8/charset=utf8mb4
