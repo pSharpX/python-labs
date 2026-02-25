@@ -56,3 +56,9 @@ def setup_logging():
     root_logger.setLevel(LOG_LEVEL)
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
+
+    # Reduce noise from uvicorn & fastapi
+    logging.getLogger("uvicorn.access").disabled = True
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+    logging.getLogger("fastapi").setLevel(logging.WARNING)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
