@@ -2,7 +2,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class DatabaseSettings(BaseSettings, case_sensitive=False):
-    model_config = SettingsConfigDict(env_prefix="database_", env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_prefix="database_", env_file=".env", env_file_encoding="utf-8", extra="allow")
 
     host: str = Field("localhost")
     port: int = Field("3306", alias="database_port") # when alias set env_prefix will be ignored.
