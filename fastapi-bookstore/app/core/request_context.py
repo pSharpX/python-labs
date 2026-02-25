@@ -1,0 +1,19 @@
+from contextvars import ContextVar
+import uuid
+
+request_id_ctx: ContextVar[str | None] = ContextVar(
+    "request_id",
+    default=None
+)
+
+def get_request_id() -> str:
+    """Get the current request ID from context."""
+    return request_id_ctx.get()
+
+def set_request_id(request_id: str) -> None:
+    """Set the request ID in context."""
+    request_id_ctx.set(request_id)
+
+def generate_request_id() -> str:
+    """Generate a new unique request ID."""
+    return str(uuid.uuid4())
