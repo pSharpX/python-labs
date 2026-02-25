@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.core.dependencies import get_create_book_use_case, get_find_book_use_case, get_search_book_use_case, \
@@ -25,9 +27,9 @@ BOOKS = [
 
 @router.get("/")
 async def search_books(
-        rating: int = Query(ge=1, le=5),
-        title: str = Query(max_length=2000),
-        published_date: int = Query(ge=1),
+        rating: Optional[int] = Query(None, ge=1, le=5),
+        title: Optional[str] = Query(None, max_length=2000),
+        published_date: Optional[int] = Query(None, ge=1),
         search_book_service: SearchBookUseCase = Depends(get_search_book_use_case)):
     return search_book_service.execute(BookSearchCriteria(rating=rating, title=title, published_date=published_date))
 
