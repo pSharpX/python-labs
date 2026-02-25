@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.exception_handlers import register_exception_handlers
 from app.api.middleware import RequestContextMiddleware
 from app.core.database import Base, engine
 from app.api.v1.router import api_router
@@ -14,6 +15,7 @@ app.add_middleware(RequestContextMiddleware)
 app.include_router(api_router, prefix="/api/v1")
 
 setup_logging()
+register_exception_handlers(app)
 
 @app.get("/")
 async def health_check():

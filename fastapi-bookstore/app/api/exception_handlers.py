@@ -1,8 +1,11 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.core.exceptions import AppException
 
+logger = logging.getLogger(__name__)
 
 def register_exception_handlers(app: FastAPI):
     @app.exception_handler(AppException)
@@ -10,7 +13,7 @@ def register_exception_handlers(app: FastAPI):
         request: Request,
         exc: AppException,
     ):
-        print(exc.code, exc.message)
+        logger.error(f"Error occurred: {type(exc).__name__}: {str(exc)}")
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -31,8 +34,8 @@ def register_exception_handlers(app: FastAPI):
         import traceback
 
         error_traceback = traceback.format_exc()
-        print(f"[ERROR] Unhandled exception: {type(exc).__name__}: {str(exc)}")
-        print(f"[ERROR] Traceback:\n{error_traceback}")
+        logger.error(f"[ERROR] Unhandled exception: {type(exc).__name__}: {str(exc)}")
+        logger.error(f"[ERROR] Traceback:\n{error_traceback}")
 
         return JSONResponse(
             status_code=500,
