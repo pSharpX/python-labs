@@ -1,3 +1,4 @@
+from app.core.metrics import track_execution_time
 from app.domain.entities import Book, Author, Category
 from app.domain.repositories import BookRepository, AuthorRepository, CategoryRepository
 from app.schemas import BookRequest
@@ -8,6 +9,7 @@ class UpdateBookUseCase:
         self.author_repo = author_repo
         self.category_repo = category_repo
 
+    @track_execution_time
     def execute(self, id: int, request: BookRequest):
         existing = self.book_repo.get_by_title(request.title)
         if existing:
