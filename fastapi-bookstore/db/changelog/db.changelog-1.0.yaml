@@ -91,7 +91,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: published_date
-                  type: date
+                  type: int
                   constraints:
                     nullable: false
   - changeSet:
@@ -151,4 +151,4 @@ databaseChangeLog:
             stripComments: true
             sql: |
               INSERT INTO books (title, description, rating, published_date, author_id, category_id)
-              VALUES ('Python Programming', 'Python Programming', 4, "2020-09-20", (SELECT id FROM authors WHERE name = 'John'),(SELECT id FROM categories WHERE name = 'Software Development'));
+              VALUES ('Python Programming', 'Python Programming', 4, 2020, (SELECT id FROM authors WHERE name = 'John'),(SELECT id FROM categories WHERE name = 'Software Development'));
