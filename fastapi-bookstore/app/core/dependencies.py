@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.domain.repositories import BookRepository, AuthorRepository, CategoryRepository
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 
-from app.user_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
+from app.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
 
 def get_book_repo_impl(db: Session = Depends(get_db)) -> BookRepository:
     return BookRepositoryImpl(db)

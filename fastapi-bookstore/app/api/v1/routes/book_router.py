@@ -6,7 +6,7 @@ from app.core.dependencies import get_create_book_use_case, get_find_book_use_ca
     get_update_book_use_case
 from app.domain.entities import BookSearchCriteria
 from app.schemas import BookRequest, CreateBookRequest
-from app.user_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
+from app.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
 
 router = APIRouter()
 
