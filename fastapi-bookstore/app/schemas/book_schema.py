@@ -11,7 +11,7 @@ class CreateBookRequest(BaseModel):
     published_date: int = Field(gt=1999, le=2031)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "title": "Software Development",
                 "author": "coding_with_john",
@@ -31,7 +31,7 @@ class BookRequest(BaseModel):
     published_date: int = Field(gt=1999, le=2031)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "title": "Software Development",
                 "author": "coding_with_john",
