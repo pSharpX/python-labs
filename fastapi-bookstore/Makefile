@@ -6,7 +6,7 @@ DB_USER=admin
 DB_PASS=admin
 
 test:
-	pytest run
+	pytest
 
 install:
 	pip install -r requirements.txt
