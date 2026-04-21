@@ -11,10 +11,6 @@ class UpdateBookUseCase:
 
     @track_execution_time
     def execute(self, id: int, request: BookRequest):
-        existing = self.book_repo.get_by_title(request.title)
-        if existing:
-            raise ValueError("Book already exists")
-
         author_existing = self.author_repo.get_by_id(request.author)
         if not author_existing:
             raise ValueError("Author is invalid")
@@ -23,7 +19,7 @@ class UpdateBookUseCase:
         if not category_existing:
             raise ValueError("Category is invalid")
 
-        updated_book = Book(
+        new_book = Book(
             id=id,
             title=request.title,
             description=request.description,
@@ -32,4 +28,4 @@ class UpdateBookUseCase:
                               description=category_existing.description),
             rating=request.rating,
             published_date=request.published_date)
-        self.book_repo.update(id, updated_book)
+        self.book_repo.update(id, new_book)
