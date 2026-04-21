@@ -47,7 +47,7 @@ class BookRepositoryImpl(BookRepository):
             return None
         return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date)
 
-    def search(self, criteria: BookSearchCriteria) -> List[Book] | None:
+    def search(self, criteria: BookSearchCriteria) -> List[Book]:
         query = self.db.query(BookModel)
         filters = []
 

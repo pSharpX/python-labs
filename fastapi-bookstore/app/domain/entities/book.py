@@ -6,13 +6,13 @@ from app.domain.entities.category import Category
 class Book:
     id: int
     title: str
-    description: str
+    description: str | None
     author: Author | None
     category: Category | None
     rating: int
     published_date: int
 
-    def __init__(self, id, title: str, description: str, author: Author | None, category: Category | None, rating: int, published_date: int):
+    def __init__(self, id, title: str, description: str | None, author: Author | None, category: Category | None, rating: int, published_date: int):
         self.id = id
         self.title = title
         self.description = description

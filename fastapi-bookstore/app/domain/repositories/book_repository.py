@@ -14,7 +14,7 @@ class BookRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_id(self, id: int) -> Book | None:
+    def get_by_id(self, id: int) -> Book:
         pass
 
     @abstractmethod
@@ -22,7 +22,7 @@ class BookRepository(ABC):
         pass
 
     @abstractmethod
-    def search(self, criteria: BookSearchCriteria) -> List[Book] | None:
+    def search(self, criteria: BookSearchCriteria) -> List[Book]:
         pass
 
     @abstractmethod
