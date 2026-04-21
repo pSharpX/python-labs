@@ -17,7 +17,7 @@ class AuthorRepositoryImpl(AuthorRepository):
         return Author(id=db_author.id, name=db_author.name, fullname=db_author.fullname)
 
     def get_by_id(self, author_id: int):
-        db_author = self.db.query(AuthorModel).filter_by(id = id).first()
+        db_author = self.db.query(AuthorModel).filter_by(id = author_id).first()
         if not db_author:
             return None
         return Author(id=db_author.id, name=db_author.name, fullname=db_author.fullname)

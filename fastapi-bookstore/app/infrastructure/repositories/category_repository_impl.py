@@ -16,8 +16,8 @@ class CategoryRepositoryImpl(CategoryRepository):
 
         return Category(id=db_category.id, name=db_category.name, description=db_category.description)
 
-    def get_by_id(self, book_id: int):
-        db_category = self.db.query(CategoryModel).filter_by(id = id).first()
+    def get_by_id(self, category_id: int):
+        db_category = self.db.query(CategoryModel).filter_by(id = category_id).first()
         if not db_category:
             return None
         return Category(id=db_category.id, name=db_category.name, description=db_category.description)

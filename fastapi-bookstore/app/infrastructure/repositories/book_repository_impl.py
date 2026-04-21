@@ -23,7 +23,7 @@ class BookRepositoryImpl(BookRepository):
     def update(self, id: int, book: Book):
         db_book = self.db.query(BookModel).filter_by(id=id).first()
         if not db_book:
-            return
+            raise BookNotFound(f"{id}")
         db_book.title = book.title
         db_book.description = book.description
         db_book.rating = book.rating
