@@ -32,7 +32,7 @@ class TestSearchBookUseCase:
 
         mock_book_repository.search.assert_called_once_with(criteria)
 
-    def test_search_book_by_title(self, mock_book_repository, mocker):
+    def test_search_book_by_title(self, mocker):
         mock_query = mocker.Mock()
         self.mock_session.query.return_value = mock_query
         mock_query.filter.return_value = mock_query
@@ -51,7 +51,7 @@ class TestSearchBookUseCase:
         mock_query.filter.assert_called_once()
         mock_query.all.assert_called_once()
 
-    def test_search_all_books(self, mock_book_repository, mocker):
+    def test_search_all_books(self, mocker):
         mock_query = mocker.Mock()
         self.mock_session.query.return_value = mock_query
         mock_query.filter.return_value = mock_query
