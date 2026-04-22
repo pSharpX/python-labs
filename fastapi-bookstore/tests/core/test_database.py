@@ -4,9 +4,11 @@ import sqlalchemy
 
 from app.core.database import DatabaseConfig
 
+seed_data = "db/changelog/"
+
 @pytest.fixture(scope="session")
 def mysql_container():
-    with MySqlContainer("mysql:8.0", dialect="pymysql") as mysql:
+    with MySqlContainer("mysql:8.0", dialect="pymysql", dbname="bookstore_database", seed=seed_data) as mysql:
         # Yield the connection URL to tests
         yield  mysql.get_connection_url()
 
@@ -18,7 +20,7 @@ def database_config(session_mocker, mysql_container):
     config = DatabaseConfig(mock_settings)
     return config
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def get_db(database_config):
     yield from database_config.get_db()
 
