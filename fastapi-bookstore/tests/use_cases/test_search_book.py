@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock
 from app.domain.entities import Book, Category, Author, BookSearchCriteria
 from app.domain.repositories import BookRepository
+from app.infrastructure.models import AuthorModel, CategoryModel, BookModel
 from app.infrastructure.repositories import BookRepositoryImpl
 from app.use_cases import SearchBookUseCase
 
@@ -12,6 +13,10 @@ class TestSearchBookUseCase:
     author: Author = Author(id=1, name="Test Author", fullname="Test Author")
     category: Category = Category(id=1, name="Test Category", description="Test Category")
     book: Book = Book(id=1, title="Test Book", description="Test Book", author=author, category=category, rating=5, published_date=2009)
+    author_model: AuthorModel = AuthorModel(id=1, name="Test Author", fullname="Test Author")
+    category_model: CategoryModel = CategoryModel(id=1, name="Test Category", description="Test Category")
+    book_model: BookModel = BookModel(id=1, title="Test Book", description="Test Book", author=author_model, category=category_model, rating=5,
+                      published_date=2009)
 
     @pytest.fixture
     def mock_book_repository(self, mocker):
@@ -27,6 +32,7 @@ class TestSearchBookUseCase:
         assert results is not None
         assert isinstance(results, list)
         assert len(results) == 1
+        assert isinstance(results[0], Book)
         assert results[0].title == self.book.title
         assert results[0].description == self.book.description
 
@@ -36,7 +42,7 @@ class TestSearchBookUseCase:
         mock_query = mocker.Mock()
         self.mock_session.query.return_value = mock_query
         mock_query.filter.return_value = mock_query
-        mock_query.all.return_value = [self.book]
+        mock_query.all.return_value = [self.book_model]
 
         criteria: BookSearchCriteria = BookSearchCriteria(title="Test Book")
 
@@ -46,6 +52,7 @@ class TestSearchBookUseCase:
         assert results is not None
         assert isinstance(results, list)
         assert len(results) == 1
+        assert isinstance(results[0], Book)
 
         spy.assert_called_once_with(criteria)
         mock_query.filter.assert_called_once()
@@ -55,7 +62,7 @@ class TestSearchBookUseCase:
         mock_query = mocker.Mock()
         self.mock_session.query.return_value = mock_query
         mock_query.filter.return_value = mock_query
-        mock_query.all.return_value = [self.book]
+        mock_query.all.return_value = [self.book_model]
 
         criteria: BookSearchCriteria = BookSearchCriteria()
 
@@ -65,6 +72,7 @@ class TestSearchBookUseCase:
         assert results is not None
         assert isinstance(results, list)
         assert len(results) == 1
+        assert isinstance(results[0], Book)
 
         spy.assert_called_once_with(criteria)
         mock_query.filter.assert_not_called()

@@ -1,7 +1,6 @@
 import pytest
 
 from app.core.exceptions import BookNotFound
-from app.domain.entities import Book, Category, Author
 from app.infrastructure.models import AuthorModel, CategoryModel, BookModel
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.schemas import BookRequest
@@ -10,10 +9,10 @@ from app.use_cases import UpdateBookUseCase
 class TestUpdateBookUseCase:
     book_id: int = 5
     service: UpdateBookUseCase
-    author: Author = Author(id=1, name="Test Author", fullname="Test Author")
-    category: Category = Category(id=1, name="Test Category", description="Test Category")
-    book: Book = Book(id=book_id, title="Old Test Book", description="Old Test Book", author=author, category=category, rating=3,
-                      published_date=2008)
+    author_model: AuthorModel = AuthorModel(id=1, name="Test Author", fullname="Test Author")
+    category_model: CategoryModel = CategoryModel(id=1, name="Test Category", description="Test Category")
+    book_model: BookModel = BookModel(id=book_id, title="Old Test Book", description="Old Test Book", author=author_model, category=category_model, rating=3,
+                                 published_date=2008)
 
     @pytest.fixture
     def default_request(self):
@@ -29,11 +28,11 @@ class TestUpdateBookUseCase:
         def mock_query(arg1):
             mock = mocker.Mock()
             if arg1 == AuthorModel:
-                mock.filter_by.return_value.first.return_value = self.author
+                mock.filter_by.return_value.first.return_value = self.author_model
             elif arg1 == CategoryModel:
-                mock.filter_by.return_value.first.return_value = self.category
+                mock.filter_by.return_value.first.return_value = self.category_model
             elif arg1 == BookModel:
-                mock.filter_by.return_value.first.return_value = self.book
+                mock.filter_by.return_value.first.return_value = self.book_model
             return mock
 
         mock_session.query.side_effect = mock_query
@@ -45,9 +44,9 @@ class TestUpdateBookUseCase:
         def mock_query(arg1):
             mock = mocker.Mock()
             if arg1 == AuthorModel:
-                mock.filter_by.return_value.first.return_value = self.author
+                mock.filter_by.return_value.first.return_value = self.author_model
             elif arg1 == CategoryModel:
-                mock.filter_by.return_value.first.return_value = self.category
+                mock.filter_by.return_value.first.return_value = self.category_model
             elif arg1 == BookModel:
                 mock.filter_by.return_value.first.return_value = None
             return mock
@@ -73,7 +72,7 @@ class TestUpdateBookUseCase:
         def mock_query(arg1):
             mock = mocker.Mock()
             if arg1 == AuthorModel:
-                mock.filter_by.return_value.first.return_value = self.author
+                mock.filter_by.return_value.first.return_value = self.author_model
             elif arg1 == CategoryModel:
                 mock.filter_by.return_value.first.return_value = None
             return mock
@@ -110,7 +109,7 @@ class TestUpdateBookUseCase:
         args, kwargs = mock_full_session.refresh.call_args
         updated_book = args[0]
         assert updated_book is not None
-        assert isinstance(updated_book, Book)
+        assert isinstance(updated_book, BookModel)
         assert updated_book.title == default_request.title
         assert updated_book.description == default_request.description
         assert updated_book.rating == default_request.rating
