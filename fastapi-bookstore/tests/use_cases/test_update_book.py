@@ -82,7 +82,7 @@ class TestUpdateBookUseCase:
         return mock_session
 
     @pytest.fixture
-    def default_service(self, mocker, request):
+    def default_service(self, request):
         author_repository = AuthorRepositoryImpl(request.param)
         category_repository = CategoryRepositoryImpl(request.param)
         book_repository = BookRepositoryImpl(request.param)
