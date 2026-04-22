@@ -11,12 +11,19 @@ authors = [
     Author(id=None, name="Test Author 2", fullname="Test Author"),
     Author(id=None, name="Test Author 3", fullname="Test Author"),
     Author(id=None, name="Test Author 4", fullname="Test Author"),
-    Author(id=None, name="Test Author 5", fullname="Test Author"),
-    Author(id=None, name="Test Author 6", fullname="Test Author"),
-    Author(id=None, name="Test Author 7", fullname="Test Author"),
+    Author(id=None, name="Test Author 5", fullname=None),
+    Author(id=None, name="Test Author 6", fullname=None),
+    Author(id=None, name="Test Author 7", fullname=None),
     Author(id=None, name="Test Author 8", fullname="Test Author"),
     Author(id=None, name="Test Author 9", fullname="Test Author"),
     Author(id=None, name="Test Author 10", fullname="Test Author")
+]
+
+invalid_authors = [
+    Author(id=None, name="Test Author 2", fullname="Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author"),
+    Author(id=None, name="Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author", fullname=None),
+    Author(id=None, name=None, fullname="Test Author"),
+    Author(id=None, name=None, fullname=None),
 ]
 
 class TestAuthorRepositoryImpl:
@@ -26,10 +33,6 @@ class TestAuthorRepositoryImpl:
     @pytest.fixture
     def default_author(self):
         return Author(id=None, name="Test Author", fullname="Test Author")
-
-    @pytest.fixture
-    def invalid_author(self):
-        return Author(id=None, name=None, fullname="Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author Test Author")
 
     @pytest.mark.parametrize("new_author", authors)
     def test_create_author(self, mocker, get_db, new_author):
@@ -55,7 +58,8 @@ class TestAuthorRepositoryImpl:
         commit_spy.assert_called_once()
         refresh_spy.assert_called_once()
 
-    def test_create_author_invalid(self, mocker, get_db, invalid_author):
+    @pytest.mark.parametrize("invalid_author", invalid_authors)
+    def test_create_author_with_invalid_data(self, mocker, get_db, invalid_author):
         add_spy = mocker.spy(get_db, 'add')
         commit_spy = mocker.spy(get_db, 'commit')
         refresh_spy = mocker.spy(get_db, 'refresh')
@@ -88,7 +92,7 @@ class TestAuthorRepositoryImpl:
 
         query_spy.assert_called_once_with(AuthorModel)
 
-    def test_get_by_id_author_unexistent(self, mocker, get_db, default_author):
+    def test_get_by_id_author_unexistent(self, mocker, get_db):
         query_spy = mocker.spy(get_db, 'query')
         self.repository = AuthorRepositoryImpl(get_db)
 
