@@ -1,11 +1,20 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.configs import DatabaseSettings
+from app.core.database import DatabaseConfig
 from app.domain.repositories import BookRepository, AuthorRepository, CategoryRepository
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
-
 from app.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
+
+def get_database_settings() -> DatabaseSettings:
+    return DatabaseSettings()
+
+def get_database_config(settings: DatabaseSettings = Depends(get_database_settings)) -> DatabaseConfig:
+    return DatabaseConfig(settings=settings)
+
+def get_db(config: DatabaseConfig = Depends(get_database_config)) -> Session:
+    yield from config.get_db()
 
 def get_book_repo_impl(db: Session = Depends(get_db)) -> BookRepository:
     return BookRepositoryImpl(db)

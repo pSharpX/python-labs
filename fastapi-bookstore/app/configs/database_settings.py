@@ -12,6 +12,3 @@ class DatabaseSettings(BaseSettings, case_sensitive=False):
 
     def connection_url(self):
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.db_name}"#?charset = utf8/charset=utf8mb4
-
-
-settings = DatabaseSettings()

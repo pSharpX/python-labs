@@ -1,15 +1,24 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from app.configs.database_settings import settings
+from sqlalchemy import create_engine, Engine
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from app.configs import DatabaseSettings
 
-engine = create_engine(settings.connection_url())
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+class DatabaseConfig:
+    settings: DatabaseSettings
+    engine: Engine
+    SessionLocal = None
+    Base = None
 
-Base = declarative_base()
+    def __init__(self, settings: DatabaseSettings):
+        self.settings = settings
+        self.engine = create_engine(self.settings.connection_url())
+        self.SessionLocal = sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
+        self.Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+        self.Base.metadata.create_all(bind=self.engine)
+
+    def get_db(self):
+        db = self.SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
