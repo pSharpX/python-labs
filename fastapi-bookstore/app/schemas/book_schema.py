@@ -1,5 +1,6 @@
 from typing import Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class CreateBookRequest(BaseModel):
     id: Optional[int] = Field(description="ID is not needed on Create", default=None)
@@ -10,8 +11,7 @@ class CreateBookRequest(BaseModel):
     rating: int = Field(gt=0, le=5)
     published_date: int = Field(gt=1999, le=2031)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "title": "Software Development",
                 "author": "coding_with_john",
@@ -19,7 +19,7 @@ class CreateBookRequest(BaseModel):
                 "rating": 4,
                 "published_date": 1999,
             }
-        }
+        })
 
 class BookRequest(BaseModel):
     id: int = Field(description="ID is not needed on Create", default=None)
@@ -30,16 +30,15 @@ class BookRequest(BaseModel):
     rating: int = Field(gt=0, le=5)
     published_date: int = Field(gt=1999, le=2031)
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "title": "Software Development",
-                "author": "coding_with_john",
-                "category": "Programming",
-                "rating": 4,
-                "published_date": 1999,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "title": "Software Development",
+            "author": "coding_with_john",
+            "category": "Programming",
+            "rating": 4,
+            "published_date": 1999,
         }
+    })
 
 class BookResponse(BaseModel):
     id: int
@@ -50,16 +49,15 @@ class BookResponse(BaseModel):
     rating: int
     published_date: int
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "title": "Software Development",
-                "author": "coding_with_john",
-                "category": "Programming",
-                "rating": 4,
-                "published_date": 1999,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "title": "Software Development",
+            "author": "coding_with_john",
+            "category": "Programming",
+            "rating": 4,
+            "published_date": 1999,
         }
+    })
 
 class BookSearchRequest(BaseModel):
     def __init__(self, /, title: Optional[str] = None, description: Optional[str] = None, author: Optional[str] = None,
