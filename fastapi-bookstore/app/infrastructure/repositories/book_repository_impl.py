@@ -13,6 +13,11 @@ class BookRepositoryImpl(BookRepository):
         self.db = db
 
     def create(self, book: Book) -> Book:
+        if book.author is None or book.author.id is None:
+            raise ValueError("author in book cannot be null")
+        if book.category is None or book.category.id is None:
+            raise ValueError("category in book cannot be null")
+
         db_book = BookModel(title=book.title, description=book.description, rating=book.rating, published_date=book.published_date, author_id=book.author.id, category_id=book.category.id)
         self.db.add(db_book)
         self.db.commit()
@@ -45,7 +50,7 @@ class BookRepositoryImpl(BookRepository):
         db_book = self.db.query(BookModel).filter(BookModel.title == title).first()
         if not db_book:
             return None
-        return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date)
+        return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date, author=None, category=None)
 
     def search(self, criteria: BookSearchCriteria) -> List[Book]:
         query = self.db.query(BookModel)
