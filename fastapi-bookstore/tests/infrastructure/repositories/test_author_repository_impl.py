@@ -4,7 +4,6 @@ from app.domain.entities import Author
 from app.domain.repositories import AuthorRepository
 from app.infrastructure.models import AuthorModel
 from app.infrastructure.repositories import AuthorRepositoryImpl
-from tests.core.test_database import get_db, database_config, mysql_container
 
 authors = [
     Author(id=None, name="Test Author 1", fullname="Test Author"),

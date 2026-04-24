@@ -5,7 +5,6 @@ from app.domain.entities import Author, Category, Book
 from app.domain.repositories import BookRepository
 from app.infrastructure.models import BookModel
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
-from tests.core.test_database import get_db, database_config, mysql_container
 
 default_author = Author(id=None, name="Test author", fullname="Test author")
 default_category = Category(id=None, name="Test category", description="Test category")

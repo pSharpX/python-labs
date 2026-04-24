@@ -4,7 +4,6 @@ from app.domain.entities import Category
 from app.domain.repositories import CategoryRepository
 from app.infrastructure.models import CategoryModel
 from app.infrastructure.repositories import CategoryRepositoryImpl
-from tests.core.test_database import get_db, database_config, mysql_container
 
 categories = [
     Category(id=None, name="Test Category 1", description="Test Category"),
