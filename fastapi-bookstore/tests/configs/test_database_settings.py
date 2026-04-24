@@ -83,7 +83,7 @@ class TestDatabaseSettings:
         assert settings.user == "test_admin"
         assert settings.password == "test_admin"
         assert settings.db_name == "test_database"
-        assert settings.connection_url() == f"mysql+pymysql://test_admin:test_admin@localhost:3306/test_database"
+        assert settings.connection_url() == f"mysql+pymysql://test_admin:test_admin@test_localhost:3306/test_database"
 
     @pytest.mark.parametrize("config", invalid_configs)
     def test_environ_database_settings_with_invalid_config(self, mocker, monkeypatch, config):
