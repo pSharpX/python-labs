@@ -1,4 +1,6 @@
 import pytest
+
+from app.core.exceptions import BookAlreadyExists, BadRequest
 from app.schemas import CreateBookRequest
 from app.use_cases import CreateBookUseCase
 from app.domain.entities import Book, Author, Category
@@ -56,7 +58,7 @@ def test_create_existent_book(default_book_request, default_book, mock_book_repo
 
     create_book_service = CreateBookUseCase(mock_book_repository, mock_author_repository, mock_category_repository)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(BookAlreadyExists):
         create_book_service.execute(default_book_request)
 
     mock_book_repository.get_by_title.assert_called_once_with(default_book_request.title)
@@ -69,7 +71,7 @@ def test_create_book_with_invalid_author(default_book_request, mock_book_reposit
 
     create_book_service = CreateBookUseCase(mock_book_repository, mock_author_repository, mock_category_repository)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(BadRequest):
         create_book_service.execute(default_book_request)
 
     mock_book_repository.get_by_title.assert_called_once_with(default_book_request.title)
@@ -84,7 +86,7 @@ def test_create_book_with_invalid_category(default_book_request, default_author,
 
     create_book_service = CreateBookUseCase(mock_book_repository, mock_author_repository, mock_category_repository)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(BadRequest):
         create_book_service.execute(default_book_request)
 
     mock_book_repository.get_by_title.assert_called_once_with(default_book_request.title)

@@ -66,5 +66,5 @@ class BookAlreadyExists(AppException):
             message=f"Book with title '{book_title}' already exists",
             code="BOOK_ALREADY_EXISTS",
             status_code=400,
-            details={"book_title": book_title},
+            details={"title": book_title},
         )

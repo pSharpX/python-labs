@@ -1,3 +1,4 @@
+from app.core.exceptions import BookAlreadyExists, BadRequest
 from app.core.metrics import track_execution_time
 from app.domain.entities import Book, Author, Category
 from app.domain.repositories import BookRepository, AuthorRepository, CategoryRepository
@@ -13,15 +14,15 @@ class CreateBookUseCase:
     def execute(self, request: CreateBookRequest) -> Book:
         existing = self.book_repo.get_by_title(request.title)
         if existing:
-            raise ValueError("Book already exists")
+            raise BookAlreadyExists(request.title)
 
         author_existing = self.author_repo.get_by_id(request.author)
         if not author_existing:
-            raise ValueError("Author is invalid")
+            raise BadRequest("author", request.author)
 
         category_existing = self.category_repo.get_by_id(request.category)
         if not category_existing:
-            raise ValueError("Category is invalid")
+            raise BadRequest("category", request.category)
 
         new_book = Book(
             id=None,

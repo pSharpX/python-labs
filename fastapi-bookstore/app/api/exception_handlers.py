@@ -1,17 +1,36 @@
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import AppException
+from app.core.exceptions import AppException, BadRequest, BookAlreadyExists
 
 logger = logging.getLogger(__name__)
 
 def register_exception_handlers(app: FastAPI):
-    @app.exception_handler(AppException)
+    @app.exception_handler(BadRequest)
+    @app.exception_handler(BookAlreadyExists)
     async def app_exception_handler(
         request: Request,
         exc: AppException,
+    ):
+        logger.debug(f"Invalid request parameters: {type(exc).__name__}: {str(exc)}")
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                    "details": exc.details,
+                }
+            },
+        )
+
+    @app.exception_handler(AppException)
+    async def app_exception_handler(
+            request: Request,
+            exc: AppException,
     ):
         logger.error(f"Error occurred: {type(exc).__name__}: {str(exc)}")
         return JSONResponse(
@@ -21,6 +40,20 @@ def register_exception_handlers(app: FastAPI):
                     "code": exc.code,
                     "message": exc.message,
                     "details": exc.details,
+                }
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def client_exception_handler(request: Request, exc: RequestValidationError):
+        logger.debug(f"Invalid request parameters: {type(exc).__name__}: {str(exc)}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": {
+                    "code": 400,
+                    "message": "Invalid request parameters",
+                    "details": exc.errors(),
                 }
             },
         )
