@@ -2,7 +2,7 @@ import logging
 import sys
 from enum import Enum
 
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger import json
 from app.core.request_context import request_id_ctx
 from app.configs.logging_settings import settings
 
@@ -30,7 +30,7 @@ def get_text_formatter():
     )
 
 def get_json_formatter():
-    return jsonlogger.JsonFormatter(
+    return json.JsonFormatter(
         fmt=(
             "%(asctime)s "
             "%(levelname)s "

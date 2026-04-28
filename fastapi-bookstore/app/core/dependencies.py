@@ -1,11 +1,17 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.configs import DatabaseSettings
+from app.configs import DatabaseSettings, LoggingSettings, AuthSettings
 from app.core.database import DatabaseConfig
 from app.domain.repositories import BookRepository, AuthorRepository, CategoryRepository
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
+
+def get_logging_settings() -> LoggingSettings:
+    return LoggingSettings()
+
+def get_authentication_settings() -> AuthSettings:
+    return AuthSettings()
 
 def get_database_settings() -> DatabaseSettings:
     return DatabaseSettings()

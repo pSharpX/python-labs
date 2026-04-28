@@ -10,7 +10,7 @@ from app.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase,
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("")
 async def search_books(
         rating: Optional[int] = Query(None, ge=1, le=5),
         title: Optional[str] = Query(None, max_length=2000),
@@ -39,6 +39,6 @@ async def update_book(book_id: int, request: BookRequest, update_book_service: U
 async def delete_book(book_id: int = Path(gt=0), update_book_service: UpdateBookUseCase = Depends(get_update_book_use_case)):
     pass
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_book(book_request: CreateBookRequest, create_book_service: CreateBookUseCase = Depends(get_create_book_use_case)):
     create_book_service.execute(book_request)
