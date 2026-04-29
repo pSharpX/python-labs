@@ -1,6 +1,8 @@
 import pytest
 
 from fastapi.testclient import TestClient
+
+from app.domain.entities import Book
 from app.main import app
 from app.core.dependencies import get_database_settings
 
@@ -83,4 +85,31 @@ class TestBookRouter:
             assert len(response.json()) == expected_count
         elif response.status_code == 400:
             assert response.json() is not None
+            assert "error" in response.json()
+
+    @pytest.mark.parametrize("book_id, status_code", [(1, 200), (0, 400), ("invalid_book_id", 400), (1000, 404)])
+    def test_get_books_by_id(self, client, book_id, status_code):
+        response = client.get(f"{self.BOOKS_RESOURCE_PATH}/{book_id}")
+        assert response.status_code == status_code
+        assert response.json() is not None
+
+        if response.status_code == 200:
+            assert "title" in response.json()
+            assert "description" in response.json()
+            assert "rating" in response.json()
+            assert "published_date" in response.json()
+            assert "author" in response.json()
+            assert "category" in response.json()
+        elif response.status_code == 400:
+            assert "error" in response.json()
+
+    @pytest.mark.parametrize("published_date, status_code", [(2009, 200), (0, 400), ("invalid_published_date", 400)])
+    def test_get_books_by_published_date(self, client, published_date, status_code):
+        response = client.get(f"{self.BOOKS_RESOURCE_PATH}/publish/{published_date}")
+        assert response.status_code == status_code
+        assert response.json() is not None
+
+        if response.status_code == 200:
+            assert isinstance(response.json(), list)
+        elif response.status_code == 400:
             assert "error" in response.json()
