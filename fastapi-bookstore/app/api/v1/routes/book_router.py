@@ -23,7 +23,7 @@ async def read_books_by_published_date(published_date: int = Path(gt=0), search_
     return search_book_service.execute(BookSearchCriteria(published_date=published_date))
 
 @router.get("/{book_id}")
-async def read_by_book_id(book_id: int = Path(gt=0), find_book_service: FindBookUseCase = Depends(get_find_book_use_case)):
+async def read_book_by_id(book_id: int = Path(gt=0), find_book_service: FindBookUseCase = Depends(get_find_book_use_case)):
     return find_book_service.execute(book_id)
 
 @router.get("/authors/{book_author}/")

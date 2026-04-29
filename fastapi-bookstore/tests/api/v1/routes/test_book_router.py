@@ -1,10 +1,8 @@
 import pytest
-
 from fastapi.testclient import TestClient
 
-from app.domain.entities import Book
-from app.main import app
 from app.core.dependencies import get_database_settings
+from app.main import app
 
 
 @pytest.fixture

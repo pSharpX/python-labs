@@ -3,12 +3,16 @@ from sqlalchemy.orm import Session
 
 from app.configs import DatabaseSettings, LoggingSettings, AuthSettings
 from app.core.database import DatabaseConfig
+from app.core.logging_config import LoggingConfig
 from app.domain.repositories import BookRepository, AuthorRepository, CategoryRepository
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
 
 def get_logging_settings() -> LoggingSettings:
     return LoggingSettings()
+
+def get_logging_config(settings: LoggingSettings = Depends(get_logging_settings)) -> LoggingConfig:
+    return LoggingConfig(settings=settings)
 
 def get_authentication_settings() -> AuthSettings:
     return AuthSettings()

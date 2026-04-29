@@ -6,7 +6,7 @@ request_id_ctx: ContextVar[str | None] = ContextVar(
     default=None
 )
 
-def get_request_id() -> str:
+def get_request_id() -> str | None:
     """Get the current request ID from context."""
     return request_id_ctx.get()
 

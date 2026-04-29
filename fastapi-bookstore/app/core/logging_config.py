@@ -1,13 +1,11 @@
 import logging
 import sys
 from enum import Enum
-
 from pythonjsonlogger import json
-from app.core.request_context import request_id_ctx
-from app.configs.logging_settings import settings
 
-LOG_FORMAT = settings.format
-LOG_LEVEL = settings.level
+from app.configs import LoggingSettings
+from app.core.request_context import request_id_ctx
+
 
 class LogFormat(str, Enum):
     JSON = "json"
@@ -42,23 +40,29 @@ def get_json_formatter():
         )
     )
 
-def setup_logging():
-    """Configure logging with automatic request ID injection."""
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(get_text_formatter())
+class LoggingConfig:
+    settings: LoggingSettings
 
-    if LOG_FORMAT == LogFormat.JSON:
-        handler.setFormatter(get_json_formatter())
+    def __init__(self, settings: LoggingSettings):
+        self.settings = settings
 
-    handler.addFilter(RequestIdFilter())
+    def setup_logging(self):
+        """Configure logging with automatic request ID injection."""
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(get_text_formatter())
 
-    root_logger = logging.getLogger()
-    root_logger.setLevel(LOG_LEVEL)
-    root_logger.handlers.clear()
-    root_logger.addHandler(handler)
+        if self.settings.format == LogFormat.JSON:
+            handler.setFormatter(get_json_formatter())
 
-    # Reduce noise from uvicorn & fastapi
-    logging.getLogger("uvicorn.access").disabled = True
-    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
-    logging.getLogger("fastapi").setLevel(logging.WARNING)
-    logging.getLogger("asyncio").setLevel(logging.WARNING)
+        handler.addFilter(RequestIdFilter())
+
+        root_logger = logging.getLogger()
+        root_logger.setLevel(self.settings.level)
+        root_logger.handlers.clear()
+        root_logger.addHandler(handler)
+
+        # Reduce noise from uvicorn & fastapi
+        logging.getLogger("uvicorn.access").disabled = True
+        logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+        logging.getLogger("fastapi").setLevel(logging.WARNING)
+        logging.getLogger("asyncio").setLevel(logging.WARNING)

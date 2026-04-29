@@ -6,5 +6,3 @@ class LoggingSettings(BaseSettings, case_sensitive=False):
 
     level: str = Field()
     format: str = Field("text", alias="log_format") # when alias set env_prefix will be ignored.
-
-settings = LoggingSettings()
