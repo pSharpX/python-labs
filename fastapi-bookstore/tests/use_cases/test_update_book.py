@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.exceptions import BookNotFound
+from app.core.exceptions import BookNotFound, BadRequest
 from app.infrastructure.models import AuthorModel, CategoryModel, BookModel
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.schemas import BookRequest
@@ -125,7 +125,7 @@ class TestUpdateBookUseCase:
         get_by_id_author_spy = mocker.spy(author_repository, 'get_by_id')
         get_by_id_category_spy = mocker.spy(category_repository, 'get_by_id')
 
-        with pytest.raises(ValueError):
+        with pytest.raises(BadRequest):
             self.service.execute(self.book_id, default_request)
 
         mock_session_with_invalid_author.commit.assert_not_called()
@@ -144,7 +144,7 @@ class TestUpdateBookUseCase:
         get_by_id_author_spy = mocker.spy(author_repository, 'get_by_id')
         get_by_id_category_spy = mocker.spy(category_repository, 'get_by_id')
 
-        with pytest.raises(ValueError):
+        with pytest.raises(BadRequest):
             self.service.execute(self.book_id, default_request)
 
         mock_session_with_invalid_category.commit.assert_not_called()

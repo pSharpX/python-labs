@@ -18,11 +18,22 @@ create_books_requests = [
     ({ "id": None, "title": "Test Book 1", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1", "category": "1"}, 201),
     ({ "id": None, "title": "Test Book 2", "rating": 4, "published_date": 2009, "author": "1", "category": "1"}, 201),
     ({ "id": None, "title": "Test Book 3", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1"}, 400),
-    ({ "id": None, "title": "Test Book 4", "description": "Test Book 1", "rating": 4, "published_date": 2009, "category": "1"}, 400),
+    ({ "id": None, "title": "Test Book 4", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1000" , "category": "1"}, 400),
     ({ "id": None, "title": "Te", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1", "category": "1"}, 400),
     ({ "id": None, "description": "Test Book 6", "rating": 4, "published_date": 2009, "author": "1", "category": "1"}, 400),
     ({ "id": None, "title": "Test Book 7", "description": "Test Book 1", "rating": 100, "published_date": 2009, "author": "1", "category": "1"}, 400),
     ({ "id": None, "title": "Test Book 8", "description": "Test Book 1", "rating": 5, "published_date": 1, "author": "1", "category": "1"}, 400)
+]
+
+update_books_requests = [
+    (1, { "id": 1, "title": "Update Test Book 1", "description": "Update Test Book 1", "rating": 3, "published_date": 2021, "author": "1", "category": "1"}, 204),
+    (1, { "id": 1, "title": "Update Test Book 2", "rating": 5, "published_date": 2021, "author": "1", "category": "1"}, 204),
+    (1, { "id": 1, "title": "Test Book 3", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1"}, 400),
+    (1, { "id": 1, "title": "Test Book 4", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1000" , "category": "1"}, 400),
+    (1, { "id": 1, "title": "Te", "description": "Test Book 1", "rating": 4, "published_date": 2009, "author": "1", "category": "1"}, 400),
+    (1, { "id": 1, "description": "Test Book 6", "rating": 4, "published_date": 2009, "author": "1", "category": "1"}, 400),
+    (1, { "id": 1, "title": "Test Book 7", "description": "Test Book 1", "rating": 100, "published_date": 2009, "author": "1", "category": "1"}, 400),
+    (1, { "id": 1, "title": "Test Book 8", "description": "Test Book 1", "rating": 5, "published_date": 1, "author": "1", "category": "1"}, 400)
 ]
 
 class TestBookRouter:
@@ -37,6 +48,14 @@ class TestBookRouter:
     @pytest.mark.parametrize("payload,status_code", create_books_requests)
     def test_create_books(self, client, payload, status_code):
         response = client.post(self.BOOKS_RESOURCE_PATH, json=payload)
+        assert response.status_code == status_code
+
+        if response.status_code == 400:
+            assert response.json() is not None
+
+    @pytest.mark.parametrize("book_id, payload,status_code", update_books_requests)
+    def test_update_books(self, client, book_id, payload, status_code):
+        response = client.put(f"{self.BOOKS_RESOURCE_PATH}/{book_id}", json=payload)
         assert response.status_code == status_code
 
         if response.status_code == 400:
