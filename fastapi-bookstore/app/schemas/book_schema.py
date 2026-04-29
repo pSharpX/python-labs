@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class CreateBookRequest(BaseModel):
     id: Optional[int] = Field(description="ID is not needed on Create", default=None)
-    title: str = Field(min_length=3)
-    description: Optional[str] = Field(default=None)
+    title: str = Field(min_length=3, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
     author: str = Field(min_length=1, max_length=100)
     category: str = Field(min_length=1, max_length=100)
     rating: int = Field(gt=0, le=5)
@@ -23,8 +23,8 @@ class CreateBookRequest(BaseModel):
 
 class BookRequest(BaseModel):
     id: int = Field(description="ID is not needed on Create", default=None)
-    title: str = Field(min_length=3)
-    description: Optional[str] = Field(default=None)
+    title: str = Field(min_length=3, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=1000)
     author: str = Field(min_length=1, max_length=100)
     category: str = Field(min_length=1, max_length=100)
     rating: int = Field(gt=0, le=5)

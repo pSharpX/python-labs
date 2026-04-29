@@ -13,8 +13,8 @@ router = APIRouter()
 @router.get("")
 async def search_books(
         rating: Optional[int] = Query(None, ge=1, le=5),
-        title: Optional[str] = Query(None, max_length=2000),
-        published_date: Optional[int] = Query(None, ge=1),
+        title: Optional[str] = Query(None, max_length=100),
+        published_date: Optional[int] = Query(None, gt=1999, le=2031),
         search_book_service: SearchBookUseCase = Depends(get_search_book_use_case)):
     return search_book_service.execute(BookSearchCriteria(rating=rating, title=title, published_date=published_date))
 
