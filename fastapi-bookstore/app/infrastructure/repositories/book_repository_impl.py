@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import and_
 
 from app.core.exceptions import BookNotFound
-from app.domain.entities import Book, BookSearchCriteria
+from app.domain.entities import Book, BookSearchCriteria, Author, Category
 from app.domain.repositories import BookRepository
 from app.infrastructure.models import BookModel
 
@@ -44,13 +44,15 @@ class BookRepositoryImpl(BookRepository):
         db_book = self.db.query(BookModel).filter_by(id = book_id).first()
         if not db_book:
             raise BookNotFound(f"{book_id}")
-        return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date, author=None, category=None)
+        return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date,
+                    author=Author(id=db_book.author_id, name=db_book.author.name, fullname=db_book.author.fullname), category=Category(id=db_book.category_id, name=db_book.category.name, description=db_book.category.description))
 
     def get_by_title(self, title: str):
         db_book = self.db.query(BookModel).filter(BookModel.title == title).first()
         if not db_book:
             return None
-        return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date, author=None, category=None)
+        return Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date,
+                    author=Author(id=db_book.author_id, name=db_book.author.name, fullname=db_book.author.fullname), category=Category(id=db_book.category_id, name=db_book.category.name, description=db_book.category.description))
 
     def search(self, criteria: BookSearchCriteria) -> List[Book]:
         query = self.db.query(BookModel)
@@ -70,6 +72,7 @@ class BookRepositoryImpl(BookRepository):
 
         results = query.all()
         return [
-            Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date, author=None, category=None)
+            Book(id=db_book.id, title=db_book.title, description=db_book.description, rating=db_book.rating, published_date=db_book.published_date,
+                 author=Author(id=db_book.author_id, name=db_book.author.name, fullname=db_book.author.fullname), category=Category(id=db_book.category_id, name=db_book.category.name, description=db_book.category.description))
             for db_book in results
         ]
