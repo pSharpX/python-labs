@@ -4,11 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class DatabaseSettings(BaseSettings, case_sensitive=False):
     model_config = SettingsConfigDict(env_prefix="database_", env_file=".env", env_file_encoding="utf-8", extra="allow")
 
-    host: str = Field("localhost")
+    host: str = Field("localhost", min_length=1)
     port: int = Field(3306, alias="database_port") # when alias set env_prefix will be ignored.
-    user: str = Field()
+    user: str = Field(min_length=2)
     password: str = Field(min_length=4)
-    db_name: str = Field("bookstore-db", alias="database_name")
+    db_name: str = Field("bookstore-db", alias="database_name", min_length=2, max_length=50)
 
     def connection_url(self):
         return f"mysql+pymysql://{self.user}:{self.password}@{self.host}:{self.port}/{self.db_name}"#?charset = utf8/charset=utf8mb4

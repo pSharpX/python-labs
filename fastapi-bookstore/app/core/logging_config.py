@@ -1,15 +1,10 @@
 import logging
 import sys
-from enum import Enum
 from pythonjsonlogger import json
 
-from app.configs import LoggingSettings
+from app.configs import LoggingSettings, LogFormat
 from app.core.request_context import request_id_ctx
 
-
-class LogFormat(str, Enum):
-    JSON = "json"
-    TEXT = "text"
 
 class RequestIdFilter(logging.Filter):
     """Filter that adds request_id to all log records."""
