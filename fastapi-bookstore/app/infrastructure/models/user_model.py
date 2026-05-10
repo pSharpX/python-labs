@@ -1,0 +1,21 @@
+from typing import Optional
+from datetime import datetime
+from sqlalchemy import DateTime,String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.infrastructure.models import BaseModel
+
+
+class UserModel(BaseModel):
+    __tablename__ = 'users'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ext_user_id: Mapped[str] = mapped_column(String(100), unique=True)
+    first_name: Mapped[str] = mapped_column(String(30))
+    last_name: Mapped[Optional[str]] = mapped_column(String(30))
+    email: Mapped[str] = mapped_column(String(30), unique=True)
+
+    phone: Mapped[str] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(30))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime)
