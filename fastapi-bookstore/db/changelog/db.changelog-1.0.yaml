@@ -201,7 +201,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: status
+                  name: status # ACTIVE, BLOCKED,
                   type: varchar(30)
                   constraints:
                     nullable: false
@@ -452,3 +452,21 @@ databaseChangeLog:
                   type: datetime2
                   constraints:
                     nullable: false
+  - changeSet:
+      id: add_unique_constraint_users
+      author: christian.rivera
+      changes:
+        - addUniqueConstraint:
+            columnNames: email
+            constraintName: uc_users_email
+            tableName: users
+  - changeSet:
+      id: add_unique_constraint_physical_identifier
+      author: christian.rivera
+      changes:
+        - addUniqueConstraint:
+            columnNames: physical_identifier
+            constraintName: uc_books_copy_physical_identifier
+            tableName: books_copy
+
+
