@@ -152,3 +152,303 @@ databaseChangeLog:
             sql: |
               INSERT INTO books (title, description, rating, published_date, author_id, category_id)
               VALUES ('Python Programming', 'Python Programming', 4, 2020, (SELECT id FROM authors WHERE name = 'John'),(SELECT id FROM categories WHERE name = 'Software Development'));
+  - changeSet:
+      id: create-users-table
+      author: christian.rivera
+      comment: add users table definition
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    primaryKeyName: pk_user_id
+              - column:
+                  name: ext_user_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: u_ext_user_id
+              - column:
+                  name: first_name
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(30)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: email
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: create-books-copy-table
+      author: christian.rivera
+      comment: add books copy table definition. This table is intended to be used for physical or rentable copies
+      changes:
+        - createTable:
+            tableName: books_copy
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_book_copy_id
+              - column:
+                  name: book_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_books_copy_book
+                    referencedTableName: books
+                    referencedColumnNames: id
+              - column:
+                  name: physical_identifier
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status # AVAILABLE, RENTED, LOST, DAMAGED
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: acquisition_date
+                  type: datetime2
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: create-rental-table
+      author: christian.rivera
+      comment: add rental table definition. This represents a rental transaction
+      changes:
+        - createTable:
+            tableName: rental
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_rental_id
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_rental_user
+                    referencedTableName: users
+                    referencedColumnNames: id
+              - column:
+                  name: status # ACTIVE, RETURNED, LATE
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rental_date
+                  type: datetime2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: due_date
+                  type: datetime2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: return_date
+                  type: datetime2
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: create-rental-detail-table
+      author: christian.rivera
+      comment: add rental-detail table definition.
+      changes:
+        - createTable:
+            tableName: rental_detail
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_rental_detail_id
+              - column:
+                  name: rental_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_rental_detail_rental
+                    referencedTableName: rental
+                    referencedColumnNames: id
+              - column:
+                  name: copy_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_rental_detail_books_copy
+                    referencedTableName: books_copy
+                    referencedColumnNames: id
+              - column:
+                  name: return_at
+                  type: datetime2
+                  constraints:
+                    nullable: true
+  - changeSet:
+      id: create-reviews-table
+      author: christian.rivera
+      comment: add reviews table definition.
+      changes:
+        - createTable:
+            tableName: reviews
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_review_id
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reviews_user
+                    referencedTableName: users
+                    referencedColumnNames: id
+              - column:
+                  name: book_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reviews_book
+                    referencedTableName: books
+                    referencedColumnNames: id
+              - column:
+                  name: review_text
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: rating
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: add_unique_constraint_reviews
+      author: christian.rivera
+      changes:
+        - addUniqueConstraint:
+            columnNames: user_id, book_id
+            constraintName: uc_reviews_user_id_book_id
+            tableName: reviews
+  - changeSet:
+      id: create-notifications-table
+      author: christian.rivera
+      comment: add notifications table definition.
+      changes:
+        - createTable:
+            tableName: notifications
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_notification_id
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_notifications_user
+                    referencedTableName: users
+                    referencedColumnNames: id
+              - column:
+                  name: rental_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_notifications_rental
+                    referencedTableName: rental
+                    referencedColumnNames: id
+              - column:
+                  name: type # DUE_REMINDER, OVERDUE, PROMOTION
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: channel # EMAIL, SMS
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status # PENDING, SENT, FAILED
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: scheduled_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
