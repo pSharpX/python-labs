@@ -468,5 +468,13 @@ databaseChangeLog:
             columnNames: physical_identifier
             constraintName: uc_books_copy_physical_identifier
             tableName: books_copy
+  - changeSet:
+      id: drop_notnullconstraint_ext_user_id
+      author: christian.rivera
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: varchar(100)
+            columnName: ext_user_id
+            tableName: users
 
 

@@ -10,7 +10,7 @@ class UserModel(BaseModel):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    ext_user_id: Mapped[str] = mapped_column(String(100), unique=True)
+    ext_user_id: Mapped[Optional[str]] = mapped_column(String(100), unique=True)
     first_name: Mapped[str] = mapped_column(String(30))
     last_name: Mapped[Optional[str]] = mapped_column(String(30))
     email: Mapped[str] = mapped_column(String(30), unique=True)
