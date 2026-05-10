@@ -32,6 +32,14 @@ class BookNotFound(ResourceNotFound):
         )
 
 
+class UserNotFound(ResourceNotFound):
+    def __init__(self, user_id: str):
+        super().__init__(
+            message=f"User {user_id} not found",
+            code="USER_NOT_FOUND",
+        )
+
+
 class AuthorNotFound(ResourceNotFound):
     def __init__(self, author_id: str):
         super().__init__(
