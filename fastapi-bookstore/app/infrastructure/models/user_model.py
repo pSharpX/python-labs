@@ -1,7 +1,7 @@
 from typing import Optional
 from datetime import datetime
 from sqlalchemy import DateTime,String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.models import BaseModel
 
@@ -14,8 +14,8 @@ class UserModel(BaseModel):
     first_name: Mapped[str] = mapped_column(String(30))
     last_name: Mapped[Optional[str]] = mapped_column(String(30))
     email: Mapped[str] = mapped_column(String(30), unique=True)
-
     phone: Mapped[str] = mapped_column(String(30))
     status: Mapped[str] = mapped_column(String(30))
-
     created_at: Mapped[datetime] = mapped_column(DateTime)
+
+    rental_list: Mapped[list["RentalModel"]] = relationship(back_populates="user", cascade="all, delete-orphan")

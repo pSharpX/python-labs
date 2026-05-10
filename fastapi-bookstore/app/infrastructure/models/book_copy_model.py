@@ -12,7 +12,7 @@ class BookCopyModel(BaseModel):
     physical_identifier: Mapped[str] = mapped_column(String(100), unique=True)
     status: Mapped[str] = mapped_column(String(100))
     acquisition_date: Mapped[datetime] = mapped_column(DateTime)
-
     book_id: Mapped[int] = mapped_column(ForeignKey('books.id'))
 
-    book: Mapped["BookModel"] = relationship(back_populates="books_copy")
+    book: Mapped["BookModel"] = relationship(back_populates="copies")
+    rental_details: Mapped[list["RentalDetailModel"]] = relationship(back_populates="book_copy", cascade="all, delete-orphan")

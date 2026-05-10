@@ -11,9 +11,10 @@ class BookModel(BaseModel):
     description: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     rating: Mapped[int] = mapped_column(Integer)
     published_date: Mapped[int] = mapped_column(Integer)
-
     author_id: Mapped[int] = mapped_column(ForeignKey('authors.id'))
     category_id: Mapped[int] = mapped_column(ForeignKey('categories.id'))
 
     author: Mapped["AuthorModel"] = relationship(back_populates="books")
     category: Mapped["CategoryModel"] = relationship(back_populates="books")
+
+    copies: Mapped[list["BookCopyModel"]] = relationship(back_populates="book", cascade="all, delete-orphan")

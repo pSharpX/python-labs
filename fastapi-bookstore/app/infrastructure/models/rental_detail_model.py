@@ -12,5 +12,5 @@ class RentalDetailModel(BaseModel):
     rental_id: Mapped[int] = mapped_column(ForeignKey('rental.id'))
     book_copy_id: Mapped[int] = mapped_column(ForeignKey('books_copy.id'))
 
-    rental: Mapped["RentalModel"] = relationship(back_populates="rental_detail")
-    book_copy: Mapped["BookCopyModel"] = relationship(back_populates="rental_detail")
+    rental: Mapped["RentalModel"] = relationship(back_populates="rental_details")
+    book_copy: Mapped["BookCopyModel"] = relationship(back_populates="rental_details")
