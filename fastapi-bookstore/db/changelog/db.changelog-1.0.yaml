@@ -1,4 +1,12 @@
 databaseChangeLog:
+  - property:
+      name: json.type
+      value: json
+      dbms: mysql, postgresql
+  - property:
+      name: json.type
+      value: clob
+      dbms: oracle, h2, mssql
   - changeSet:
       id: create-authors-table
       author: christian.rivera
@@ -476,5 +484,65 @@ databaseChangeLog:
             columnDataType: varchar(100)
             columnName: ext_user_id
             tableName: users
-
+  - changeSet:
+      id: add_user_id_column_users
+      author: christian.rivera
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: user_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uc_user_id
+  - changeSet:
+      id: create-outbox-table
+      author: christian.rivera
+      comment: add outbox table definition for transactional operations.
+      changes:
+        - createTable:
+            tableName: outbox
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_outbox_id
+              - column:
+                  name: event_type # user.created, etc
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload
+                  type: ${json.type}
+                  constraints:
+                    nullable: false
+              - column:
+                  name: processed
+                  type: bit
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: datetime2
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: add_user_registration_status_column_users
+      author: christian.rivera
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: user_registration_status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
 
