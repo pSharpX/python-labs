@@ -21,6 +21,19 @@ services:
       retries: 5
       start_period: 30s
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # AMQP protocol
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
   liquibase:
     image: liquibase/liquibase
     depends_on:
@@ -41,3 +54,4 @@ services:
 
 volumes:
   mysql_data:
+  rabbitmq_data:
