@@ -5,8 +5,8 @@ from sqlalchemy.sql.expression import and_
 
 from app.core.exceptions import BookNotFound
 from app.domain.entities import Book, BookSearchCriteria, Author, Category
-from app.domain.repositories import BookRepository
-from app.infrastructure.models import BookModel
+from app.application.ports.repositories import BookRepository
+from app.infrastructure.database.models import BookModel
 
 class BookRepositoryImpl(BookRepository):
     def __init__(self, db: Session):

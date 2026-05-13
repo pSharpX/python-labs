@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.domain.entities import Author
-from app.domain.repositories import AuthorRepository
-from app.infrastructure.models import AuthorModel
+from app.application.ports.repositories import AuthorRepository
+from app.infrastructure.database.models import AuthorModel
 
 class AuthorRepositoryImpl(AuthorRepository):
 

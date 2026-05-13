@@ -1,6 +1,6 @@
 import pytest
 from app.domain.entities import Book, Category, Author
-from app.use_cases import FindBookUseCase
+from application.use_cases import FindBookUseCase
 from app.core.exceptions import BookNotFound
 
 class TestFindBookUseCase:

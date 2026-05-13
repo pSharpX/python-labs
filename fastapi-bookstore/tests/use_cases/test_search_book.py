@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import Mock
 from app.domain.entities import Book, Category, Author, BookSearchCriteria
-from app.domain.repositories import BookRepository
-from app.infrastructure.models import AuthorModel, CategoryModel, BookModel
+from application.ports.repositories import BookRepository
+from app.infrastructure.database.models import AuthorModel, CategoryModel, BookModel
 from app.infrastructure.repositories import BookRepositoryImpl
-from app.use_cases import SearchBookUseCase
+from application.use_cases import SearchBookUseCase
 
 class TestSearchBookUseCase:
     mock_session = Mock()

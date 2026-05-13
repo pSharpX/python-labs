@@ -2,7 +2,7 @@ import pytest
 
 from app.core.exceptions import BookAlreadyExists, BadRequest
 from app.schemas import CreateBookRequest
-from app.use_cases import CreateBookUseCase
+from app.application.use_cases import CreateBookUseCase
 from app.domain.entities import Book, Author, Category
 
 

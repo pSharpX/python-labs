@@ -1,10 +1,10 @@
 import pytest
 
 from app.core.exceptions import BookNotFound, BadRequest
-from app.infrastructure.models import AuthorModel, CategoryModel, BookModel
+from app.infrastructure.database.models import AuthorModel, CategoryModel, BookModel
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.schemas import BookRequest
-from app.use_cases import UpdateBookUseCase
+from application.use_cases import UpdateBookUseCase
 
 class TestUpdateBookUseCase:
     book_id: int = 5

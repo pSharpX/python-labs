@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.domain.entities import Category
-from app.domain.repositories import CategoryRepository
-from app.infrastructure.models import CategoryModel
+from app.application.ports.repositories import CategoryRepository
+from app.infrastructure.database.models import CategoryModel
 
 class CategoryRepositoryImpl(CategoryRepository):
 

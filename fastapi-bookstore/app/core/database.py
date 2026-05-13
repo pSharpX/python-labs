@@ -1,24 +1,29 @@
-from sqlalchemy import create_engine, Engine
-from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base, scoped_session, Session
 from app.configs import DatabaseSettings
 
+Base = declarative_base()
+
 class DatabaseConfig:
-    settings: DatabaseSettings
-    engine: Engine
-    SessionLocal = None
-    Base = None
-
     def __init__(self, settings: DatabaseSettings):
-        self.settings = settings
-        self.engine = create_engine(self.settings.connection_url())
-        self.SessionLocal = sessionmaker(bind=self.engine, autocommit=False, autoflush=False)
-        self.Base = declarative_base()
+        self._settings = settings
+        self._engine = create_engine(self._settings.connection_url())
+        self._session_factory = scoped_session(sessionmaker(
+            bind=self._engine,
+            autocommit=False,
+            autoflush=False
+        ))
+        self.create_database()
 
-        self.Base.metadata.create_all(bind=self.engine)
+    def create_database(self) -> None:
+        Base.metadata.create_all(self._engine)
 
     def get_db(self):
-        db = self.SessionLocal()
+        session: Session = self._session_factory()
         try:
-            yield db
+            yield session
+        except Exception:
+            session.rollback()
+            raise
         finally:
-            db.close()
+            session.close()

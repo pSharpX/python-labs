@@ -2,8 +2,8 @@ import pytest
 
 from app.core.exceptions import BookNotFound
 from app.domain.entities import Author, Category, Book
-from app.domain.repositories import BookRepository
-from app.infrastructure.models import BookModel
+from application.ports.repositories import BookRepository
+from app.infrastructure.database.models import BookModel
 from app.infrastructure.repositories import BookRepositoryImpl, AuthorRepositoryImpl, CategoryRepositoryImpl
 
 default_author = Author(id=None, name="Test author", fullname="Test author")
