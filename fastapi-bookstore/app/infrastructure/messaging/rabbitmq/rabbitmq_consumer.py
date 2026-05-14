@@ -28,11 +28,11 @@ class RabbitMQConsumer(EventConsumer):
     async def on_message(self, message: aio_pika.IncomingMessage):
         """Callable consumer function."""
         async with message.process():  # Automates ack/nack
-            logger.debug(f"Received message: {message.body.decode()}")
+            logger.info(f"Received message: {message.body.decode()}")
             payload = json.loads(message.body)
             await self.handler.handle(payload)
 
-    async def consume(self):
+    async def start(self):
         channel = await self.channel_factory.create_channel()
         queue = await channel.declare_queue(self.queue_name, durable=True)
         exchange = await channel.declare_exchange(

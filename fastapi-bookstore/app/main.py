@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     worker = container.outbox_worker()
     consumer = container.event_consumer()
     await connection.connect()
-    await consumer.consume()
+    await consumer.start()
     await worker.start()
     yield
     await worker.stop()

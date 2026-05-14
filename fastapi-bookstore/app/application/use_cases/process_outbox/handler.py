@@ -19,11 +19,11 @@ class ProcessOutboxHandler:
         self.uow = uow
 
     async def handle(self):
-        logger.info(f"Running outbox processor")
+        logger.debug(f"Running outbox processor")
         events = self.outbox_repo.get_unprocessed()
 
         for event in events:
-            logger.debug(f"Publishing event to queue: ID = {event.id}, EVENT_TYPE = {event.event_type}")
+            logger.info(f"Publishing event to queue: ID = {event.id}, EVENT_TYPE = {event.event_type}")
             await self.publisher.publish(
                 topic=event.event_type,
                 payload=event.payload,
