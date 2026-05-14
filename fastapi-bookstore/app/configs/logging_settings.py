@@ -9,7 +9,10 @@ class LogFormat(str, Enum):
 class LoggingSettings(BaseSettings, case_sensitive=False):
     model_config = SettingsConfigDict(env_prefix="log_", env_file=".env", env_file_encoding="utf-8", extra="allow")
 
-    level: str = Field()
+    level: str = Field("WARN", max_length=10, min_length=1)
+    level_sqlalchemy: str = Field("WARN", max_length=10, min_length=1)
+    level_uvicorn: str = Field("WARN", max_length=10, min_length=1)
+    level_fastapi: str = Field("WARN", max_length=10, min_length=1)
     format: str = Field("text", alias="log_format") # when alias set env_prefix will be ignored.
 
     @field_validator('format', mode='after')

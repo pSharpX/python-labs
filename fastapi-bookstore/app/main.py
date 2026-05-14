@@ -5,8 +5,6 @@ from fastapi import FastAPI
 from app.api.exception_handlers import register_exception_handlers
 from app.api.middleware import RequestContextMiddleware
 from app.api.v1.router import api_router
-from app.core.dependencies import get_logging_settings
-from app.core.logging_config import LoggingConfig
 from app.core.container import Container
 
 
@@ -28,6 +26,10 @@ async def lifespan(app: FastAPI):
     container.shutdown_resources()
 
 container = Container()
+
+logging_config = container.logging_config()
+logging_config.setup_logging()
+
 app = FastAPI(lifespan=lifespan)
 app.container = container
 
@@ -35,7 +37,6 @@ app.add_middleware(RequestContextMiddleware)
 
 app.include_router(api_router, prefix="/api/v1")
 
-LoggingConfig(get_logging_settings())
 register_exception_handlers(app)
 
 @app.get("/")

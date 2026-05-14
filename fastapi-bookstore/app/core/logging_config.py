@@ -27,7 +27,7 @@ def get_json_formatter():
         fmt=(
             "%(asctime)s "
             "%(levelname)s "
-            "%(request_id)s"
+            "%(request_id)s "
             "%(name)s "
             "%(module)s.%(funcName)s "
             "%(lineno)d "
@@ -49,6 +49,7 @@ class LoggingConfig:
         if self.settings.format == LogFormat.JSON:
             handler.setFormatter(get_json_formatter())
 
+        #handler.setLevel(self.settings.level)
         handler.addFilter(RequestIdFilter())
 
         root_logger = logging.getLogger()
@@ -56,8 +57,13 @@ class LoggingConfig:
         root_logger.handlers.clear()
         root_logger.addHandler(handler)
 
+        # Critical for async apps
+        #for name in logging.root.manager.loggerDict:
+        #    logging.getLogger(name).setLevel(self.settings.level)
+
         # Reduce noise from uvicorn & fastapi
         logging.getLogger("uvicorn.access").disabled = True
-        logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
-        logging.getLogger("fastapi").setLevel(logging.WARNING)
+        logging.getLogger("uvicorn.error").setLevel(self.settings.level_uvicorn)
+        logging.getLogger("sqlalchemy").setLevel(self.settings.level_sqlalchemy)
+        logging.getLogger("fastapi").setLevel(self.settings.level_fastapi)
         logging.getLogger("asyncio").setLevel(logging.WARNING)
