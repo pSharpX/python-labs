@@ -16,3 +16,4 @@ httpx==0.28.1
 aio-pika==9.6.2
 uplink[aiohttp]==0.10.0
 dependency-injector==4.49.0
+requests==2.34.2
