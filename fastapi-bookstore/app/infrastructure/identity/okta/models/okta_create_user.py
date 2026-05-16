@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class ProfileData(BaseModel):
     first_name: str = Field(serialization_alias="firstName")
@@ -6,6 +7,8 @@ class ProfileData(BaseModel):
     email: str
     login: str
     mobile_phone: str = Field(serialization_alias="mobilePhone")
+
+    model_config = ConfigDict(serialize_by_alias=True)
 
 class CreateUser(BaseModel):
     profile: ProfileData
