@@ -1,6 +1,7 @@
-from uplink import Consumer, post, Body, headers, json, returns, error_handler, response_handler
+from uplink import post, Body, headers, json, returns, error_handler, response_handler, Consumer
 
 from app.infrastructure.identity.okta.okta_error_handler import OktaErrorHandler
+from app.infrastructure.http.client.uplink_client import BaseHttpClient
 
 
 @headers({
@@ -9,7 +10,7 @@ from app.infrastructure.identity.okta.okta_error_handler import OktaErrorHandler
 })
 @error_handler(OktaErrorHandler.raise_api_error)
 @response_handler(OktaErrorHandler.raise_for_status)
-class OktaClient(Consumer):
+class OktaClient(BaseHttpClient):
 
     @json
     @returns.json(key="id")

@@ -1,4 +1,3 @@
-from uplink import AiohttpClient
 from uplink.auth import ApiTokenHeader
 
 from app.application.ports.identity import IdentityProvider
@@ -14,7 +13,6 @@ class OktaIdentityProvider(IdentityProvider):
         self.okta_client = OktaClient(
             settings.org_url,
             auth=ApiTokenHeader("Authorization", f"SSWS {settings.token}"),
-            client=AiohttpClient()
         )
 
     async def create_user(self, email: str, first_name: str, last_name: str, phone: str) -> str:
