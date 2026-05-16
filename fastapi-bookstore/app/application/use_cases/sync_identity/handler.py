@@ -19,17 +19,20 @@ class SyncIdentityHandler:
         self.uow = uow
 
     async def handle(self, event: dict):
-        logger.debug(f"Receiving event from queue: ID = {event["user_id"]}")
+        logger.debug(f"Starting external user registration request: user_id = {event["user_id"]}")
         provider_user_id = await self.provider.create_user(
             email=event["email"],
             first_name=event["first_name"],
             last_name=event["last_name"],
             phone=event["phone"]
         )
+        logger.debug(f"External user registration completed successfully: ext_user_id = {provider_user_id}")
 
+        logger.debug("Updating user registration status in database")
         self.user_repo.mark_as_synced(
             user_id=event["user_id"],
             ext_user_id=provider_user_id,
         )
+        logger.debug(f"User registration status updated successfully: user_id = {event['user_id']}")
 
         self.uow.commit()
