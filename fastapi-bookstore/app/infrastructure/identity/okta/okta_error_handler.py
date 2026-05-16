@@ -14,11 +14,20 @@ class OktaErrorHandler:
             # Pass through the response.
             return response
 
-        logger.error(f"OKTA call got unexpected response: status_code = {response.status_code}, message = {response.json()}")
-        raise AppException("OKTA call got unexpected response")
+        response_text = response.text
+        try:
+            error_payload = response.json()
+        except Exception as exc:
+            logger.error(f"Error parsing response: {type(exc).__name__}: {str(exc)}")
+            error_payload = response_text
+
+        logger.error(
+            f"HTTP request failed: status_code = {response.status_code}, url = {response.url}, response = {error_payload}",
+        )
+        raise AppException(f"HTTP request failed: status_code = {response.status_code}")
 
     @staticmethod
     def raise_api_error(exc_type, exc_val, exc_tb):
         """Wraps client error with custom API error"""
-        logger.error(f"OKTA call failed: type = {exc_type}, value = {exc_val}, traceback = {exc_tb}")
+        logger.error(f"HTTP request failed: type = {exc_type}, value = {exc_val}, traceback = {exc_tb}")
         raise AppException(exc_val)
