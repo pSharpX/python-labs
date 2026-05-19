@@ -1,23 +1,20 @@
-from uplink import Consumer, AiohttpClient
+from uplink import Consumer
 
-from app.infrastructure.http.interceptors.registry import InterceptorRegistry
-from app.infrastructure.http.config.aiohttp_interceptable_client import InterceptableClientSession
+from infrastructure.http.middleware.logging_session import LoggingSession
 
 
 class BaseHttpClient(Consumer):
 
     def __init__(self, base_url: str, **kwargs):
-        registry = InterceptorRegistry()
-        session = InterceptableClientSession(
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
-            trace_configs=[registry.build_trace_config()]
-        )
+        session = LoggingSession()
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
 
         super().__init__(
             base_url=base_url,
-            client=AiohttpClient(session=session),
+            session=session,
+            headers=headers,
             **kwargs
         )
