@@ -27,6 +27,7 @@ class RabbitMQPublisher(EventPublisher):
 
         message = aio_pika.Message(
             body=json.dumps(payload).encode(),
+            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
         await exchange.publish(
             message,

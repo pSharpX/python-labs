@@ -28,12 +28,13 @@ class RabbitMQConsumer(EventConsumer):
     async def on_message(self, message: aio_pika.IncomingMessage):
         """Callable consumer function."""
         try:
-            async with message.process():  # Automates ack/nack
-                logger.info(f"Message received for processing: {message.body.decode()}")
-                payload = json.loads(message.body)
-                await self.handler.handle(payload)
-                logger.info("Message processing completed")
+            logger.info(f"Message received for processing: {message.body.decode()}")
+            payload = json.loads(message.body)
+            await self.handler.handle(payload)
+            await message.ack()
+            logger.info("Message processing completed")
         except Exception as exc:
+            await message.reject(requeue=True)
             logger.error(f"Message processing failed: {type(exc).__name__}: {str(exc)}" )
 
     async def start(self):
