@@ -5,8 +5,8 @@ from app.infrastructure.http.interceptors.aiohttp_interceptor import AiohttpInte
 
 
 class InterceptorRegistry:
-    def __init__(self):
-        self.registry: list[AiohttpInterceptor] = []
+    def __init__(self, interceptors: list[AiohttpInterceptor] | None = None):
+        self.registry: list[AiohttpInterceptor] = interceptors or []
         self.registry.append(LoggingInterceptor())
 
     def add(self, custom_interceptor: AiohttpInterceptor) -> None:
