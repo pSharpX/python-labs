@@ -1,13 +1,13 @@
 import logging
 
 from app.application.ports.identity import IdentityProvider
-from app.application.ports.repositories import UserRepository
+from app.application.ports.messaging import MessageHandler
+from app.application.ports.repositories import UserRepository, OutboxRepository
 from app.infrastructure.database import UnitOfWork
-from app.application.ports.repositories import OutboxRepository
 
 logger = logging.getLogger(__name__)
 
-class SyncIdentityHandler:
+class SyncIdentityHandler(MessageHandler):
 
     def __init__(
         self,

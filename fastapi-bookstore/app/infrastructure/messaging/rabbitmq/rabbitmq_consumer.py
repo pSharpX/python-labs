@@ -3,9 +3,8 @@ import logging
 
 import aio_pika
 
-from app.application.use_cases import SyncIdentityHandler
 from app.infrastructure.messaging.rabbitmq import RabbitMQChannelFactory
-from app.application.ports.messaging import EventConsumer
+from app.application.ports.messaging import EventConsumer, MessageHandler
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class RabbitMQConsumer(EventConsumer):
         exchange_name: str,
         queue_name: str,
         routing_key: str,
-        handler: SyncIdentityHandler,
+        handler: MessageHandler,
     ):
         self.channel_factory = channel_factory
         self.exchange_name = exchange_name

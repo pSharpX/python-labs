@@ -1,10 +1,11 @@
 import logging
 
 from app.application.ports.notification import NotificationSender
+from app.application.ports.messaging import MessageHandler
 
 logger = logging.getLogger(__name__)
 
-class SendWelcomeNotificationHandler:
+class SendWelcomeNotificationHandler(MessageHandler):
 
     def __init__(
         self,

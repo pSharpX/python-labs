@@ -88,7 +88,7 @@ class Container(containers.DeclarativeContainer):
         exchange_name=rabbitmq_settings.provided.exchange_name,
         queue_name=rabbitmq_settings.provided.queue_name,
         routing_key="user.registration.completed",
-        handler=sync_identity_handler
+        handler=send_notification_handler
     )
 
     create_book_use_case = providers.Factory(CreateBookUseCase, book_repo=book_repo, author_repo=author_repo, category_repo=category_repo)

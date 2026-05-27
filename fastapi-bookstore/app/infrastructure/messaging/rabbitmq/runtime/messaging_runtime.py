@@ -11,12 +11,8 @@ class MessagingRuntime:
         background_registry: BackgroundServiceRegistry,
     ):
         self.connection = connection
-        self.consumer_registry = (
-            consumer_registry
-        )
-        self.background_registry = (
-            background_registry
-        )
+        self.consumer_registry = consumer_registry
+        self.background_registry = background_registry
 
     async def start(self):
         await self.connection.connect()
