@@ -5,6 +5,7 @@ from app.application.commands.register_user import RegisterUserHandler
 from app.application.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
 from app.application.use_cases.process_outbox.handler import ProcessOutboxHandler
 from app.application.use_cases.sync_identity.handler import SyncIdentityHandler
+from app.application.use_cases.send_notification.handler import SendWelcomeNotificationHandler
 from app.configs import LoggingSettings, AuthSettings, DatabaseSettings
 from app.core.database import DatabaseConfig
 from app.core.logging_config import LoggingConfig
@@ -15,6 +16,9 @@ from app.infrastructure.messaging.rabbitmq import RabbitMQSettings, RabbitMQConn
 from app.infrastructure.repositories import OutboxRepositoryImpl, UserRepositoryImpl, BookRepositoryImpl, \
     AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.workers.outbox_worker import OutboxWorker
+from app.infrastructure.notification.mailchimp import MailchimpSettings, MailchimpNotificationSender
+from app.infrastructure.messaging.rabbitmq.runtime import ConsumerRegistry, BackgroundServiceRegistry
+from app.infrastructure.messaging.rabbitmq.runtime.messaging_runtime import MessagingRuntime
 
 
 def get_db(config: DatabaseConfig) -> Session:
@@ -35,6 +39,7 @@ class Container(containers.DeclarativeContainer):
     authentication_settings = providers.ThreadSafeSingleton(AuthSettings)
     okta_settings = providers.ThreadSafeSingleton(OktaSettings)
     rabbitmq_settings = providers.ThreadSafeSingleton(RabbitMQSettings)
+    mailchimp_settings = providers.ThreadSafeSingleton(MailchimpSettings)
 
     logging_config = providers.Factory(
         LoggingConfig,
@@ -55,7 +60,10 @@ class Container(containers.DeclarativeContainer):
     category_repo = providers.Factory(CategoryRepositoryImpl, db=get_db)
 
     identity_provider = providers.Factory(OktaIdentityProvider, settings=okta_settings)
-    sync_identity_handler = providers.Factory(SyncIdentityHandler, provider=identity_provider, user_repo=user_repo, uow=uow)
+    sync_identity_handler = providers.Factory(SyncIdentityHandler, provider=identity_provider, outbox_repo=outbox_repo, user_repo=user_repo, uow=uow)
+
+    notification_sender = providers.Factory(MailchimpNotificationSender, settings=mailchimp_settings)
+    send_notification_handler = providers.Factory(SendWelcomeNotificationHandler, notification_sender=notification_sender)
 
     rabbitmq_connection = providers.Factory(RabbitMQConnection, settings=rabbitmq_settings)
     rabbitmq_channel_factory = providers.Factory(RabbitMQChannelFactory, connection=rabbitmq_connection)
@@ -66,12 +74,20 @@ class Container(containers.DeclarativeContainer):
         exchange_name=rabbitmq_settings.provided.exchange_name,
         queue_name=rabbitmq_settings.provided.queue_name,
     )
-    event_consumer = providers.Factory(
+    user_created_consumer = providers.Factory(
         RabbitMQConsumer,
         channel_factory=rabbitmq_channel_factory,
         exchange_name=rabbitmq_settings.provided.exchange_name,
         queue_name=rabbitmq_settings.provided.queue_name,
-        routing_key=rabbitmq_settings.provided.queue_name,
+        routing_key="user.created",
+        handler=sync_identity_handler
+    )
+    user_registration_completed_consumer = providers.Factory(
+        RabbitMQConsumer,
+        channel_factory=rabbitmq_channel_factory,
+        exchange_name=rabbitmq_settings.provided.exchange_name,
+        queue_name=rabbitmq_settings.provided.queue_name,
+        routing_key="user.registration.completed",
         handler=sync_identity_handler
     )
 
@@ -95,4 +111,25 @@ class Container(containers.DeclarativeContainer):
 
     outbox_worker = providers.Factory(OutboxWorker, handler=process_outbox_handler)
 
+    consumer_registry = providers.Factory(
+        ConsumerRegistry,
+        consumers=providers.List(
+            user_created_consumer,
+            user_registration_completed_consumer
+        )
+    )
+
+    background_registry = providers.Factory(
+        BackgroundServiceRegistry,
+        services=providers.List(
+            outbox_worker
+        )
+    )
+
+    messaging_runtime = providers.Factory(
+        MessagingRuntime,
+        connection=rabbitmq_connection,
+        consumer_registry=consumer_registry,
+        background_registry=background_registry
+    )
 

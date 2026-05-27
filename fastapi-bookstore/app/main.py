@@ -14,15 +14,10 @@ async def lifespan(app: FastAPI):
 
     # Resolve dependencies from container
     container.init_resources()
-    connection = container.rabbitmq_connection()
-    worker = container.outbox_worker()
-    consumer = container.event_consumer()
-    await connection.connect()
-    await consumer.start()
-    await worker.start()
+    runtime = container.messaging_runtime()
+    await runtime.start()
     yield
-    await worker.stop()
-    await connection.close()
+    await runtime.stop()
     container.shutdown_resources()
 
 container = Container()

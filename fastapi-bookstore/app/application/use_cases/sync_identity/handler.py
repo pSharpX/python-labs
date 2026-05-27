@@ -3,6 +3,7 @@ import logging
 from app.application.ports.identity import IdentityProvider
 from app.application.ports.repositories import UserRepository
 from app.infrastructure.database import UnitOfWork
+from app.application.ports.repositories import OutboxRepository
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,12 @@ class SyncIdentityHandler:
     def __init__(
         self,
         provider: IdentityProvider,
+        outbox_repo: OutboxRepository,
         user_repo: UserRepository,
         uow: UnitOfWork,
     ):
         self.provider = provider
+        self.outbox_repo = outbox_repo
         self.user_repo = user_repo
         self.uow = uow
 
@@ -34,5 +37,15 @@ class SyncIdentityHandler:
             ext_user_id=provider_user_id,
         )
         logger.debug(f"User registration status updated successfully: user_id = {event['user_id']}")
+
+        logger.debug("Adding  user.registration.completed event")
+        self.outbox_repo.add(
+            event_type="user.registration.completed",
+            payload={
+                "user_id": event["user_id"],
+                "email": event["email"],
+                "first_name": event["first_name"],
+            },
+        )
 
         self.uow.commit()
