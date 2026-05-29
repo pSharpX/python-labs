@@ -18,6 +18,7 @@ class MaskingService:
         "secret",
         "client_secret",
         "api_key",
+        "key",
     }
 
     @classmethod
