@@ -32,6 +32,8 @@ services:
       RABBITMQ_DEFAULT_PASS: admin123
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/local/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq/local/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     restart: unless-stopped
 
   liquibase:

@@ -1,0 +1,67 @@
+{
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "users": [
+    { "name": "admin", "password": "admin123", "tags": "administrator" },
+    { "name": "devops", "password": "devops", "tags": "management" },
+    { "name": "christian", "password": "christian", "tags": "policymaker" },
+    { "name": "guest", "password": "guest", "tags": "monitoring" }
+  ],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "policies": [],
+  "exchanges": [
+    {
+      "name": "user.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "dev.identity.event.user-registered.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dev.notification.event.user-registered.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "user.exchange",
+      "vhost": "/",
+      "destination": "dev.identity.event.user-registered.v1",
+      "destination_type": "queue",
+      "routing_key": "user.created",
+      "arguments": {}
+    },
+    {
+      "source": "user.exchange",
+      "vhost": "/",
+      "destination": "dev.notification.event.user-registered.v1",
+      "destination_type": "queue",
+      "routing_key": "user.registration.completed",
+      "arguments": {}
+    }
+  ]
+}
