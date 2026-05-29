@@ -13,8 +13,8 @@ from app.infrastructure.notification.mailchimp.mailchimp_error_handler import Ma
 class MailchimpClient(AsyncBaseHttpClient):
 
     @json
-    @returns.json(key="_id")
-    @post("/messages/send-template")
-    async def send_notification(self, user: Body) -> str:
+    @returns.json
+    @post("api/1.3/messages/send-template")
+    async def send_notification(self, payload: Body) -> list:
         """Send email notification using a template"""
         pass

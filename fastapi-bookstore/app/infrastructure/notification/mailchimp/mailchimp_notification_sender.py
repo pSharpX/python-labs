@@ -1,3 +1,4 @@
+import logging
 
 from app.application.ports.notification import NotificationSender
 from app.infrastructure.notification.mailchimp.mailchimp_settings import MailchimpSettings
@@ -6,6 +7,7 @@ from app.infrastructure.notification.mailchimp.models import SendMessageWithTemp
 from app.infrastructure.notification.mailchimp.mailchimp_authenticator import \
     MailchimpAuthenticator
 
+logger = logging.getLogger(__name__)
 
 class MailchimpNotificationSender(NotificationSender):
 
@@ -19,7 +21,7 @@ class MailchimpNotificationSender(NotificationSender):
         )
 
     async def send_welcome_email(self, email: str, first_name: str) -> None:
-        payload: SendMessageWithTemplate = SendMessageWithTemplate.create(
+        send_notification: SendMessageWithTemplate = SendMessageWithTemplate.create(
             template_name="template-test",
             template_content=[
                 {
@@ -42,4 +44,6 @@ class MailchimpNotificationSender(NotificationSender):
             merge_language="handlebars",
             global_merge_vars=[]
         )
-        await self.mailchimp_client.send_notification(payload)
+
+        response = await self.mailchimp_client.send_notification(send_notification.model_dump())
+        logger.info(f"Notification sent to {email}: {response[0]["status"]}")

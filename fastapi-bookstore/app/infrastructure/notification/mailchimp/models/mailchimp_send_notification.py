@@ -58,7 +58,7 @@ class SendMessageWithTemplate(BaseModel):
         return cls(
             key=None,
             template_name=template_name,
-            template_content=[TemplateContent(name=template.name, content=template.content) for template in template_content],
+            template_content=[TemplateContent(name=template["name"], content=template["content"]) for template in template_content],
             message=Message(
                 html=None,
                 text=None,
@@ -68,7 +68,7 @@ class SendMessageWithTemplate(BaseModel):
                 from_email=from_email,
                 from_name=from_name,
                 merge_language=merge_language,
-                global_merge_vars=[GlobalMergeVar(name=merge_var.name, content=merge_var.content) for merge_var in global_merge_vars],
+                global_merge_vars=[GlobalMergeVar(name=merge_var["name"], content=merge_var["content"]) for merge_var in global_merge_vars],
                 to=[To(email=to_email, name=to_name)],
             ),
             is_async=False,
