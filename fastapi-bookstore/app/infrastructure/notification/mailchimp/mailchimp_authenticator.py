@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class MailchimpAuthenticator(RequestInterceptor):
 
-    def __init__(self):
-        self.settings = MailchimpSettings()
+    def __init__(self, settings: MailchimpSettings):
+        self.settings = settings
 
     async def before_request(self, method: str, url: str, kwargs: dict):
         body = kwargs.get("json")

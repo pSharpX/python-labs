@@ -1,5 +1,6 @@
 from dependency_injector import containers, providers
 from sqlalchemy.orm import Session
+from uplink.auth import ApiTokenHeader
 
 from app.application.commands.register_user import RegisterUserHandler
 from app.application.use_cases import CreateBookUseCase, FindBookUseCase, SearchBookUseCase, UpdateBookUseCase
@@ -11,18 +12,24 @@ from app.core.database import DatabaseConfig
 from app.core.logging_config import LoggingConfig
 from app.infrastructure.database import UnitOfWork
 from app.infrastructure.identity.okta import OktaSettings, OktaIdentityProvider
+from app.infrastructure.identity.okta.okta_client import OktaClient
 from app.infrastructure.messaging.rabbitmq import RabbitMQSettings, RabbitMQConnection, RabbitMQChannelFactory, \
     RabbitMQPublisher, RabbitMQConsumer
 from app.infrastructure.repositories import OutboxRepositoryImpl, UserRepositoryImpl, BookRepositoryImpl, \
     AuthorRepositoryImpl, CategoryRepositoryImpl
 from app.workers.outbox_worker import OutboxWorker
 from app.infrastructure.notification.mailchimp import MailchimpSettings, MailchimpNotificationSender
+from app.infrastructure.notification.mailchimp.mailchimp_client import MailchimpClient
+from app.infrastructure.notification.mailchimp.mailchimp_authenticator import MailchimpAuthenticator
 from app.infrastructure.messaging.rabbitmq.runtime import ConsumerRegistry, BackgroundServiceRegistry
 from app.infrastructure.messaging.rabbitmq.runtime.messaging_runtime import MessagingRuntime
 
 
 def get_db(config: DatabaseConfig) -> Session:
     yield from config.get_db()
+
+def get_okta_authenticator(settings: OktaSettings) -> ApiTokenHeader:
+    return ApiTokenHeader("Authorization", f"SSWS {settings.token}")
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
@@ -59,10 +66,29 @@ class Container(containers.DeclarativeContainer):
     author_repo = providers.Factory(AuthorRepositoryImpl, db=get_db)
     category_repo = providers.Factory(CategoryRepositoryImpl, db=get_db)
 
-    identity_provider = providers.Factory(OktaIdentityProvider, settings=okta_settings)
+    okta_authenticator = providers.Callable(
+        get_okta_authenticator,
+        settings=okta_settings
+    )
+    okta_client = providers.Factory(
+        OktaClient,
+        base_url=okta_settings.provided.org_url,
+        auth=okta_authenticator
+    )
+
+    mailchimp_authenticator = providers.Factory(MailchimpAuthenticator, settings=mailchimp_settings)
+    mailchimp_client = providers.Factory(
+        MailchimpClient,
+        base_url=mailchimp_settings.provided.base_url,
+        interceptors=providers.List(
+            mailchimp_authenticator
+        )
+    )
+
+    identity_provider = providers.Factory(OktaIdentityProvider, client=okta_client)
     sync_identity_handler = providers.Factory(SyncIdentityHandler, provider=identity_provider, outbox_repo=outbox_repo, user_repo=user_repo, uow=uow)
 
-    notification_sender = providers.Factory(MailchimpNotificationSender, settings=mailchimp_settings)
+    notification_sender = providers.Factory(MailchimpNotificationSender, client=mailchimp_client)
     send_notification_handler = providers.Factory(SendWelcomeNotificationHandler, notification_sender=notification_sender)
 
     rabbitmq_connection = providers.Factory(RabbitMQConnection, settings=rabbitmq_settings)
@@ -77,7 +103,7 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         channel_factory=rabbitmq_channel_factory,
         exchange_name=rabbitmq_settings.provided.exchange_name,
-        queue_name="dev.identity.event.user-registered.v1",
+        queue_name=rabbitmq_settings.provided.registration_queue_name,
         routing_key="user.created",
         handler=sync_identity_handler
     )
@@ -85,7 +111,7 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         channel_factory=rabbitmq_channel_factory,
         exchange_name=rabbitmq_settings.provided.exchange_name,
-        queue_name="dev.notification.event.user-registered.v1",
+        queue_name=rabbitmq_settings.provided.notification_queue_name,
         routing_key="user.registration.completed",
         handler=send_notification_handler
     )
