@@ -72,13 +72,12 @@ class Container(containers.DeclarativeContainer):
         RabbitMQPublisher,
         channel_factory=rabbitmq_channel_factory,
         exchange_name=rabbitmq_settings.provided.exchange_name,
-        queue_name=rabbitmq_settings.provided.queue_name,
     )
     user_created_consumer = providers.Factory(
         RabbitMQConsumer,
         channel_factory=rabbitmq_channel_factory,
         exchange_name=rabbitmq_settings.provided.exchange_name,
-        queue_name=rabbitmq_settings.provided.queue_name,
+        queue_name="dev.identity.event.user-registered.v1",
         routing_key="user.created",
         handler=sync_identity_handler
     )
@@ -86,7 +85,7 @@ class Container(containers.DeclarativeContainer):
         RabbitMQConsumer,
         channel_factory=rabbitmq_channel_factory,
         exchange_name=rabbitmq_settings.provided.exchange_name,
-        queue_name=rabbitmq_settings.provided.queue_name,
+        queue_name="dev.notification.event.user-registered.v1",
         routing_key="user.registration.completed",
         handler=send_notification_handler
     )

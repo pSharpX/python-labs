@@ -2,6 +2,7 @@ import json
 import logging
 
 import aio_pika
+from aio_pika import ExchangeType
 
 from app.infrastructure.messaging.rabbitmq import RabbitMQChannelFactory
 from app.application.ports.messaging import EventConsumer, MessageHandler
@@ -38,10 +39,12 @@ class RabbitMQConsumer(EventConsumer):
 
     async def start(self):
         channel = await self.channel_factory.create_channel()
-        queue = await channel.declare_queue(self.queue_name, durable=True)
+        queue = await channel.declare_queue(self.queue_name, durable=True, passive=True)
         exchange = await channel.declare_exchange(
             self.exchange_name,
+            type=ExchangeType.DIRECT,
             durable=True,
+            passive=True,
         )
 
         await queue.bind(

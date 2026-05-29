@@ -1,5 +1,6 @@
 import json
 import aio_pika
+from aio_pika import ExchangeType
 
 from app.application.ports.messaging import EventPublisher
 from app.infrastructure.messaging.rabbitmq import RabbitMQChannelFactory
@@ -11,18 +12,17 @@ class RabbitMQPublisher(EventPublisher):
             self,
             channel_factory: RabbitMQChannelFactory,
             exchange_name: str,
-            queue_name: str,
     ):
         self.channel_factory = channel_factory
         self.exchange_name = exchange_name
-        self.queue_name = queue_name
 
     async def publish(self, topic: str, payload: dict):
         channel = await self.channel_factory.create_channel()
-        await channel.declare_queue(self.queue_name, durable=True)
         exchange = await channel.declare_exchange(
             self.exchange_name,
+            type=ExchangeType.DIRECT,
             durable=True,
+            passive=True,
         )
 
         message = aio_pika.Message(
@@ -31,5 +31,5 @@ class RabbitMQPublisher(EventPublisher):
         )
         await exchange.publish(
             message,
-            routing_key=self.queue_name,
+            routing_key=topic,
         )
