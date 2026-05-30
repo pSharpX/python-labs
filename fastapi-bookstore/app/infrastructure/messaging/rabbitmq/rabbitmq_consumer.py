@@ -34,7 +34,7 @@ class RabbitMQConsumer(EventConsumer):
             await message.ack()
             logger.info("Message processing completed")
         except Exception as exc:
-            await message.reject(requeue=True)
+            await message.reject(requeue=False)
             logger.error(f"Message processing failed: {type(exc).__name__}: {str(exc)}" )
 
     async def start(self):
