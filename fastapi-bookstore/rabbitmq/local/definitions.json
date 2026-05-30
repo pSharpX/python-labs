@@ -69,7 +69,9 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {
-        "x-dead-letter-exchange": "user.exchange.dlx"
+        "x-dead-letter-exchange": "user.exchange.dlx",
+        "x-dead-letter-routing-key": "user.created",
+        "x-message-ttl": 1800000
       }
     },
     {
@@ -85,7 +87,9 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {
-        "x-dead-letter-exchange": "user.exchange.dlx"
+        "x-dead-letter-exchange": "user.exchange.dlx",
+        "x-dead-letter-routing-key": "user.registration.completed",
+        "x-message-ttl": 1800000
       }
     },
     {
@@ -108,9 +112,9 @@
     {
       "source": "user.exchange.dlx",
       "vhost": "/",
-      "destination": "dev.identity.event.user-registered.v1",
+      "destination": "dev.identity.event.user-registered.v1.dlq",
       "destination_type": "queue",
-      "routing_key": "#",
+      "routing_key": "user.created",
       "arguments": {}
     },
     {
@@ -124,9 +128,9 @@
     {
       "source": "user.exchange.dlx",
       "vhost": "/",
-      "destination": "dev.notification.event.user-registered.v1",
+      "destination": "dev.notification.event.user-registered.v1.dlq",
       "destination_type": "queue",
-      "routing_key": "#",
+      "routing_key": "user.registration.completed",
       "arguments": {}
     }
   ]
