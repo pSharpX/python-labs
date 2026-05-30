@@ -13,7 +13,7 @@ class BackgroundServiceRegistry:
         self.services.append(service)
 
     async def start_all(self):
-        logger.info(f"Staring workers: {len(self.services)}")
+        logger.info(f"Starting workers: {len(self.services)}")
         for service in self.services:
 
             task = asyncio.create_task(

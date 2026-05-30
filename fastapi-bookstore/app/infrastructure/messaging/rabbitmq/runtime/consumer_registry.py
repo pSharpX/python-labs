@@ -14,6 +14,6 @@ class ConsumerRegistry:
         self.consumers.append(consumer)
 
     async def start_all(self):
-        logger.info(f"Staring consumers: {len(self.consumers)}")
+        logger.info(f"Starting consumers: {len(self.consumers)}")
         for consumer in self.consumers:
             await consumer.start()
