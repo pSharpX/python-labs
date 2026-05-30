@@ -18,10 +18,42 @@
     }
   ],
   "parameters": [],
-  "policies": [],
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "default-dlx",
+      "pattern": "^dev\\.(identity|notification)\\.event\\.user-registered\\.v1$",
+      "apply-to": "queues",
+      "priority": 1,
+      "definition": {
+        "dead-letter-exchange": "user.exchange.dlx",
+        "message-ttl": 7200000
+      }
+    },
+    {
+      "vhost": "/",
+      "name": "dlq-retention",
+      "pattern": "^.*\\.dlq$",
+      "apply-to": "queues",
+      "priority": 50,
+      "definition": {
+        "message-ttl": 604800000,
+        "queue-mode": "lazy"
+      }
+    }
+  ],
   "exchanges": [
     {
       "name": "user.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "user.exchange.dlx",
       "vhost": "/",
       "type": "direct",
       "durable": true,
@@ -36,10 +68,28 @@
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "user.exchange.dlx"
+      }
+    },
+    {
+      "name": "dev.identity.event.user-registered.v1.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
       "arguments": {}
     },
     {
       "name": "dev.notification.event.user-registered.v1",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "user.exchange.dlx"
+      }
+    },
+    {
+      "name": "dev.notification.event.user-registered.v1.dlq",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -56,11 +106,27 @@
       "arguments": {}
     },
     {
+      "source": "user.exchange.dlx",
+      "vhost": "/",
+      "destination": "dev.identity.event.user-registered.v1",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    },
+    {
       "source": "user.exchange",
       "vhost": "/",
       "destination": "dev.notification.event.user-registered.v1",
       "destination_type": "queue",
       "routing_key": "user.registration.completed",
+      "arguments": {}
+    },
+    {
+      "source": "user.exchange.dlx",
+      "vhost": "/",
+      "destination": "dev.notification.event.user-registered.v1",
+      "destination_type": "queue",
+      "routing_key": "#",
       "arguments": {}
     }
   ]
