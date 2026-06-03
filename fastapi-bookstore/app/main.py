@@ -5,28 +5,27 @@ from fastapi import FastAPI
 from app.api.exception_handlers import register_exception_handlers
 from app.api.middleware import RequestContextMiddleware
 from app.api.v1.router import api_router
-from app.core.container import Container
+from app.core.starter import ContainerStarter
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    container: Container = app.container
+    container: ContainerStarter = app.container
 
     # Resolve dependencies from container
-    container.init_resources()
-    runtime = container.messaging_runtime()
-    await runtime.start()
+    container.initialize()
+    await container.start()
     yield
-    await runtime.stop()
-    container.shutdown_resources()
+    await container.stop()
+    container.destroy()
 
-container = Container()
+container_starter = ContainerStarter()
 
-logging_config = container.logging_config()
+logging_config = container_starter.container.logging_config()
 logging_config.setup_logging()
 
 app = FastAPI(lifespan=lifespan)
-app.container = container
+app.container = container_starter
 
 app.add_middleware(RequestContextMiddleware)
 

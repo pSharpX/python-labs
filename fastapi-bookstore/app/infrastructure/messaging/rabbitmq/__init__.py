@@ -3,6 +3,7 @@ from app.infrastructure.messaging.rabbitmq.rabbitmq_connection import RabbitMQCo
 from app.infrastructure.messaging.rabbitmq.rabbitmq_channel_factory import RabbitMQChannelFactory
 from app.infrastructure.messaging.rabbitmq.rabbitmq_consumer import RabbitMQConsumer
 from app.infrastructure.messaging.rabbitmq.rabbitmq_publisher import RabbitMQPublisher
+from app.infrastructure.messaging.rabbitmq.rabbitmq_depedencies import RabbitMQContainer
 
 __all__ = [
     "RabbitMQSettings",
@@ -10,4 +11,5 @@ __all__ = [
     "RabbitMQConsumer",
     "RabbitMQPublisher",
     "RabbitMQChannelFactory",
+    "RabbitMQContainer"
 ]
