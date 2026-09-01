@@ -11,7 +11,7 @@ from settings import StoreSettings
 
 
 class IndexingStageRAG:
-    def __init__(self, settings: StoreSettings):
+    def __init__(self, settings: StoreSettings, collection_name: str):
         self.settings = settings
         self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         # Embedder
@@ -19,7 +19,7 @@ class IndexingStageRAG:
         # Init vector store
         self.client = chromadb.HttpClient(host=self.settings.host, port=self.settings.port)
         self.vector_store = Chroma(
-            collection_name=self.settings.store_name,
+            collection_name=collection_name,
             embedding_function=self.embeddings_model,
             client=self.client,
         )
@@ -43,14 +43,14 @@ class IndexingStageRAG:
 
 
 class RetrievalStageRAG:
-    def __init__(self, settings: StoreSettings, top_k: int = 3):
+    def __init__(self, settings: StoreSettings, collection_name: str, top_k: int = 3):
         self.settings = settings
         # Embedder
         self.embeddings_model = OpenAIEmbeddings()
         # Init vector store
         self.client = chromadb.HttpClient(host=self.settings.host, port=self.settings.port)
         self.vector_store = Chroma(
-            collection_name=self.settings.store_name,
+            collection_name=collection_name,
             embedding_function=self.embeddings_model,
             client=self.client,
         )

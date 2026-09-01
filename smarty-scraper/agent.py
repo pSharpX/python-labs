@@ -3,12 +3,12 @@ from langchain.agents import create_agent, AgentState
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
-
 from rich import print
+
 from config import langfuse_handler
 from prompts import SYSTEM_PROMPT
-from rag import RetrievalStageRAG
-from settings import BaseModelSettings, StoreSettings
+from settings import BaseModelSettings
+
 
 class ProductAssistantState(AgentState):
     first_product: str
@@ -16,8 +16,7 @@ class ProductAssistantState(AgentState):
 
 
 class RAGPoweredAgent:
-    def __init__(self, model_settings: BaseModelSettings, store_settings: StoreSettings, tools: list):
-        self.rag = RetrievalStageRAG(store_settings)
+    def __init__(self, model_settings: BaseModelSettings, tools: list):
         self.model_settings = model_settings
         self.model = init_chat_model(
             model=self.model_settings.model_name,
@@ -28,7 +27,7 @@ class RAGPoweredAgent:
         # noinspection bad-argument-type
         self.agent = create_agent(
             model=self.model,
-            tools=[tools],
+            tools=tools,
             system_prompt=SYSTEM_PROMPT,
             name="smarty-scraper-agent",
             checkpointer=InMemorySaver(),

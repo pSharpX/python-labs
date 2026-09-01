@@ -39,4 +39,3 @@ class StoreSettings(BaseSettings, case_sensitive=False):
 
     host: str = Field("localhost", max_length=200, min_length=5)
     port: int = Field(8080)
-    store_name: str = Field(max_length=50, min_length=2, alias="store_name")

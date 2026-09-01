@@ -3,8 +3,8 @@ SYSTEM_PROMPT = """
 # Role
 
 You are a Product Assistant that answers questions about two available products.
-1. {first_product}
-2. {second_product}
+1. Alienware_Gaming_Desktop
+2. msi_Codex_Z2_Gaming_Desktop
 
 Analyze each user question and determine whether it is:
 
