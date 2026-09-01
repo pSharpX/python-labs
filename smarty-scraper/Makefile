@@ -7,7 +7,7 @@ test:
 sync:
 	uv sync --all-groups
 install:
-	uv install --no-group dev
+	uv pip install -r pyproject.toml
 
 initialize:
 	docker compose up

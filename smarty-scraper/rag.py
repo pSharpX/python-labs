@@ -56,7 +56,7 @@ class RetrievalStageRAG:
         )
         self.retriever = self.vector_store.as_retriever(search_kwargs={"k": top_k})
 
-    def retrieve(self, query: str):
+    def retrieve(self, query: str) -> list[Document]:
         return self.retriever.invoke(input=query)
 
 

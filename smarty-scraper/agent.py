@@ -1,13 +1,22 @@
-from langchain.chat_models import init_chat_model
-from langchain_core.prompts import ChatPromptTemplate
 
+from langchain.agents import create_agent, AgentState
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
+from langgraph.checkpoint.memory import InMemorySaver
+
+from rich import print
+from config import langfuse_handler
 from prompts import SYSTEM_PROMPT
 from rag import RetrievalStageRAG
 from settings import BaseModelSettings, StoreSettings
 
+class ProductAssistantState(AgentState):
+    first_product: str
+    second_product: str
 
-class RAGPoweredChat:
-    def __init__(self, model_settings: BaseModelSettings, store_settings: StoreSettings):
+
+class RAGPoweredAgent:
+    def __init__(self, model_settings: BaseModelSettings, store_settings: StoreSettings, tools: list):
         self.rag = RetrievalStageRAG(store_settings)
         self.model_settings = model_settings
         self.model = init_chat_model(
@@ -16,17 +25,43 @@ class RAGPoweredChat:
             temperature=self.model_settings.temperature,
             max_tokens=self.model_settings.max_tokens,
         )
-        self.prompt = ChatPromptTemplate.from_template(SYSTEM_PROMPT)
+        # noinspection bad-argument-type
+        self.agent = create_agent(
+            model=self.model,
+            tools=[tools],
+            system_prompt=SYSTEM_PROMPT,
+            name="smarty-scraper-agent",
+            checkpointer=InMemorySaver(),
+            state_schema=ProductAssistantState,
+        )
 
-    def __ask(self, question: str):
-        docs = self.rag.retrieve(question)
-        prompt = self.prompt.invoke({"context": docs, "question": question})
-        answer = self.model.invoke(prompt)
-        return answer
-
-    def initialize(self):
-        print("Ask your question: ")
-        question = input()
-        answer = self.__ask(question)
-        print(answer)
+    def start(self, input_obj: dict, session_id: str):
+        print("Welcome to Product Assistant Agent!")
+        print("Start typing ('c' for exit) >> ")
+        while True:
+            question = input()
+            if question == "c":
+                break
+            elif question.strip() == "":
+                continue
+            state = self.agent.invoke(
+                input={
+                    "first_product": input_obj["first_product"],
+                    "second_product": input_obj["second_product"],
+                    "messages": [HumanMessage(content=question)]
+                },
+                config={
+                    "callbacks": [langfuse_handler],
+                    "metadata": {
+                        "langfuse_user_id": input_obj["user_id"],
+                        "langfuse_session_id": session_id,
+                        "langfuse_tags": ["environment:dev", "framework:langchain", "application:smarty-scraper-agent"],
+                    },
+                    "configurable": {
+                        "thread_id": session_id
+                    }
+                },
+                context=input_obj,
+            )
+            print(state["messages"][-1].content)
 
