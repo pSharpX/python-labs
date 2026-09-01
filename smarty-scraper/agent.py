@@ -35,7 +35,7 @@ class RAGPoweredAgent:
         )
 
     def start(self, input_obj: dict, session_id: str):
-        print("Welcome to Product Assistant Agent!")
+        print("Welcome to Product Assistant Agent! \n")
         print("Start typing ('c' for exit) >> ")
         while True:
             question = input()
