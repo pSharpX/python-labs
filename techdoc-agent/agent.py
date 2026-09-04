@@ -9,6 +9,7 @@ from config import langfuse_handler
 from prompts import SYSTEM_PROMPT
 from rich import print
 from settings import BaseModelSettings
+from tools import SaveMarkdownTool
 
 warnings.filterwarnings(
     "ignore",
@@ -18,8 +19,7 @@ warnings.filterwarnings(
 
 
 class TechDocState(AgentState):
-    selected_cine: str
-    supported_cinemas: list
+    user_id: str
 
 
 class TechDocAgent:
@@ -35,6 +35,7 @@ class TechDocAgent:
         self.agent = create_agent(
             model=self.model,
             tools=[
+                SaveMarkdownTool()
             ],
             system_prompt=self.system_prompt,
             middleware=[
@@ -55,8 +56,7 @@ class TechDocAgent:
                 continue
             state = self.agent.invoke(
                 input={
-                    "selected_cine": input_obj["selected_cine"],
-                    "supported_cinemas": input_obj["supported_cinemas"],
+                    "user_id": input_obj["user_id"],
                     "messages": [HumanMessage(content=question)]
                 },
                 config={
