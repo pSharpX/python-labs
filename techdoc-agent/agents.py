@@ -23,26 +23,29 @@ class TechDocState(AgentState):
 
 class TechDocAgent:
     def __init__(self):
-        self.model_settings = BaseModelSettings()
-        self.model = init_chat_model(
-            model=self.model_settings.model_name,
-            model_provider=self.model_settings.provider,
-            temperature=self.model_settings.temperature,
+        self.__model_settings = BaseModelSettings()
+        self.__model = init_chat_model(
+            model=self.__model_settings.model_name,
+            model_provider=self.__model_settings.provider,
+            temperature=self.__model_settings.temperature,
         )
-        self.system_prompt = SYSTEM_PROMPT
+        self.__system_prompt = SYSTEM_PROMPT
         # noinspection bad-argument-type
-        self.agent = create_agent(
-            model=self.model,
+        self.__agent = create_agent(
+            model=self.__model,
             tools=[
                 SaveMarkdownTool()
             ],
-            system_prompt=self.system_prompt,
+            system_prompt=self.__system_prompt,
             middleware=[
             ],
             name="techdoc-agent",
             state_schema=TechDocState,
             checkpointer=InMemorySaver()
         )
+
+    def unwrap(self):
+        return self.__agent
 
     def start(self, input_obj: dict, session_id: str):
         print("Welcome to TechDoc Agent, your technical and functional proposal docs builder!")
@@ -53,7 +56,7 @@ class TechDocAgent:
                 break
             elif question.strip() == "":
                 continue
-            state = self.agent.invoke(
+            state = self.__agent.invoke(
                 input={
                     "user_id": input_obj["user_id"],
                     "messages": [HumanMessage(content=question)]
