@@ -1,10 +1,11 @@
 import uuid
 
-from agent import TechDocAgent
+from agents import TechDocAgent
+from graphs import TechDocGraphAgent
 
 
 def start_agent():
-    agent = TechDocAgent()
+    agent = TechDocGraphAgent()
     agent.start(
         input_obj={
             "user_id": str(uuid.uuid4()),

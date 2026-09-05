@@ -7,7 +7,6 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from config import langfuse_handler
 from prompts import SYSTEM_PROMPT
-from rich import print
 from settings import BaseModelSettings
 from tools import SaveMarkdownTool
 

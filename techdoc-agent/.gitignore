@@ -178,3 +178,4 @@ cython_debug/
 *.xlsx
 *.faiss
 *.pkl
+/docs*
