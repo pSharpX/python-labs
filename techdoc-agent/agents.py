@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from config import langfuse_handler
-from prompts import SYSTEM_PROMPT
+from prompts import TECHDOC_SYSTEM_PROMPT
 from settings import BaseModelSettings
 from tools import SaveMarkdownTool
 
@@ -29,7 +29,7 @@ class TechDocAgent:
             model_provider=self.__model_settings.provider,
             temperature=self.__model_settings.temperature,
         )
-        self.__system_prompt = SYSTEM_PROMPT
+        self.__system_prompt = TECHDOC_SYSTEM_PROMPT
         # noinspection bad-argument-type
         self.__agent = create_agent(
             model=self.__model,

@@ -74,6 +74,7 @@ def test_tool_correctness(agent, test_case):
         threshold=0.8,
         include_reason=True,
         model=model_settings.model_name,
+        should_consider_ordering=True,
     )
 
     # Act
