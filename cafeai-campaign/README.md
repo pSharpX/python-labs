@@ -1,0 +1,3 @@
+# cafeai-campaign
+
+Cafe.AI Launch es un agente especializado en diseñar la primera campaña publicitaria de Cafe.AI. Analiza el producto, público objetivo y propuesta de valor para definir la estrategia de lanzamiento, mensajes clave, canales de comunicación y contenidos promocionales. Su objetivo es generar una campaña coherente y atractiva que permita posicionar Cafe.AI, captar sus primeros usuarios y establecer una base para futuras campañas de marketing.
