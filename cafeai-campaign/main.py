@@ -1,10 +1,9 @@
 import uuid
 
-from graphs import AdCampaignBuilderWorkflow, SmartAdCampaignBuilderWorkflow
+from graphs import SmartAdCampaignBuilderWorkflow
 
 
 def start_agent():
-    #agent = AdCampaignBuilderWorkflow()
     agent = SmartAdCampaignBuilderWorkflow()
     agent.start(
         input_obj={
