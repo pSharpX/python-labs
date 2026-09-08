@@ -1,10 +1,10 @@
 import uuid
 
-from graphs import CampaignCreatorWorkflow
+from graphs import AdCampaignBuilderWorkflow
 
 
 def start_agent():
-    agent = CampaignCreatorWorkflow()
+    agent = AdCampaignBuilderWorkflow()
     agent.start(
         input_obj={
             "user_id": str(uuid.uuid4()),

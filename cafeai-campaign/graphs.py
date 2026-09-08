@@ -4,21 +4,38 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
+from pydantic import BaseModel, Field
 
 from config import langfuse_handler
 from prompts import get_creative_strategist_prompt, get_copywriter_prompt, get_visual_designer_prompt
 from settings import BaseModelSettings
 
 
-class CampaignBrandState(TypedDict):
+class AdCampaignBuilderInput(BaseModel):
+    idea: str = Field(
+        description="Idea o concepto principal de la campaña publicitaria que se desea desarrollar.",
+    )
+
+class AdCampaignBuilderOutput(BaseModel):
+    creative_brief: str = Field(
+        description="Brief creativo de la campaña, incluyendo objetivo, audiencia, mensaje clave, tono y concepto visual."
+    )
+    copywriter_copies: str = Field(
+        description="Textos publicitarios propuestos para la campaña, adaptados al concepto, audiencia y canales definidos."
+    )
+    designs: str = Field(
+        description="Propuestas de diseño visual para la campaña, incluyendo concepto, composición, estilo y elementos gráficos."
+    )
+
+class AdCampaignBuilderState(TypedDict):
     idea: str
     creative_brief: str
     copywriter_copies: str
     designs: str
 
 
-class CampaignCreatorWorkflow:
-    """A langgraph powered workflow that orchestrate and delegate ad campaign creation to nodes or workers."""
+class AdCampaignBuilderWorkflow:
+    """A langgraph powered workflow that build ad campaigns."""
 
     def __init__(self):
         self.__settings = BaseModelSettings()
@@ -27,10 +44,14 @@ class CampaignCreatorWorkflow:
             model_provider=self.__settings.provider,
             temperature=self.__settings.temperature,
         )
-        self.__builder = StateGraph(CampaignBrandState)
+        self.__builder = StateGraph(
+            state_schema=AdCampaignBuilderState,
+            input_schema=AdCampaignBuilderInput,
+            output_schema=AdCampaignBuilderOutput,
+        )
         self.graph = self.__build()
 
-    def __creative_strategist_node(self, state: CampaignBrandState):
+    def __creative_strategist_node(self, state: AdCampaignBuilderState):
         """Creative Strategist Node capture brand context and develop the creative concept and plan."""
 
         system_prompt = SystemMessage(content=get_creative_strategist_prompt())
@@ -44,7 +65,7 @@ class CampaignCreatorWorkflow:
             "creative_brief": res.content,
         }
 
-    def __copywriter_node(self, state: CampaignBrandState):
+    def __copywriter_node(self, state: AdCampaignBuilderState):
         """Copywriter Node use the creative brief to write ad messages to connect with the target."""
 
         system_prompt = SystemMessage(content=get_copywriter_prompt(state["idea"]))
@@ -58,7 +79,7 @@ class CampaignCreatorWorkflow:
             "copywriter_copies": res.content,
         }
 
-    def __visual_designer_node(self, state: CampaignBrandState):
+    def __visual_designer_node(self, state: AdCampaignBuilderState):
         """Visual Designer Node use the creative brief and the copywriter copies to transform the ad messages and ideas into consistent visual direction."""
 
         system_prompt = SystemMessage(content=get_visual_designer_prompt(state["idea"]))
@@ -87,7 +108,7 @@ class CampaignCreatorWorkflow:
         return self.__builder.compile(checkpointer=InMemorySaver())
 
     def start(self, input_obj: dict, session_id: str):
-        print("Welcome to Orchestrator Agent, your helpful assistant!")
+        print("Welcome to AdCampaign Builder Workflow, your helpful assistant!")
         print("Start typing ('c' for exit) >> ")
         while True:
             question = input()
@@ -115,6 +136,6 @@ class CampaignCreatorWorkflow:
                         "thread_id": session_id
                     }
                 })
-            print(state["messages"][-1].content)
+            print(state)
 
 
