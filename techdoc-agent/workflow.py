@@ -7,10 +7,9 @@ from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel, Field
 
 from config import langfuse_handler
-from prompts import ORCHESTRATOR_SYSTEM_PROMPT, REQ_SCOUT_SYSTEM_PROMPT, \
+from prompts import REQ_SCOUT_SYSTEM_PROMPT, \
     TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from tools import SaveMarkdownTool
 
 AgentNodeType = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
 
@@ -42,16 +41,11 @@ class TechDocBuilderGraph:
 
     def __init__(self):
         self.__settings = BaseModelSettings()
-        self.__system_prompt = SystemMessage(content=ORCHESTRATOR_SYSTEM_PROMPT)
-        self.__tools = [
-            SaveMarkdownTool()
-        ]
-        self.__tools_by_name = {tool.name: tool for tool in self.__tools}
         self.__model = init_chat_model(
             model=self.__settings.model_name,
             model_provider=self.__settings.provider,
             temperature=self.__settings.temperature,
-        ).bind_tools(self.__tools)
+        )
         self.__builder = StateGraph(
             state_schema=TechDocBuilderState,
             input_schema=TechDocBuilderInput,
@@ -104,7 +98,8 @@ class TechDocBuilderGraph:
             "financial_document": res.content,
         }
 
-    def __aggregator_node(self, state: TechDocBuilderState):
+    @staticmethod
+    def __aggregator_node(state: TechDocBuilderState):
         """Aggregator Node collect all the document pieces and prepare the final document proposal."""
 
         requirements = state["requirements"]
