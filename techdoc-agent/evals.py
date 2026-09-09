@@ -5,7 +5,7 @@ from deepeval import assert_test
 from deepeval.dataset import EvaluationDataset, Golden
 from deepeval.integrations.langchain import CallbackHandler
 from deepeval.metrics import TaskCompletionMetric, ToolCorrectnessMetric
-from deepeval.test_case import ToolCall, ToolCallParams, LLMTestCase
+from deepeval.test_case import ToolCall, LLMTestCase
 
 from agents import TechDocAgent
 from settings import BaseModelSettings
@@ -74,7 +74,6 @@ def test_tool_correctness(agent, test_case):
         threshold=0.8,
         include_reason=True,
         model=model_settings.model_name,
-        should_consider_ordering=True,
     )
 
     # Act
