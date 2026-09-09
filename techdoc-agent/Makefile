@@ -10,3 +10,5 @@ test:
 	deepeval test run evals.py
 run:
 	uv run main.py
+scan:
+	uv run security.py

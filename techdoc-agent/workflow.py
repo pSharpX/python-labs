@@ -136,6 +136,29 @@ class TechDocBuilderGraph:
 
         return self.__builder.compile(checkpointer=InMemorySaver())
 
+    def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderOutput:
+        return self.graph.invoke(
+            input={
+                "user_request": question
+            },
+            config={
+                "callbacks": [langfuse_handler],
+                "metadata": {
+                    "langfuse_user_id": input_obj["user_id"],
+                    "langfuse_session_id": session_id,
+                    "langfuse_tags": [
+                        "environment:dev",
+                        "framework:langgraph",
+                        "application:techdoc-builder-workflow",
+                        "component:builder-workflow"
+                    ]
+                },
+                "configurable": {
+                    "thread_id": session_id
+                }
+            }
+        )
+
     def start(self, input_obj: dict, session_id: str):
         print("Welcome to TechDoc Builder Workflow, your helpful assistant!")
         print("Start typing ('c' for exit) >> ")
@@ -145,24 +168,5 @@ class TechDocBuilderGraph:
                 break
             elif question.strip() == "":
                 continue
-            state = self.graph.invoke(
-                input={
-                    "user_request": question
-                },
-                config={
-                    "callbacks": [langfuse_handler],
-                    "metadata": {
-                        "langfuse_user_id": input_obj["user_id"],
-                        "langfuse_session_id": session_id,
-                        "langfuse_tags": [
-                            "environment:dev",
-                            "framework:langgraph",
-                            "application:techdoc-builder-workflow",
-                            "component:builder-workflow"
-                        ]
-                    },
-                    "configurable": {
-                        "thread_id": session_id
-                    }
-                })
+            state = self.invoke(input_obj, session_id, question)
             print(state)

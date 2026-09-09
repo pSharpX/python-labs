@@ -180,3 +180,5 @@ cython_debug/
 *.pkl
 /docs*
 .deepeval*
+.deepteam*
+deepteam*
