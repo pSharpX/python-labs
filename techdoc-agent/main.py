@@ -1,11 +1,10 @@
 import uuid
 
-from agents import TechDocAgent
-from graphs import OrchestratorAgent
+from workflow import TechDocBuilderGraph
 
 
 def start_agent():
-    agent = OrchestratorAgent()
+    agent = TechDocBuilderGraph()
     agent.start(
         input_obj={
             "user_id": str(uuid.uuid4()),
