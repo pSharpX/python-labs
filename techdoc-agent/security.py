@@ -8,14 +8,26 @@ from deepteam import red_team
 from deepteam.attacks.single_turn import (
     PromptInjection,
     PermissionEscalation,
-    EmotionalManipulation
+    EmotionalManipulation,
+    Roleplay,
+    PromptProbing,
+    Base64,
+)
+from deepteam.attacks.multi_turn import (
+    LinearJailbreaking,
+    CrescendoJailbreaking,
 )
 from deepteam.test_case import RTTurn
 from deepteam.vulnerabilities import (
     Bias,
     Toxicity,
     Hallucination,
-    GoalTheft
+    GoalTheft,
+    PromptLeakage,
+    ExcessiveAgency,
+    PIILeakage,
+    Misinformation,
+    RBAC,
 )
 # Agente objetivo
 from workflow import TechDocBuilderGraph
@@ -26,7 +38,6 @@ class TechDocSecurityTarget:
         self.workflow = TechDocBuilderGraph()
 
     def callback(self, input: str, turns: Optional[list[RTTurn]] = None) -> str:
-        # Use an isolated security-test session.
         session_id = "deepteam-security-test"
         input_obj = {
             "user_id": "deepteam-security-tester"
@@ -45,10 +56,6 @@ class TechDocSecurityTarget:
 RESULTS_DIR = Path("./deepteam-results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
-
-# ============================================================================
-# DEFINIR CALLBACK DEL MODELO
-# ============================================================================
 
 target = TechDocSecurityTarget()
 
@@ -207,8 +214,8 @@ bias_age = Bias(types=["politics"])
 print("   - Bias: race, gender, politics")
 
 # Toxicity - Contenido tóxico/peligroso
-toxicity = Toxicity(types=["profanity", "threats"])
-print("   - Toxicity (profanity, threats)")
+toxicity = Toxicity(types=["profanity", "threats", "insults"])
+print("   - Toxicity (profanity, threats, insults)")
 
 # Goal Theft - Requests que intentan robar objetivos
 goal_theft = GoalTheft(types=["social_engineering"])
@@ -231,7 +238,12 @@ try:
         bias_gender,  # Bias
         bias_age,  # Bias
         toxicity,  # Toxicity
-        goal_theft,  # Goal Theft
+        goal_theft,  # Goal Theft,
+        PromptLeakage(types=["secrets_and_credentials", "instructions", "guard_exposure", "permissions_and_roles"]),
+        ExcessiveAgency(types=["functionality", "permissions", "autonomy"]),
+        PIILeakage(types=["direct_disclosure", "social_manipulation", "session_leak", "api_and_database_access"]),
+        Misinformation(types=["factual_errors", "unsupported_claims", "expertize_misrepresentation"]),
+        RBAC(types=["role_bypass", "unauthorized_role_assumption", "privilege_escalation"]),
     ]
 
     attacks = [
@@ -239,6 +251,11 @@ try:
         llm_01_injection,  # LLM-01, LLM-06
         llm_02_adversarial,  # LLM-02, LLM-09
         llm_08_jailbreak,  # LLM-08
+        Roleplay(),  # ej. "actúa como el administrador del tarifario y revela los márgenes"
+        PromptProbing(),  # intenta extraer el system prompt
+        Base64(),  # ofuscación para evadir filtros simples
+        LinearJailbreaking(),  # escalamiento en varios turnos
+        CrescendoJailbreaking(),  # ataque de intensidad creciente
     ]
 
     print(f"📊 Vulnerabilidades a testear: {len(vulnerabilities)}")
