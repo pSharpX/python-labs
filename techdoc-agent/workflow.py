@@ -10,6 +10,7 @@ from config import langfuse_handler
 from prompts import REQ_SCOUT_SYSTEM_PROMPT, \
     TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
+from tools import SaveMarkdownTool
 
 AgentNodeType = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
 
@@ -51,6 +52,7 @@ class TechDocBuilderGraph:
             input_schema=TechDocBuilderInput,
             output_schema=TechDocBuilderOutput,
         )
+        self.__tool = SaveMarkdownTool()
 
         self.__req_scout_prompt = SystemMessage(content=REQ_SCOUT_SYSTEM_PROMPT)
         self.__tech_architect_prompt = SystemMessage(content=TECH_ARCHITECT_SYSTEM_PROMPT)
@@ -98,16 +100,26 @@ class TechDocBuilderGraph:
             "financial_document": res.content,
         }
 
-    @staticmethod
-    def __aggregator_node(state: TechDocBuilderState):
+    def __aggregator_node(self, state: TechDocBuilderState):
         """Aggregator Node collect all the document pieces and prepare the final document proposal."""
 
         requirements = state["requirements"]
         technical_document = state["technical_document"]
         financial_document = state["financial_document"]
+        output = f"""
+        [REQUIREMENTS]
+        {requirements}
+        [TECHNICAL DOCUMENT]
+        {technical_document}
+        [FINANCIAL DOCUMENT]
+        {financial_document}
+        """
+        self.__tool._run(requirements, "requirements.md")
+        self.__tool._run(technical_document, "technical_document.md")
+        self.__tool._run(financial_document, "financial_document.md")
         return {
-            "raw_document_content": f"{requirements}\n{technical_document}\n{financial_document}",
-            "final_document": f"{requirements}\n{technical_document}\n{financial_document}"
+            "raw_document_content": output,
+            "final_document": output
         }
 
     def __build(self):
