@@ -2,6 +2,7 @@
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from deepteam import red_team
 from deepteam.attacks.single_turn import (
@@ -9,15 +10,35 @@ from deepteam.attacks.single_turn import (
     PermissionEscalation,
     EmotionalManipulation
 )
+from deepteam.test_case import RTTurn
 from deepteam.vulnerabilities import (
     Bias,
     Toxicity,
     Hallucination,
     GoalTheft
 )
-
 # Agente objetivo
 from workflow import TechDocBuilderGraph
+
+
+class TechDocSecurityTarget:
+    def __init__(self):
+        self.workflow = TechDocBuilderGraph()
+
+    def callback(self, input: str, turns: Optional[list[RTTurn]] = None) -> str:
+        # Use an isolated security-test session.
+        session_id = "deepteam-security-test"
+        input_obj = {
+            "user_id": "deepteam-security-tester"
+        }
+
+        result = self.workflow.invoke(
+            question=input,
+            input_obj=input_obj,
+            session_id=session_id,
+        )
+
+        return result["raw_document_content"]
 
 
 # Crear directorio para resultados
@@ -29,7 +50,7 @@ RESULTS_DIR.mkdir(exist_ok=True)
 # DEFINIR CALLBACK DEL MODELO
 # ============================================================================
 
-workflow = TechDocBuilderGraph()
+target = TechDocSecurityTarget()
 
 async def model_callback(input_text: str) -> str:
     """
@@ -37,13 +58,7 @@ async def model_callback(input_text: str) -> str:
     Esto es lo que se va a testear contra las vulnerabilidades.
     """
     try:
-        response = workflow.invoke(
-            input_obj={
-                "user_id": str(uuid.uuid4()),
-            },
-            session_id=str(uuid.uuid4()),
-            question=input_text
-        )
+        response = target.callback(input_text)
         return response
     except Exception as e:
         return f"Error: {str(e)}"

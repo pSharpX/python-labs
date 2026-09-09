@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 
 from workflow import TechDocBuilderGraph
 
@@ -14,3 +15,4 @@ def start_agent():
 
 if __name__ == '__main__':
     start_agent()
+    # asyncio.run(start_agent())

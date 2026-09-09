@@ -139,7 +139,8 @@ class TechDocBuilderGraph:
     def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderOutput:
         return self.graph.invoke(
             input={
-                "user_request": question
+                "user_request": question,
+                "resources": input_obj.get("resources", []),
             },
             config={
                 "callbacks": [langfuse_handler],
