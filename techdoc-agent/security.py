@@ -4,7 +4,6 @@ from pathlib import Path
 from deepteam import red_team
 from deepteam.attacks.multi_turn import (
     LinearJailbreaking,
-    CrescendoJailbreaking,
 )
 from deepteam.attacks.single_turn import (
     PromptInjection,
@@ -12,7 +11,6 @@ from deepteam.attacks.single_turn import (
     EmotionalManipulation,
     Roleplay,
     PromptProbing,
-    Base64,
 )
 from deepteam.vulnerabilities import (
     Toxicity,
@@ -22,7 +20,6 @@ from deepteam.vulnerabilities import (
     ExcessiveAgency,
     PIILeakage,
     Misinformation,
-    RBAC,
 )
 
 # Agente objetivo
@@ -158,24 +155,11 @@ print("✅ LLM-04: Model Denial of Service")
 print("   - Ataque: Implícito en PromptInjection (consumo de recursos)")
 
 # ============================================================================
-# LLM-05: SUPPLY CHAIN VULNERABILITIES (Crítico)
-# ============================================================================
-print("✅ LLM-05: Supply Chain Vulnerabilities")
-# Verificación manual de dependencias
-print("   - Verificación: Manual (revisar requirements.txt)")
-
-# ============================================================================
 # LLM-06: SENSITIVE INFORMATION DISCLOSURE (Crítico)
 # ============================================================================
 print("✅ LLM-06: Sensitive Information Disclosure")
 llm_06_injection = PromptInjection(weight=3)  # Específico para exfiltración
 print("   - Ataque: PromptInjection con enfoque en datos sensibles (weight=3)")
-
-# ============================================================================
-# LLM-07: CROSS-PLUGIN REQUEST FORGERY (Alto)
-# ============================================================================
-print("✅ LLM-07: Cross-Plugin Request Forgery")
-print("   - Verificación: Manual (revisar herramientas del agente)")
 
 # ============================================================================
 # LLM-08: MODEL POISONING (Crítico)
@@ -227,7 +211,7 @@ try:
         goal_theft,  # Goal Theft,
         PromptLeakage(types=["secrets_and_credentials", "instructions", "guard_exposure"]),
         ExcessiveAgency(types=["functionality", "permissions", "autonomy"]),
-        PIILeakage(types=["direct_disclosure", "social_manipulation", "session_leak", "api_and_database_access"]),
+        PIILeakage(types=["direct_disclosure", "session_leak", "api_and_database_access"]),
         Misinformation(types=["factual_errors", "unsupported_claims", "expertize_misrepresentation"]),
         #RBAC(types=["role_bypass", "unauthorized_role_assumption", "privilege_escalation"]),
     ]
@@ -269,8 +253,8 @@ try:
 
     print("\n📋 TEST CASES:")
     print("-" * 80)
-    for i, test_case in enumerate(risk_assessment.test_cases, 1):
-        print(f"\n{i}. {test_case}")
+    #for i, test_case in enumerate(risk_assessment.test_cases, 1):
+    #    print(f"\n{i}. {test_case}")
 
     # ============================================================================
     # GENERAR REPORTE DETALLADO
@@ -317,20 +301,10 @@ try:
    - Impacto: ALTO
    - Estado: Monitoreado
 
-✅ LLM-05: Supply Chain Vulnerabilities
-   - Verificación: Manual (revisar requirements.txt)
-   - Impacto: CRÍTICO
-   - Estado: Pendiente revisión manual
-
 ✅ LLM-06: Sensitive Information Disclosure
    - Ataques: PromptInjection (data exfiltration)
    - Impacto: CRÍTICO
    - Estado: Testeado
-
-✅ LLM-07: Cross-Plugin Request Forgery
-   - Verificación: Manual (revisar herramientas)
-   - Impacto: ALTO
-   - Estado: Pendiente revisión manual
 
 ✅ LLM-08: Model Poisoning
    - Ataques: JailBreak
@@ -350,10 +324,6 @@ try:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🔍 VULNERABILIDADES ADICIONALES:
-
-✅ Bias (Sesgo discriminatorio)
-   - Tipos: race, gender, age
-   - Estado: Testeado
 
 ✅ Toxicity (Contenido tóxico)
    - Impacto: ALTO
