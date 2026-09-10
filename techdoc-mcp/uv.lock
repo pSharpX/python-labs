@@ -576,6 +576,20 @@ wheels = [
 ]
 
 [[package]]
+name = "detoxify"
+version = "0.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sentencepiece" },
+    { name = "torch" },
+    { name = "transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/1f/3b0a6cba11a0e9e2530d6021bb2f723b2c5b6653244e6eda47df80356acc/detoxify-0.5.2.tar.gz", hash = "sha256:c119d0b47545bb076190ff583faad9aa3bb0a90ac01c7c4144758606d21da5b1", size = 13813, upload-time = "2024-02-01T14:51:23.61Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1f/5c/94f765f08fe52473bc945284b7912032c099d0737cb8ad9235deb3b40d35/detoxify-0.5.2-py3-none-any.whl", hash = "sha256:e6135a2d85ad17bfb19d8cf53756a1b499e6d9c03cb1976ddefdc013bf29d32a", size = 12103, upload-time = "2024-02-01T14:51:21.791Z" },
+]
+
+[[package]]
 name = "diff-match-patch"
 version = "20241021"
 source = { registry = "https://pypi.org/simple" }
@@ -893,6 +907,19 @@ wheels = [
 ]
 
 [[package]]
+name = "guardrails-ai-regex-match"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "guardrails-ai" },
+    { name = "rstr" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/6c/54550c7a8a04d36b43517f9c22c4dbba510893efe696741ca8b8fdc4b80e/guardrails_ai_regex_match-0.1.0.tar.gz", hash = "sha256:851a73b6317977d6dd70e8533ca3f0ec0a628f59646bcc7194dcbf6a6e56467e", size = 4075, upload-time = "2026-07-05T17:01:33.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/25/4ae89acaecaecbbf245435819e68f47d5250cc1271b0c11558603d8faff3/guardrails_ai_regex_match-0.1.0-py3-none-any.whl", hash = "sha256:ce51f0e0e662cbc9e90bb5278db0062b037adb5a4bc3603f8c66a6c10b57e328", size = 3914, upload-time = "2026-07-05T17:01:32.472Z" },
+]
+
+[[package]]
 name = "guardrails-ai-secrets-present"
 version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -903,6 +930,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b4/5e/cc11ed62b84784e300dc3a7d36dd01f3c0672a9086874ac7eccd9fde83c3/guardrails_ai_secrets_present-0.1.0.tar.gz", hash = "sha256:17fb5c3fdec6c26e735f4345fadeb43126a8cd677b7d6fbe18053983136737a7", size = 5303, upload-time = "2026-07-07T15:59:25.156Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f2/a5/6000579fa20e0ccac570a0b0534f19c21a4c1f63a3a01a4396152a14c4ef/guardrails_ai_secrets_present-0.1.0-py3-none-any.whl", hash = "sha256:a4149c61e11213344d94ff425853927a36217ddb0d3df1f29cb64374a7a3a328", size = 4830, upload-time = "2026-07-07T15:59:23.899Z" },
+]
+
+[[package]]
+name = "guardrails-ai-toxic-language"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "detoxify" },
+    { name = "guardrails-ai" },
+    { name = "nltk" },
+    { name = "torch" },
+    { name = "transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/a0/fe8c5dfd275956b9c41a536aed7a85ac521766122a683b3f58e5d992ecd2/guardrails_ai_toxic_language-0.0.2.tar.gz", hash = "sha256:4320d2eb9d87d8ba14c8d515d7f46bffb74ef43f5d829ce19d0d8d46aa3e83a6", size = 8663, upload-time = "2026-07-09T18:34:39.107Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/fb/6d3195546bf389e50c57a707399cd2f94f8faa8180484d0f54c6e42a2938/guardrails_ai_toxic_language-0.0.2-py3-none-any.whl", hash = "sha256:781e2fb198a986a6a233f143809f9d2a3de8f03bf11c1bee022422003aa6f8a8", size = 8421, upload-time = "2026-07-09T18:34:37.928Z" },
 ]
 
 [[package]]
@@ -2638,6 +2681,28 @@ wheels = [
 ]
 
 [[package]]
+name = "sentencepiece"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/33/ea3cb3839607eb175da835244a798f797f478c5ddf0e8ecdf57ea85a4c70/sentencepiece-0.2.2.tar.gz", hash = "sha256:3d2b5e824b5622038dc7b490897efe05ebbbb9e7350fc142f3ecc8789ef9bdf6", size = 8218435, upload-time = "2026-07-12T08:39:34.701Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0b/7e/f5df63edb6bcb46c1343cfa5d9192d73a4eb61af2e800d9402efff387523/sentencepiece-0.2.2-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:c62bd361cec1f5b556eb8210264ecfff37486cd990c3386cc00310f26c54090a", size = 2190240, upload-time = "2026-07-12T08:39:08.178Z" },
+    { url = "https://files.pythonhosted.org/packages/52/0a/095d183b453b2a2e20b016829029c58eca90adc1c9911113e5d26fff45ed/sentencepiece-0.2.2-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:46ba07b543add034de0ff47ac5f907e9a06682f91d85121a972764628933be6b", size = 1442220, upload-time = "2026-07-12T08:39:09.91Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/18/823954c9c90e74eba09fb96752dc37a5555df00d69866cb9406d1725dc7e/sentencepiece-0.2.2-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:79bac5a251f23a7341e28fda9ce0d5319edf45328239ce037c0682936f137906", size = 1348056, upload-time = "2026-07-12T08:39:11.744Z" },
+    { url = "https://files.pythonhosted.org/packages/10/ca/1b6c251321901cbf8a2d2e48b8b70eb82a449011b766af52a228d0a90b6b/sentencepiece-0.2.2-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1402d8ee36f0d851cea8eee4dbb85fea14643b7503cf4d00d102eec0fe3ca719", size = 1325463, upload-time = "2026-07-12T08:39:13.413Z" },
+    { url = "https://files.pythonhosted.org/packages/24/b3/718847349da7b25c8220ed86d85b89080af94740b2d87a59198104ae5c51/sentencepiece-0.2.2-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8d44b20234905ff022b7d535f79d1f823ad7670c9851cc4f03cdc34787cdb3ab", size = 1398138, upload-time = "2026-07-12T08:39:15.564Z" },
+    { url = "https://files.pythonhosted.org/packages/33/fe/4906f12c458274edd96387e4baaad7c6f064a2b7c11a1cc2401c8a7bd483/sentencepiece-0.2.2-cp314-cp314-win_amd64.whl", hash = "sha256:63250cfab8b80a1ef82a614eb2b3cadfec2c405f870cedc139d08e2f063eb708", size = 1356144, upload-time = "2026-07-12T08:39:17.313Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/eb/22f89b6542aba400b0007cf0b1697cc3f99be8fb682fdb4c05eec450e33f/sentencepiece-0.2.2-cp314-cp314-win_arm64.whl", hash = "sha256:65d84ec36888de4a848eee5f910e67fbc79b064685ef1e10a502e14520ead9c9", size = 1294351, upload-time = "2026-07-12T08:39:18.967Z" },
+    { url = "https://files.pythonhosted.org/packages/84/c4/7afe8c2315b76e46818851a057e50a378a0382aa00b970a1fa444181b6f6/sentencepiece-0.2.2-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:d254c98ca6387655400b3959c33c83efd807f5edeb608e3aca45800ceaa77151", size = 2223281, upload-time = "2026-07-12T08:39:20.978Z" },
+    { url = "https://files.pythonhosted.org/packages/98/42/fb678e472c554ef086be6375d20060ca610a2c4218854d4c091001fc6f91/sentencepiece-0.2.2-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:3fd9ce2ab4460c713cfdeb4aca693ca6732a11538e05fb332d5af42e3d7fde25", size = 1458779, upload-time = "2026-07-12T08:39:22.812Z" },
+    { url = "https://files.pythonhosted.org/packages/78/52/ffe402b13bce1889228a98dc6cd86ae8afac1112362236be3468be784441/sentencepiece-0.2.2-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:7fc14c1585139fa6b68775e616a6b90cf622ebf219f9558c0aeaf5d253ee6c9b", size = 1361736, upload-time = "2026-07-12T08:39:24.602Z" },
+    { url = "https://files.pythonhosted.org/packages/78/4a/2288f60e7283583ec0a0f16e72f9c8e68557d7e7a4b585d2cda4f9f47e64/sentencepiece-0.2.2-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:df88b0c34f2fa909d322f7b06b1398e1e81af4b2f42a7b8e3556f928b25d1811", size = 1328155, upload-time = "2026-07-12T08:39:26.422Z" },
+    { url = "https://files.pythonhosted.org/packages/26/31/5dd6882ebe899f741a5cfe40ff56c6efc06bc26ee287abdb723b671f409c/sentencepiece-0.2.2-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3f5851441ab1ef8634963a5100b733a8bbeefe623e0c5c005b1f1f3880e574cf", size = 1398307, upload-time = "2026-07-12T08:39:28.637Z" },
+    { url = "https://files.pythonhosted.org/packages/da/05/7d7780fa63f4b8c1821953b916e25f89ae8f14d4da6ba91e10f6d06dc2b4/sentencepiece-0.2.2-cp314-cp314t-win_amd64.whl", hash = "sha256:046b15ea22d8042e2e173561d464ec3b64a9c2081324df70ebce7bf7ebb3e497", size = 1367133, upload-time = "2026-07-12T08:39:30.546Z" },
+    { url = "https://files.pythonhosted.org/packages/49/a1/70007fef3f818c688de4a730f98024a671599ab67f20270f8efb03d69dcc/sentencepiece-0.2.2-cp314-cp314t-win_arm64.whl", hash = "sha256:fa9f5ef0e2a82233dd0b8b32ea3f5710e0c44afbc07ed3620219f32601e56090", size = 1302760, upload-time = "2026-07-12T08:39:32.457Z" },
+]
+
+[[package]]
 name = "setuptools"
 version = "84.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2789,7 +2854,9 @@ dependencies = [
     { name = "guardrails-ai-detect-jailbreak" },
     { name = "guardrails-ai-detect-pii" },
     { name = "guardrails-ai-detect-system-prompt-leakage" },
+    { name = "guardrails-ai-regex-match" },
     { name = "guardrails-ai-secrets-present" },
+    { name = "guardrails-ai-toxic-language" },
     { name = "guardrails-ai-valid-length" },
 ]
 
@@ -2799,7 +2866,9 @@ requires-dist = [
     { name = "guardrails-ai-detect-jailbreak", specifier = ">=0.1.6" },
     { name = "guardrails-ai-detect-pii", specifier = ">=0.0.6" },
     { name = "guardrails-ai-detect-system-prompt-leakage", specifier = ">=0.1.0" },
+    { name = "guardrails-ai-regex-match", specifier = ">=0.1.0" },
     { name = "guardrails-ai-secrets-present", specifier = ">=0.1.0" },
+    { name = "guardrails-ai-toxic-language", specifier = ">=0.0.2" },
     { name = "guardrails-ai-valid-length", specifier = ">=0.1.0" },
 ]
 

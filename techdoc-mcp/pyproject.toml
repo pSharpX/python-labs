@@ -9,6 +9,8 @@ dependencies = [
     "guardrails-ai-detect-jailbreak>=0.1.6",
     "guardrails-ai-detect-pii>=0.0.6",
     "guardrails-ai-detect-system-prompt-leakage>=0.1.0",
+    "guardrails-ai-regex-match>=0.1.0",
     "guardrails-ai-secrets-present>=0.1.0",
+    "guardrails-ai-toxic-language>=0.0.2",
     "guardrails-ai-valid-length>=0.1.0",
 ]
