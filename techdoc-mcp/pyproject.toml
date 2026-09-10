@@ -1,0 +1,14 @@
+[project]
+name = "techdoc-mcp"
+version = "0.1.0"
+description = "An AI-powered assistant that transforms functional requirements into structured technical proposal."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "guardrails-ai>=0.11.0",
+    "guardrails-ai-detect-jailbreak>=0.1.6",
+    "guardrails-ai-detect-pii>=0.0.6",
+    "guardrails-ai-detect-system-prompt-leakage>=0.1.0",
+    "guardrails-ai-secrets-present>=0.1.0",
+    "guardrails-ai-valid-length>=0.1.0",
+]
