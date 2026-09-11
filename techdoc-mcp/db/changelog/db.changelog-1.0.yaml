@@ -1,0 +1,240 @@
+databaseChangeLog:
+  - property:
+      name: json.type
+      value: json
+      dbms: mysql, postgresql
+  - property:
+      name: json.type
+      value: clob
+      dbms: oracle, h2, mssql
+  - changeSet:
+      id: enable-pgvector
+      author: christian.rivera
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS vector;
+  - changeSet:
+      id: enable-pgcrypto
+      author: christian.rivera
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+  - changeSet:
+      id: create-business_lines-table
+      author: christian.rivera
+      comment: add business_lines table definition
+      changes:
+        - createTable:
+            tableName: business_lines
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: code
+                  type: INT
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: create-families-table
+      author: christian.rivera
+      comment: add families table definition
+      changes:
+        - createTable:
+            tableName: families
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: line_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_family_line
+                    references: business_lines(id)
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: create-products_services-table
+      author: christian.rivera
+      comment: add products_services table definition
+      changes:
+        - createTable:
+            tableName: products_services
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: family_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_product_family
+                    references: families(id)
+              - column:
+                  name: code
+                  type: VARCHAR(50)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: smb_applicable
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: corp_applicable
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+
+  - changeSet:
+      id: insert-initial-catalog-data
+      author: christian.rivera
+      comment: insert initial catalog data for testing
+      changes:
+        # Business Lines Insertion[cite: 1]
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: code, valueNumeric: 1 }
+              - column: { name: name, value: "Modern Work y Microsoft 365" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 2 }
+              - column: { name: code, valueNumeric: 2 }
+              - column: { name: name, value: "Cloud e Infraestructura" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 3 }
+              - column: { name: code, valueNumeric: 3 }
+              - column: { name: name, value: "Ciberseguridad" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 4 }
+              - column: { name: code, valueNumeric: 4 }
+              - column: { name: name, value: "Datos e IA" }
+
+        # Families Insertion[cite: 1]
+        - insert:
+            tableName: families
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: line_id, valueNumeric: 1 }
+              - column: { name: name, value: "Microsoft 365" }
+        - insert:
+            tableName: families
+            columns:
+              - column: { name: id, valueNumeric: 2 }
+              - column: { name: line_id, valueNumeric: 1 }
+              - column: { name: name, value: "Exchange Online" }
+        - insert:
+            tableName: families
+            columns:
+              - column: { name: id, valueNumeric: 3 }
+              - column: { name: line_id, valueNumeric: 2 }
+              - column: { name: name, value: "Azure" }
+        - insert:
+            tableName: families
+            columns:
+              - column: { name: id, valueNumeric: 4 }
+              - column: { name: line_id, valueNumeric: 3 }
+              - column: { name: name, value: "Defender" }
+        - insert:
+            tableName: families
+            columns:
+              - column: { name: id, valueNumeric: 5 }
+              - column: { name: line_id, valueNumeric: 4 }
+              - column: { name: name, value: "IA" }
+
+        # Products/Services Insertion Sample[cite: 1]
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 1 }
+              - column: { name: code, value: "M365-ASS-01" }
+              - column: { name: name, value: "Assessment Microsoft 365" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación del tenant, configuración, adopción, seguridad y oportunidades de mejora." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 2 }
+              - column: { name: code, value: "EXO-MIG-01" }
+              - column: { name: name, value: "Migración a Exchange Online" }
+              - column: { name: type, value: "Migración" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Migración de buzones desde plataformas compatibles." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 3 }
+              - column: { name: code, value: "AZ-MIG-01" }
+              - column: { name: name, value: "Migración hacia Azure" }
+              - column: { name: type, value: "Migración" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Migración de cargas compatibles hacia Azure." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 4 }
+              - column: { name: code, value: "DEF-END-01" }
+              - column: { name: name, value: "Microsoft Defender for Endpoint" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Protección y respuesta para endpoints." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 5 }
+              - column: { name: code, value: "AI-AGT-01" }
+              - column: { name: name, value: "Desarrollo de agentes de IA" }
+              - column: { name: type, value: "Desarrollo IA" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño e implementación de agentes y soluciones de IA." }

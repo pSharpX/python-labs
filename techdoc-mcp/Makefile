@@ -1,34 +1,26 @@
 -include .env
 export
 
+CHANGELOG_DIR=$(PWD)/db/changelog
+GENERATED_DIR=$(PWD)/db/changelog
+
+DB_JDBC_URL=jdbc:postgresql://host.docker.internal:5432/vectordb
+COMPOSE_PROFILES=rag
+
+initialize:
+	docker compose up
+start:
+	docker compose start
+down:
+	docker compose down
+destroy:
+	docker compose down -v
+
+
 sync:
 	uv sync --all-groups
 install:
 	uv pip install -r pyproject.toml
 
-test:
-	deepeval test run evals.py
 run:
 	uv run main.py
-scan:
-	uv run security.py
-
-
-# work
-#guard_init:
-#	python -m guardrails_ai.detect_pii.post_install
-
-# work
-#guard_init:
-#	python -m guardrails_ai.toxic_language.post_install
-
-# DID NOT work
-#guard_init:
-#	python -m guardrails_ai.detect_jailbreak.post_install
-
-#guard_init:
-#	python -m guardrails_ai.detect_system_prompt_leakage.post_install
-
-guard_init:
-	python -m guardrails_ai.valid_length.post_install
-
