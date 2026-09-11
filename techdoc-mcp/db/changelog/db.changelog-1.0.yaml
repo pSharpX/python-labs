@@ -238,3 +238,1099 @@ databaseChangeLog:
               - column: { name: smb_applicable, valueBoolean: true }
               - column: { name: corp_applicable, valueBoolean: true }
               - column: { name: description, value: "Diseño e implementación de agentes y soluciones de IA." }
+
+  - changeSet:
+      id: create-hourly_rate-table
+      author: christian.rivera
+      comment: add hourly_rate table definition
+      changes:
+        - createTable:
+            tableName: hourly_rate
+            columns:
+              - column:
+                  name: role_code
+                  type: VARCHAR(20)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: category
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: level
+                  type: VARCHAR(50)
+              - column:
+                  name: smb_rate
+                  type: NUMERIC(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: corporate_rate
+                  type: NUMERIC(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+
+  - changeSet:
+      id: create-specialty-table
+      author: christian.rivera
+      comment: add specialty table definition
+      changes:
+        - createTable:
+            tableName: specialty
+            columns:
+              - column:
+                  name: code
+                  type: VARCHAR(20)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code_example
+                  type: VARCHAR(100)
+
+  - changeSet:
+      id: create-surcharge-table
+      author: christian.rivera
+      comment: add surcharge table definition
+      changes:
+        - createTable:
+            tableName: surcharge
+            columns:
+              - column:
+                  name: code
+                  type: VARCHAR(20)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: condition
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: factor
+                  type: NUMERIC(5, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rule
+                  type: TEXT
+
+  - changeSet:
+      id: create-blended_rate-table
+      author: christian.rivera
+      comment: add blended_rate table definition
+      changes:
+        - createTable:
+            tableName: blended_rate
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_type
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: smb_rate
+                  type: NUMERIC(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: corporate_rate
+                  type: NUMERIC(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: suggested_use
+                  type: TEXT
+
+  - changeSet:
+      id: create-segmentation_criterion-table
+      author: christian.rivera
+      comment: add segmentation_criterion table definition
+      changes:
+        - createTable:
+            tableName: segmentation_criterion
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: criterion
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: smb_description
+                  type: TEXT
+              - column:
+                  name: corporate_description
+                  type: TEXT
+
+  - changeSet:
+      id: create-business_line_role-table
+      author: christian.rivera
+      comment: add business_line_role table definition
+      changes:
+        - createTable:
+            tableName: business_line_role
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: business_line
+                  type: VARCHAR(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: main_role
+                  type: VARCHAR(150)
+              - column:
+                  name: main_role_code
+                  type: VARCHAR(100)
+              - column:
+                  name: support_roles
+                  type: TEXT
+              - column:
+                  name: target_segment
+                  type: VARCHAR(100)
+              - column:
+                  name: usage_description
+                  type: TEXT
+
+  - changeSet:
+      id: insert-hourly-rate-data
+      author: christian.rivera
+      comment: insert initial hourly_rate data for testing
+      changes:
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-PM" }
+              - column: { name: category, value: "Gestión" }
+              - column: { name: position, value: "Project Manager" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Gestión integral del proyecto, coordinación, seguimiento, riesgos y comunicaciones." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-ARQ" }
+              - column: { name: category, value: "Arquitectura" }
+              - column: { name: position, value: "Arquitecto de Soluciones" }
+              - column: { name: level, value: "Senior/Lead" }
+              - column: { name: smb_rate, valueNumeric: 45 }
+              - column: { name: corporate_rate, valueNumeric: 55 }
+              - column: { name: description, value: "Diseño de arquitectura, decisiones técnicas y lineamientos de solución." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-LT" }
+              - column: { name: category, value: "Arquitectura" }
+              - column: { name: position, value: "Líder Técnico" }
+              - column: { name: level, value: "Senior/Lead" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Liderazgo técnico, diseño detallado y supervisión de implementación." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-ESP" }
+              - column: { name: category, value: "Especialista" }
+              - column: { name: position, value: "Especialista Senior" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Especialista tecnológico de alta experiencia para tareas complejas." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-CONS-SR" }
+              - column: { name: category, value: "Consultoría" }
+              - column: { name: position, value: "Consultor Senior" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Análisis, diseño, implementación y documentación especializada." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-CONS" }
+              - column: { name: category, value: "Consultoría" }
+              - column: { name: position, value: "Consultor" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: description, value: "Ejecución técnica/funcional de consultoría e implementación." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-CONS-JR" }
+              - column: { name: category, value: "Consultoría" }
+              - column: { name: position, value: "Consultor Junior" }
+              - column: { name: level, value: "Junior" }
+              - column: { name: smb_rate, valueNumeric: 25 }
+              - column: { name: corporate_rate, valueNumeric: 30 }
+              - column: { name: description, value: "Apoyo en levantamiento, configuración, pruebas y documentación." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-FUNC" }
+              - column: { name: category, value: "Funcional" }
+              - column: { name: position, value: "Consultor Funcional / Business Analyst" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: description, value: "Levantamiento de procesos, requerimientos y diseño funcional." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DEV-SR" }
+              - column: { name: category, value: "Desarrollo" }
+              - column: { name: position, value: "Desarrollador Senior" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Desarrollo, integraciones y automatización de alta complejidad." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DEV" }
+              - column: { name: category, value: "Desarrollo" }
+              - column: { name: position, value: "Desarrollador" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Desarrollo y configuración de soluciones de complejidad media." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-ENG" }
+              - column: { name: category, value: "Ingeniería" }
+              - column: { name: position, value: "Ingeniero de Implementación" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: description, value: "Implementación, configuración, pruebas y puesta en producción." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-SEC" }
+              - column: { name: category, value: "Seguridad" }
+              - column: { name: position, value: "Especialista Seguridad / Compliance" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Diseño e implementación de seguridad, cumplimiento y protección de datos." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DATA" }
+              - column: { name: category, value: "Datos" }
+              - column: { name: position, value: "Especialista Datos / SQL" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "SQL, datos, migración, performance y arquitectura de datos." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-AI" }
+              - column: { name: category, value: "IA" }
+              - column: { name: position, value: "Especialista IA / Copilot" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Copilot, agentes y soluciones de inteligencia artificial." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-QA" }
+              - column: { name: category, value: "Calidad" }
+              - column: { name: position, value: "QA / Tester" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 25 }
+              - column: { name: corporate_rate, valueNumeric: 30 }
+              - column: { name: description, value: "Pruebas, evidencias y control de calidad." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DOC" }
+              - column: { name: category, value: "Documentación" }
+              - column: { name: position, value: "Especialista Documentación" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 25 }
+              - column: { name: corporate_rate, valueNumeric: 30 }
+              - column: { name: description, value: "Elaboración, consolidación y control de entregables documentales." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-SOP-L1" }
+              - column: { name: category, value: "Soporte" }
+              - column: { name: position, value: "Soporte Nivel 1" }
+              - column: { name: level, value: "Junior" }
+              - column: { name: smb_rate, valueNumeric: 20 }
+              - column: { name: corporate_rate, valueNumeric: 25 }
+              - column: { name: description, value: "Atención inicial, diagnóstico básico y resolución de casos estándar." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-SOP-L2" }
+              - column: { name: category, value: "Soporte" }
+              - column: { name: position, value: "Soporte Nivel 2" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 25 }
+              - column: { name: corporate_rate, valueNumeric: 35 }
+              - column: { name: description, value: "Diagnóstico especializado y resolución de complejidad media." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-SOP-L3" }
+              - column: { name: category, value: "Soporte" }
+              - column: { name: position, value: "Soporte Nivel 3" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Troubleshooting avanzado y escalamiento técnico especializado." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-SDM" }
+              - column: { name: category, value: "Gestión" }
+              - column: { name: position, value: "Service Delivery Manager" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Gestión de servicios administrados, SLA, capacidad, escalamiento y relación operativa con el cliente." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-PRE" }
+              - column: { name: category, value: "Preventa" }
+              - column: { name: position, value: "Consultor / Ingeniero de Preventa" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Levantamiento, dimensionamiento, diseño preliminar y soporte técnico a propuestas." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-INF" }
+              - column: { name: category, value: "Infraestructura" }
+              - column: { name: position, value: "Especialista de Infraestructura" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Windows Server, Active Directory, datacenter, servicios base y troubleshooting avanzado." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-NET" }
+              - column: { name: category, value: "Infraestructura" }
+              - column: { name: position, value: "Especialista de Redes y Conectividad" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "LAN/WAN/WiFi, routing, VPN, conectividad híbrida y diagnóstico de redes." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-VIRT" }
+              - column: { name: category, value: "Infraestructura" }
+              - column: { name: position, value: "Especialista de Virtualización" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "VMware, Hyper-V, virtualización, capacidad y modernización de plataforma." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-BCDR" }
+              - column: { name: category, value: "Continuidad" }
+              - column: { name: position, value: "Especialista Backup / Disaster Recovery" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Diseño y ejecución de estrategias de respaldo, recuperación y continuidad." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-BI" }
+              - column: { name: category, value: "Datos" }
+              - column: { name: position, value: "Consultor BI / Analítica" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Análisis, modelado, KPIs, dashboards y definición de soluciones de inteligencia de negocio." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-PBI" }
+              - column: { name: category, value: "Datos" }
+              - column: { name: position, value: "Desarrollador Power BI" }
+              - column: { name: level, value: "Mid/Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Modelado semántico, Power Query, DAX, reportes y dashboards Power BI." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DE" }
+              - column: { name: category, value: "Datos" }
+              - column: { name: position, value: "Data Engineer" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Ingesta, transformación, pipelines, integración y arquitectura de datos." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-FAB" }
+              - column: { name: category, value: "Datos" }
+              - column: { name: position, value: "Especialista Microsoft Fabric" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Arquitectura, implementación y optimización de workloads Microsoft Fabric." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-D365-F" }
+              - column: { name: category, value: "Aplicaciones de Negocio" }
+              - column: { name: position, value: "Consultor Funcional Dynamics 365" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Levantamiento, diseño funcional, configuración y adopción de Dynamics 365 CRM/ERP." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-D365-T" }
+              - column: { name: category, value: "Aplicaciones de Negocio" }
+              - column: { name: position, value: "Consultor Técnico Dynamics 365" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 45 }
+              - column: { name: corporate_rate, valueNumeric: 55 }
+              - column: { name: description, value: "Extensiones, integraciones, personalizaciones y arquitectura técnica Dynamics 365." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-WEB" }
+              - column: { name: category, value: "Desarrollo" }
+              - column: { name: position, value: "Desarrollador Web" }
+              - column: { name: level, value: "Mid/Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Desarrollo frontend/backend de aplicaciones web empresariales." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-MOB" }
+              - column: { name: category, value: "Desarrollo" }
+              - column: { name: position, value: "Desarrollador Mobile" }
+              - column: { name: level, value: "Mid/Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Desarrollo de aplicaciones móviles y componentes asociados." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-UX" }
+              - column: { name: category, value: "Diseño" }
+              - column: { name: position, value: "UX/UI Designer" }
+              - column: { name: level, value: "Mid" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: description, value: "Investigación, prototipado, diseño de experiencia e interfaces de usuario." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DEVOPS" }
+              - column: { name: category, value: "DevOps" }
+              - column: { name: position, value: "Ingeniero DevOps" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Repositorios, Boards, pipelines CI/CD, automatización y prácticas DevOps." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-DEVSEC" }
+              - column: { name: category, value: "DevOps" }
+              - column: { name: position, value: "Especialista DevSecOps" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 45 }
+              - column: { name: corporate_rate, valueNumeric: 55 }
+              - column: { name: description, value: "Integración de seguridad, controles y automatización en el ciclo de desarrollo." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-GOV" }
+              - column: { name: category, value: "Estrategia" }
+              - column: { name: position, value: "Consultor Gobierno TI / Transformación Digital" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: description, value: "Gobierno TI, madurez digital, roadmap, procesos, indicadores y transformación." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-CHG" }
+              - column: { name: category, value: "Adopción" }
+              - column: { name: position, value: "Consultor de Adopción / Change Management" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Gestión del cambio, comunicaciones, adopción y acompañamiento a usuarios." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-TRN" }
+              - column: { name: category, value: "Capacitación" }
+              - column: { name: position, value: "Instructor / Capacitador Técnico" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: description, value: "Preparación y ejecución de capacitaciones técnicas o funcionales." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-HUNT" }
+              - column: { name: category, value: "Staffing" }
+              - column: { name: position, value: "Especialista de Hunting TI" }
+              - column: { name: level, value: "Mid/Senior" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: description, value: "Levantamiento de perfil, búsqueda, filtro y evaluación inicial de talento tecnológico." }
+        - insert:
+            tableName: hourly_rate
+            columns:
+              - column: { name: role_code, value: "HH-LIC" }
+              - column: { name: category, value: "Licenciamiento" }
+              - column: { name: position, value: "Especialista de Licenciamiento" }
+              - column: { name: level, value: "Senior" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: description, value: "Perfilamiento, optimización, compliance y recomendación de licencias y suscripciones." }
+
+  - changeSet:
+      id: insert-specialty-data
+      author: christian.rivera
+      comment: insert initial specialty data for testing
+      changes:
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "M365" }
+              - column: { name: name, value: "Microsoft 365" }
+              - column: { name: code_example, value: "HH-CONS-SR-M365" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "EXO" }
+              - column: { name: name, value: "Exchange Online" }
+              - column: { name: code_example, value: "HH-CONS-SR-EXO" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "ENTRA" }
+              - column: { name: name, value: "Microsoft Entra ID" }
+              - column: { name: code_example, value: "HH-CONS-SR-ENTRA" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "INT" }
+              - column: { name: name, value: "Microsoft Intune" }
+              - column: { name: code_example, value: "HH-CONS-SR-INT" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "SEC" }
+              - column: { name: name, value: "Seguridad Microsoft" }
+              - column: { name: code_example, value: "HH-CONS-SR-SEC" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "PUR" }
+              - column: { name: name, value: "Microsoft Purview" }
+              - column: { name: code_example, value: "HH-CONS-SR-PUR" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "SPO" }
+              - column: { name: name, value: "SharePoint Online" }
+              - column: { name: code_example, value: "HH-CONS-SR-SPO" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "TEAMS" }
+              - column: { name: name, value: "Microsoft Teams" }
+              - column: { name: code_example, value: "HH-CONS-SR-TEAMS" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "PP" }
+              - column: { name: name, value: "Power Platform" }
+              - column: { name: code_example, value: "HH-CONS-SR-PP" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "AI" }
+              - column: { name: name, value: "Copilot / Inteligencia Artificial" }
+              - column: { name: code_example, value: "HH-CONS-SR-AI" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "AZ" }
+              - column: { name: name, value: "Microsoft Azure" }
+              - column: { name: code_example, value: "HH-CONS-SR-AZ" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "INF" }
+              - column: { name: name, value: "Windows Server / Active Directory / Infraestructura" }
+              - column: { name: code_example, value: "HH-CONS-SR-INF" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "DATA" }
+              - column: { name: name, value: "SQL / Datos" }
+              - column: { name: code_example, value: "HH-CONS-SR-DATA" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "BI" }
+              - column: { name: name, value: "Business Intelligence / Analítica" }
+              - column: { name: code_example, value: "HH-BI" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "PBI" }
+              - column: { name: name, value: "Power BI" }
+              - column: { name: code_example, value: "HH-PBI" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "FAB" }
+              - column: { name: name, value: "Microsoft Fabric" }
+              - column: { name: code_example, value: "HH-FAB" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "D365" }
+              - column: { name: name, value: "Dynamics 365 CRM / ERP" }
+              - column: { name: code_example, value: "HH-D365-F / HH-D365-T" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "WEB" }
+              - column: { name: name, value: "Desarrollo Web" }
+              - column: { name: code_example, value: "HH-WEB" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "MOB" }
+              - column: { name: name, value: "Desarrollo Mobile" }
+              - column: { name: code_example, value: "HH-MOB" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "DEVOPS" }
+              - column: { name: name, value: "Azure DevOps / CI-CD" }
+              - column: { name: code_example, value: "HH-DEVOPS" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "DEVSEC" }
+              - column: { name: name, value: "DevSecOps" }
+              - column: { name: code_example, value: "HH-DEVSEC" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "NET" }
+              - column: { name: name, value: "Networking / Conectividad" }
+              - column: { name: code_example, value: "HH-NET" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "VIRT" }
+              - column: { name: name, value: "VMware / Hyper-V" }
+              - column: { name: code_example, value: "HH-VIRT" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "BCDR" }
+              - column: { name: name, value: "Backup / Disaster Recovery" }
+              - column: { name: code_example, value: "HH-BCDR" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "GOV" }
+              - column: { name: name, value: "Gobierno TI / Transformación Digital" }
+              - column: { name: code_example, value: "HH-GOV" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "CHG" }
+              - column: { name: name, value: "Adopción / Change Management" }
+              - column: { name: code_example, value: "HH-CHG" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "LIC" }
+              - column: { name: name, value: "Licenciamiento y Suscripciones" }
+              - column: { name: code_example, value: "HH-LIC" }
+        - insert:
+            tableName: specialty
+            columns:
+              - column: { name: code, value: "HUNT" }
+              - column: { name: name, value: "Hunting / Staffing TI" }
+              - column: { name: code_example, value: "HH-HUNT" }
+
+  - changeSet:
+      id: insert-surcharge-data
+      author: christian.rivera
+      comment: insert initial surcharge data for testing
+      changes:
+        - insert:
+            tableName: surcharge
+            columns:
+              - column: { name: code, value: "HOR-LAB" }
+              - column: { name: condition, value: "Horario laboral estándar" }
+              - column: { name: factor, valueNumeric: 1 }
+              - column: { name: rule, value: "Aplica tarifa base." }
+        - insert:
+            tableName: surcharge
+            columns:
+              - column: { name: code, value: "HOR-18-23" }
+              - column: { name: condition, value: "Atención 18:00–23:00" }
+              - column: { name: factor, valueNumeric: 1.5 }
+              - column: { name: rule, value: "Factor referencial. Contrato específico prevalece." }
+        - insert:
+            tableName: surcharge
+            columns:
+              - column: { name: code, value: "HOR-23-09" }
+              - column: { name: condition, value: "Atención 23:00–09:00" }
+              - column: { name: factor, valueNumeric: 2 }
+              - column: { name: rule, value: "Factor referencial. Contrato específico prevalece." }
+        - insert:
+            tableName: surcharge
+            columns:
+              - column: { name: code, value: "SAB" }
+              - column: { name: condition, value: "Sábado" }
+              - column: { name: factor, valueNumeric: 2 }
+              - column: { name: rule, value: "Factor referencial. Contrato específico prevalece." }
+        - insert:
+            tableName: surcharge
+            columns:
+              - column: { name: code, value: "DOM-FER" }
+              - column: { name: condition, value: "Domingo / feriado" }
+              - column: { name: factor, valueNumeric: 2 }
+              - column: { name: rule, value: "Factor referencial. Contrato específico prevalece." }
+        - insert:
+            tableName: surcharge
+            columns:
+              - column: { name: code, value: "EMERG" }
+              - column: { name: condition, value: "Emergencia / no planificada" }
+              - column: { name: factor, valueNumeric: 2 }
+              - column: { name: rule, value: "Sujeto a disponibilidad y aprobación." }
+
+  - changeSet:
+      id: insert-blended-rate-data
+      author: christian.rivera
+      comment: insert initial blended_rate data for testing
+      changes:
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Implementación estándar" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: suggested_use, value: "Proyectos de implementación con mezcla de perfiles." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Consultoría especializada" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: suggested_use, value: "Assessment, optimización, gobierno y consultoría especializada." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Seguridad / Arquitectura" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: suggested_use, value: "Alta participación de arquitectos o especialistas senior." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Desarrollo Power Platform" }
+              - column: { name: smb_rate, valueNumeric: 35 }
+              - column: { name: corporate_rate, valueNumeric: 45 }
+              - column: { name: suggested_use, value: "Power Apps, Power Automate y componentes relacionados." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "IA / Copilot" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: suggested_use, value: "Copilot Studio, agentes, readiness y gobierno de IA." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Soporte por bolsa" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: suggested_use, value: "Tarifa promedio sugerida; ajustar según composición de niveles." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Datos / Power BI / Fabric" }
+              - column: { name: smb_rate, valueNumeric: 38 }
+              - column: { name: corporate_rate, valueNumeric: 48 }
+              - column: { name: suggested_use, value: "Proyectos de analítica, Power BI, ingeniería de datos y Microsoft Fabric." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Dynamics 365 CRM / ERP" }
+              - column: { name: smb_rate, valueNumeric: 42 }
+              - column: { name: corporate_rate, valueNumeric: 52 }
+              - column: { name: suggested_use, value: "Proyectos funcionales/técnicos Dynamics con perfiles senior especializados." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Desarrollo Web / Móvil" }
+              - column: { name: smb_rate, valueNumeric: 36 }
+              - column: { name: corporate_rate, valueNumeric: 46 }
+              - column: { name: suggested_use, value: "Desarrollo de aplicaciones personalizadas con combinación de desarrollo, QA y PM." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "DevOps / DevSecOps" }
+              - column: { name: smb_rate, valueNumeric: 42 }
+              - column: { name: corporate_rate, valueNumeric: 52 }
+              - column: { name: suggested_use, value: "Implementación de Azure DevOps, CI/CD y prácticas DevSecOps." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Cloud e Infraestructura" }
+              - column: { name: smb_rate, valueNumeric: 38 }
+              - column: { name: corporate_rate, valueNumeric: 48 }
+              - column: { name: suggested_use, value: "Azure, Windows Server, redes, virtualización, backup y continuidad." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Estrategia / Gobierno TI" }
+              - column: { name: smb_rate, valueNumeric: 40 }
+              - column: { name: corporate_rate, valueNumeric: 50 }
+              - column: { name: suggested_use, value: "Assessment de madurez, roadmap, gobierno y transformación digital." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Staff Augmentation" }
+              - column: { name: smb_rate, valueNumeric: 32 }
+              - column: { name: corporate_rate, valueNumeric: 42 }
+              - column: { name: suggested_use, value: "Referencia blended para servicios de asignación de especialistas; validar perfil contratado." }
+        - insert:
+            tableName: blended_rate
+            columns:
+              - column: { name: project_type, value: "Capacitación / Adopción" }
+              - column: { name: smb_rate, valueNumeric: 30 }
+              - column: { name: corporate_rate, valueNumeric: 40 }
+              - column: { name: suggested_use, value: "Capacitaciones, talleres y gestión de adopción." }
+
+  - changeSet:
+      id: insert-segmentation-criterion-data
+      author: christian.rivera
+      comment: insert initial segmentation_criterion data for testing
+      changes:
+        - insert:
+            tableName: segmentation_criterion
+            columns:
+              - column: { name: criterion, value: "Usuarios de referencia" }
+              - column: { name: smb_description, value: "Hasta 300" }
+              - column: { name: corporate_description, value: "Más de 300 o complejidad equivalente" }
+        - insert:
+            tableName: segmentation_criterion
+            columns:
+              - column: { name: criterion, value: "Arquitectura" }
+              - column: { name: smb_description, value: "Simple / moderada" }
+              - column: { name: corporate_description, value: "Compleja, híbrida o crítica" }
+        - insert:
+            tableName: segmentation_criterion
+            columns:
+              - column: { name: criterion, value: "Stakeholders" }
+              - column: { name: smb_description, value: "Pocos" }
+              - column: { name: corporate_description, value: "Múltiples áreas / sedes / países" }
+        - insert:
+            tableName: segmentation_criterion
+            columns:
+              - column: { name: criterion, value: "Gobierno y compliance" }
+              - column: { name: smb_description, value: "Estándar" }
+              - column: { name: corporate_description, value: "Reforzado / regulado" }
+        - insert:
+            tableName: segmentation_criterion
+            columns:
+              - column: { name: criterion, value: "Gestión de proyecto" }
+              - column: { name: smb_description, value: "Ligera" }
+              - column: { name: corporate_description, value: "Formal, con mayores controles" }
+        - insert:
+            tableName: segmentation_criterion
+            columns:
+              - column: { name: criterion, value: "Regla de excepción" }
+              - column: { name: smb_description, value: "Puede escalar por complejidad" }
+              - column: { name: corporate_description, value: "Corporate prevalece cuando hay criticidad alta" }
+
+  - changeSet:
+      id: insert-business-line-role-data
+      author: christian.rivera
+      comment: insert initial business_line_role data for testing
+      changes:
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Modern Work y Microsoft 365" }
+              - column: { name: main_role, value: "Consultor Senior" }
+              - column: { name: main_role_code, value: "HH-CONS-SR" }
+              - column: { name: support_roles, value: "HH-ARQ; HH-ENG; HH-PM; HH-SEC" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Assessment, migración, implementación, optimización y gobierno M365." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Cloud e Infraestructura" }
+              - column: { name: main_role, value: "Especialista Infraestructura / Arquitecto" }
+              - column: { name: main_role_code, value: "HH-INF / HH-ARQ" }
+              - column: { name: support_roles, value: "HH-NET; HH-VIRT; HH-BCDR; HH-ENG; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Azure, datacenter, Windows Server, AD, redes, virtualización y continuidad." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Ciberseguridad" }
+              - column: { name: main_role, value: "Especialista Seguridad / Compliance" }
+              - column: { name: main_role_code, value: "HH-SEC" }
+              - column: { name: support_roles, value: "HH-ARQ; HH-CONS-SR; HH-ENG; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Defender, Purview, Zero Trust, hardening y controles de seguridad." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Datos e IA" }
+              - column: { name: main_role, value: "Data Engineer / Especialista IA" }
+              - column: { name: main_role_code, value: "HH-DE / HH-AI" }
+              - column: { name: support_roles, value: "HH-BI; HH-PBI; HH-FAB; HH-ARQ; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Analítica, Power BI, Fabric, SQL, Copilot y agentes de IA." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Automatización y Aplicaciones de Negocio" }
+              - column: { name: main_role, value: "Desarrollador Senior / Consultor Funcional" }
+              - column: { name: main_role_code, value: "HH-DEV-SR / HH-FUNC" }
+              - column: { name: support_roles, value: "HH-DEV; HH-QA; HH-ARQ; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Power Apps, Power Automate, RPA e integraciones." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Dynamics 365 CRM y ERP" }
+              - column: { name: main_role, value: "Consultor Funcional Dynamics 365" }
+              - column: { name: main_role_code, value: "HH-D365-F" }
+              - column: { name: support_roles, value: "HH-D365-T; HH-QA; HH-PM; HH-ARQ" }
+              - column: { name: target_segment, value: "Principalmente Corporate" }
+              - column: { name: usage_description, value: "CRM/ERP, configuración, integración, personalización y adopción." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Desarrollo Web y Móvil" }
+              - column: { name: main_role, value: "Desarrollador Web / Mobile" }
+              - column: { name: main_role_code, value: "HH-WEB / HH-MOB" }
+              - column: { name: support_roles, value: "HH-DEV-SR; HH-UX; HH-QA; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Aplicaciones web, móviles, .NET y mantenimiento evolutivo." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "DevOps" }
+              - column: { name: main_role, value: "Ingeniero DevOps" }
+              - column: { name: main_role_code, value: "HH-DEVOPS" }
+              - column: { name: support_roles, value: "HH-DEVSEC; HH-ARQ; HH-DEV-SR; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Azure DevOps, repositorios, CI/CD y DevSecOps." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Staff Augmentation y Hunting" }
+              - column: { name: main_role, value: "Especialista Hunting / Perfil requerido" }
+              - column: { name: main_role_code, value: "HH-HUNT" }
+              - column: { name: support_roles, value: "Rol técnico objetivo; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Búsqueda de talento o asignación de especialistas." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Servicios Administrados y Mesa de Ayuda" }
+              - column: { name: main_role, value: "Service Delivery Manager" }
+              - column: { name: main_role_code, value: "HH-SDM" }
+              - column: { name: support_roles, value: "HH-SOP-L1; HH-SOP-L2; HH-SOP-L3; HH-ENG" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Mesa de ayuda, soporte recurrente y operación administrada." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Estrategia e Innovación Digital" }
+              - column: { name: main_role, value: "Consultor Gobierno TI" }
+              - column: { name: main_role_code, value: "HH-GOV" }
+              - column: { name: support_roles, value: "HH-ARQ; HH-FUNC; HH-CHG; HH-PM" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Madurez digital, roadmap, gobierno TI e innovación." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Licenciamiento y Suscripciones" }
+              - column: { name: main_role, value: "Especialista Licenciamiento" }
+              - column: { name: main_role_code, value: "HH-LIC" }
+              - column: { name: support_roles, value: "HH-PRE; HH-CONS-SR" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Perfilamiento, optimización y asesoría de licenciamiento." }
+        - insert:
+            tableName: business_line_role
+            columns:
+              - column: { name: business_line, value: "Capacitación y Workshops" }
+              - column: { name: main_role, value: "Instructor / Consultor" }
+              - column: { name: main_role_code, value: "HH-TRN" }
+              - column: { name: support_roles, value: "HH-CONS-SR; HH-CHG; HH-ESP" }
+              - column: { name: target_segment, value: "Ambos" }
+              - column: { name: usage_description, value: "Capacitación técnica, funcional, workshops y adopción." }
