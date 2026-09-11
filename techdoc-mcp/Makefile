@@ -24,3 +24,9 @@ install:
 
 run:
 	uv run main.py
+
+mcp:
+	uv run server.py
+
+server:
+	fastmcp run server.py:mcp --transport http --port 8000
