@@ -1,12 +1,12 @@
 -include .env
 export
 
-CHANGELOG_DIR=$(PWD)/db/changelog
-GENERATED_DIR=$(PWD)/db/changelog
 
 DB_JDBC_URL=jdbc:postgresql://host.docker.internal:5432/vectordb
 COMPOSE_PROFILES=rag
 
+build:
+	docker compose up --build
 initialize:
 	docker compose up
 start:

@@ -10,10 +10,11 @@ services:
       - "7687:7687" # Neo4j Bolt
     environment:
       - NEO4J_AUTH=${GRAPH_USER}/${GRAPH_PASS}
+      - NEO4J_initial_dbms_default__database=${GRAPH_NAME}
       - NEO4J_PLUGINS=["apoc", "bloom", "graph-data-science", "genai"]
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
     healthcheck:
-      test: [ "CMD-SHELL", "cypher-shell -u ${GRAPH_USER} -p ${GRAPH_PASS} 'RETURN 1'" ]
+      test: [ "CMD-SHELL", "cypher-shell -u ${GRAPH_USER} -p ${GRAPH_PASS} -d ${GRAPH_NAME} 'RETURN 1'" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -73,7 +74,7 @@ services:
       - ${PWD}/graphs/changelog/:/liquibase/changelog
     command: >
       --changeLogFile=./graphs.changelog-1.0.yaml
-      --url=jdbc:neo4j:bolt://neo4j:7687
+      --url=jdbc:neo4j:bolt://neo4j:7687/${GRAPH_NAME}
       --classpath=/liquibase/changelog
       --username=${GRAPH_USER}
       --password=${GRAPH_PASS}
