@@ -9,9 +9,14 @@ services:
       - "7473:7473" # Neo4j HTTPS
       - "7687:7687" # Neo4j Bolt
     environment:
-      - NEO4J_AUTH=neo4j/password
+      - NEO4J_AUTH=${GRAPH_USER}/${GRAPH_PASS}
       - NEO4J_PLUGINS=["apoc", "bloom", "graph-data-science", "genai"]
       - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    healthcheck:
+      test: [ "CMD-SHELL", "cypher-shell -u ${GRAPH_USER} -p ${GRAPH_PASS} 'RETURN 1'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
@@ -24,15 +29,15 @@ services:
     container_name: pgvector
     restart: always
     environment:
-      POSTGRES_USER: pgvector_user
-      POSTGRES_PASSWORD: p4ssw0rd
-      POSTGRES_DB: vectordb
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5442:5432"
     volumes:
       - pgvector_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U pgvector_user -d vectordb" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,13 +54,30 @@ services:
       - ${PWD}/db/changelog/:/liquibase/changelog
     command: >
       --changeLogFile=./db.changelog-1.0.yaml
-      --url=jdbc:postgresql://pgvector:5432/vectordb
+      --url=jdbc:postgresql://pgvector:5432/${DB_NAME}
       --driver=org.postgresql.Driver
       --classpath=/liquibase/changelog
-      --username=pgvector_user
-      --password=p4ssw0rd
+      --username=${DB_USER}
+      --password=${DB_PASS}
       update
 
+  liquibase-neo4j:
+    profiles: [ rag ]
+    build:
+      context: ./liquibase
+    container_name: liquibase-neo4j
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ${PWD}/graphs/changelog/:/liquibase/changelog
+    command: >
+      --changeLogFile=./graphs.changelog-1.0.yaml
+      --url=jdbc:neo4j:bolt://neo4j:7687
+      --classpath=/liquibase/changelog
+      --username=${GRAPH_USER}
+      --password=${GRAPH_PASS}
+      update
 
 volumes:
   pgvector_data:

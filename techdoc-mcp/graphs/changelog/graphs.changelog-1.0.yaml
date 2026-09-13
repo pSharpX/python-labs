@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table
+      author: christian.rivera
+      comment: add table definition
+      changes:
+        - cypher: 'CREATE (:Movie {title: ''My Life'', genre: ''Comedy''})'
