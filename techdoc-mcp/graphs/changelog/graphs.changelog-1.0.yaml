@@ -1,7 +1,156 @@
 databaseChangeLog:
+
+  # -------------------------------------------------------------------
+  # 1. Constraints and Indexes
+  # -------------------------------------------------------------------
   - changeSet:
-      id: create-table
+      id: neo4j-create-constraints
       author: christian.rivera
-      comment: add table definition
+      comment: Define node key uniqueness constraints and lookup indexes
       changes:
-        - cypher: 'CREATE (:Movie {title: ''My Life'', genre: ''Comedy''})'
+        - cypher:
+            cypher: |
+              CREATE CONSTRAINT db_line_id_unique IF NOT EXISTS FOR (b:BusinessLine) REQUIRE b.id IS UNIQUE;
+              CREATE CONSTRAINT family_id_unique IF NOT EXISTS FOR (f:Family) REQUIRE f.id IS UNIQUE;
+              CREATE CONSTRAINT product_code_unique IF NOT EXISTS FOR (p:ProductService) REQUIRE p.code IS UNIQUE;
+              CREATE CONSTRAINT hourly_rate_code_unique IF NOT EXISTS FOR (h:HourlyRate) REQUIRE h.roleCode IS UNIQUE;
+              CREATE CONSTRAINT specialty_code_unique IF NOT EXISTS FOR (s:Specialty) REQUIRE s.code IS UNIQUE;
+              CREATE CONSTRAINT surcharge_code_unique IF NOT EXISTS FOR (sc:Surcharge) REQUIRE sc.code IS UNIQUE;
+
+  # -------------------------------------------------------------------
+  # 2. Business Lines & Families Nodes
+  # -------------------------------------------------------------------
+  - changeSet:
+      id: neo4j-insert-business-lines-and-families
+      author: christian.rivera
+      comment: Seed BusinessLine and Family nodes with hierarchical BELONGS_TO relationships
+      changes:
+        - cypher:
+            cypher: |
+              MERGE (b1:BusinessLine {id: 1}) SET b1.code = 1, b1.name = "Modern Work y Microsoft 365"
+              MERGE (b2:BusinessLine {id: 2}) SET b2.code = 2, b2.name = "Cloud e Infraestructura"
+              MERGE (b3:BusinessLine {id: 3}) SET b3.code = 3, b3.name = "Ciberseguridad"
+              MERGE (b4:BusinessLine {id: 4}) SET b4.code = 4, b4.name = "Datos e IA"
+
+              MERGE (f1:Family {id: 1}) SET f1.name = "Microsoft 365"
+              MERGE (f2:Family {id: 2}) SET f2.name = "Exchange Online"
+              MERGE (f3:Family {id: 3}) SET f3.name = "Azure"
+              MERGE (f4:Family {id: 4}) SET f4.name = "Defender"
+              MERGE (f5:Family {id: 5}) SET f5.name = "IA"
+
+              WITH f1, f2, f3, f4, f5
+              MATCH (b1:BusinessLine {id: 1})
+              MATCH (b2:BusinessLine {id: 2})
+              MATCH (b3:BusinessLine {id: 3})
+              MATCH (b4:BusinessLine {id: 4})
+
+              MERGE (f1)-[:BELONGS_TO]->(b1)
+              MERGE (f2)-[:BELONGS_TO]->(b1)
+              MERGE (f3)-[:BELONGS_TO]->(b2)
+              MERGE (f4)-[:BELONGS_TO]->(b3)
+              MERGE (f5)-[:BELONGS_TO]->(b4)
+
+  # -------------------------------------------------------------------
+  # 3. Products & Services Nodes
+  # -------------------------------------------------------------------
+  - changeSet:
+      id: neo4j-insert-products-services
+      author: christian.rivera
+      comment: Seed Products/Services nodes linked directly to their respective Family
+      changes:
+        - cypher:
+            cypher: |
+              MATCH (f1:Family {id: 1})
+              MATCH (f2:Family {id: 2})
+              MATCH (f3:Family {id: 3})
+              MATCH (f4:Family {id: 4})
+              MATCH (f5:Family {id: 5})
+
+              MERGE (p1:ProductService {code: "M365-ASS-01"})
+              SET p1.name = "Assessment Microsoft 365",
+                  p1.type = "Assessment",
+                  p1.smbApplicable = true,
+                  p1.corpApplicable = true,
+                  p1.description = "Evaluación del tenant, configuración, adopción, seguridad y oportunidades de mejora."
+              MERGE (p1)-[:BELONGS_TO]->(f1)
+
+              MERGE (p2:ProductService {code: "EXO-MIG-01"})
+              SET p2.name = "Migración a Exchange Online",
+                  p2.type = "Migración",
+                  p2.smbApplicable = true,
+                  p2.corpApplicable = true,
+                  p2.description = "Migración de buzones desde plataformas compatibles."
+              MERGE (p2)-[:BELONGS_TO]->(f2)
+
+              MERGE (p3:ProductService {code: "AZ-MIG-01"})
+              SET p3.name = "Migración hacia Azure",
+                  p3.type = "Migración",
+                  p3.smbApplicable = false,
+                  p3.corpApplicable = true,
+                  p3.description = "Migración de cargas compatibles hacia Azure."
+              MERGE (p3)-[:BELONGS_TO]->(f3)
+
+              MERGE (p4:ProductService {code: "DEF-END-01"})
+              SET p4.name = "Microsoft Defender for Endpoint",
+                  p4.type = "Seguridad",
+                  p4.smbApplicable = true,
+                  p4.corpApplicable = true,
+                  p4.description = "Protección y respuesta para endpoints."
+              MERGE (p4)-[:BELONGS_TO]->(f4)
+
+              MERGE (p5:ProductService {code: "AI-AGT-01"})
+              SET p5.name = "Desarrollo de agentes de IA",
+                  p5.type = "Desarrollo IA",
+                  p5.smbApplicable = true,
+                  p5.corpApplicable = true,
+                  p5.description = "Diseño e implementación de agentes y soluciones de IA."
+              MERGE (p5)-[:BELONGS_TO]->(f5)
+
+  # -------------------------------------------------------------------
+  # 4. Complete Hourly Rates Nodes (All 29 Roles)
+  # -------------------------------------------------------------------
+  - changeSet:
+      id: neo4j-insert-hourly-rates
+      author: christian.rivera
+      comment: Seed full list of HourlyRate nodes with complete descriptions
+      changes:
+        - cypher:
+            cypher: |
+              UNWIND [
+                {roleCode: "HH-PM", category: "Gestión", position: "Project Manager", level: "Senior", smbRate: 35.00, corporateRate: 45.00, description: "Gestión integral del proyecto, coordinación, seguimiento, riesgos y comunicaciones."},
+                {roleCode: "HH-ARQ", category: "Arquitectura", position: "Arquitecto de Soluciones", level: "Senior/Lead", smbRate: 45.00, corporateRate: 55.00, description: "Diseño de arquitectura, decisiones técnicas y lineamientos de solución."},
+                {roleCode: "HH-LT", category: "Arquitectura", position: "Líder Técnico", level: "Senior/Lead", smbRate: 40.00, corporateRate: 50.00, description: "Liderazgo técnico, diseño detallado y supervisión de implementación."},
+                {roleCode: "HH-ESP", category: "Especialista", position: "Especialista Senior", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Especialista tecnológico de alta experiencia para tareas complejas."},
+                {roleCode: "HH-CONS-SR", category: "Consultoría", position: "Consultor Senior", level: "Senior", smbRate: 35.00, corporateRate: 45.00, description: "Análisis, diseño, implementación y documentación especializada."},
+                {roleCode: "HH-CONS", category: "Consultoría", position: "Consultor", level: "Mid", smbRate: 30.00, corporateRate: 40.00, description: "Ejecución técnica/funcional de consultoría e implementación."},
+                {roleCode: "HH-CONS-JR", category: "Consultoría", position: "Consultor Junior", level: "Junior", smbRate: 25.00, corporateRate: 30.00, description: "Apoyo en levantamiento, configuración, pruebas y documentación."},
+                {roleCode: "HH-FUNC", category: "Funcional", position: "Consultor Funcional / Business Analyst", level: "Mid", smbRate: 30.00, corporateRate: 40.00, description: "Levantamiento de procesos, requerimientos y diseño funcional."},
+                {roleCode: "HH-DEV-SR", category: "Desarrollo", position: "Desarrollador Senior", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Desarrollo, integraciones y automatización de alta complejidad."},
+                {roleCode: "HH-DEV", category: "Desarrollo", position: "Desarrollador", level: "Mid", smbRate: 35.00, corporateRate: 45.00, description: "Desarrollo y configuración de soluciones de complejidad media."},
+                {roleCode: "HH-ENG", category: "Ingeniería", position: "Ingeniero de Implementación", level: "Mid", smbRate: 30.00, corporateRate: 40.00, description: "Implementación, configuración, pruebas y puesta en producción."},
+                {roleCode: "HH-SEC", category: "Seguridad", position: "Especialista Seguridad / Compliance", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Diseño e implementación de seguridad, cumplimiento y protección de datos."},
+                {roleCode: "HH-DATA", category: "Datos", position: "Especialista Datos / SQL", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "SQL, datos, migración, performance y arquitectura de datos."},
+                {roleCode: "HH-AI", category: "IA", position: "Especialista IA / Copilot", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Copilot, agentes y soluciones de inteligencia artificial."},
+                {roleCode: "HH-QA", category: "Calidad", position: "QA / Tester", level: "Mid", smbRate: 25.00, corporateRate: 30.00, description: "Pruebas, evidencias y control de calidad."},
+                {roleCode: "HH-DOC", category: "Documentación", position: "Especialista Documentación", level: "Mid", smbRate: 25.00, corporateRate: 30.00, description: "Elaboración, consolidación y control de entregables documentales."},
+                {roleCode: "HH-SOP-L1", category: "Soporte", position: "Soporte Nivel 1", level: "Junior", smbRate: 20.00, corporateRate: 25.00, description: "Atención inicial, diagnóstico básico y resolución de casos estándar."},
+                {roleCode: "HH-SOP-L2", category: "Soporte", position: "Soporte Nivel 2", level: "Mid", smbRate: 25.00, corporateRate: 35.00, description: "Diagnóstico especializado y resolución de complejidad media."},
+                {roleCode: "HH-SOP-L3", category: "Soporte", position: "Soporte Nivel 3", level: "Senior", smbRate: 35.00, corporateRate: 45.00, description: "Troubleshooting avanzado y escalamiento técnico especializado."},
+                {roleCode: "HH-SDM", category: "Gestión", position: "Service Delivery Manager", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Gestión de servicios administrados, SLA, capacidad, escalamiento y relación operativa con el cliente."},
+                {roleCode: "HH-PRE", category: "Preventa", position: "Consultor / Ingeniero de Preventa", level: "Senior", smbRate: 35.00, corporateRate: 45.00, description: "Levantamiento, dimensionamiento, diseño preliminar y soporte técnico a propuestas."},
+                {roleCode: "HH-INF", category: "Infraestructura", position: "Especialista de Infraestructura", level: "Senior", smbRate: 35.00, corporateRate: 45.00, description: "Windows Server, Active Directory, datacenter, servicios base y troubleshooting avanzado."},
+                {roleCode: "HH-NET", category: "Infraestructura", position: "Especialista de Redes y Conectividad", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "LAN/WAN/WiFi, routing, VPN, conectividad híbrida y diagnóstico de redes."},
+                {roleCode: "HH-VIRT", category: "Infraestructura", position: "Especialista de Virtualización", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "VMware, Hyper-V, virtualización, capacidad y modernización de plataforma."},
+                {roleCode: "HH-BCDR", category: "Continuidad", position: "Especialista Backup / Disaster Recovery", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Diseño y ejecución de estrategias de respaldo, recuperación y continuidad."},
+                {roleCode: "HH-BI", category: "Datos", position: "Consultor BI / Analítica", level: "Senior", smbRate: 35.00, corporateRate: 45.00, description: "Análisis, modelado, KPIs, dashboards y definición de soluciones de inteligencia de negocio."},
+                {roleCode: "HH-PBI", category: "Datos", position: "Desarrollador Power BI", level: "Mid/Senior", smbRate: 35.00, corporateRate: 45.00, description: "Modelado semántico, Power Query, DAX, reportes y dashboards Power BI."},
+                {roleCode: "HH-DE", category: "Datos", position: "Data Engineer", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Ingesta, transformación, pipelines, integración y arquitectura de datos."},
+                {roleCode: "HH-FAB", category: "Datos", position: "Especialista Microsoft Fabric", level: "Senior", smbRate: 40.00, corporateRate: 50.00, description: "Arquitectura, implementación y optimización de workloads Microsoft Fabric."}
+              ] AS rate
+              MERGE (h:HourlyRate {roleCode: rate.roleCode})
+              SET h.category = rate.category,
+                  h.position = rate.position,
+                  h.level = rate.level,
+                  h.smbRate = rate.smbRate,
+                  h.corporateRate = rate.corporateRate,
+                  h.description = rate.description
