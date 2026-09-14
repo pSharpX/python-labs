@@ -18,7 +18,7 @@ class TariffCalculationService:
     def calculate_service_cost(
             self,
             role_code: str,
-            segment: SEGMENT_CODE,  # 'SMB' or 'Corporate'
+            segment: SEGMENT_CODE,
             hours: float,
             surcharge_code: Optional[str] = None
     ) -> CostCalculationDTO:

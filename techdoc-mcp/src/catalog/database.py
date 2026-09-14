@@ -18,6 +18,7 @@ SessionFactory = sessionmaker(
 )
 
 def get_db():
+    """ Generator intended for dependency injection frameworks such as FastAPI. """
     session: Session = SessionFactory()
     try:
         yield session
