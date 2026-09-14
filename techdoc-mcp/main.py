@@ -83,6 +83,11 @@ def get_graph_context():
             # Easily serialize to clean JSON for LLM ingestion
             print(footprint.model_dump_json(indent=2))
 
+        print("\n>> 4. Finds matching role nodes (Typed Output)")
+        hourly_rates: List[HourlyRateDTO] = rag_service.search_similar_roles("Desarrollo")
+        for hr in hourly_rates:
+            print(f"[{hr.role_code}] {hr.category} ({hr.position}) ({hr.level})")
+
     finally:
         rag_service.close()
 
