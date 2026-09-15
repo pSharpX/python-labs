@@ -3,7 +3,7 @@ services:
   neo4j:
     image: neo4j:2025.10.1-community-bullseye
     profiles: [rag]
-    container_name: neo4j
+    container_name: techdoc-catalog-graph
     ports:
       - "7474:7474" # Neo4j HTTP
       - "7473:7473" # Neo4j HTTPS
@@ -27,7 +27,7 @@ services:
   pgvector:
     image: pgvector/pgvector:pg16
     profiles: [rag]
-    container_name: pgvector
+    container_name: techdoc-catalog-db
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -36,7 +36,7 @@ services:
     ports:
       - "5442:5432"
     volumes:
-      - pgvector_data:/var/lib/postgresql/data
+      - techdoc_catalog_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
@@ -45,6 +45,7 @@ services:
       start_period: 30s
 
   liquibase:
+    container_name: techdoc-db-liquibase
     profiles: [rag]
     build:
       context: ./liquibase
@@ -66,7 +67,7 @@ services:
     profiles: [ rag ]
     build:
       context: ./liquibase
-    container_name: liquibase-neo4j
+    container_name: techdoc-graph-liquibase
     depends_on:
       neo4j:
         condition: service_healthy
@@ -81,6 +82,6 @@ services:
       update
 
 volumes:
-  pgvector_data:
+  techdoc_catalog_data:
   neo4j_data:
   neo4j_logs:

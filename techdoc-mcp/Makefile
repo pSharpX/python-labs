@@ -2,7 +2,6 @@
 export
 
 
-DB_JDBC_URL=jdbc:postgresql://host.docker.internal:5432/vectordb
 COMPOSE_PROFILES=rag
 
 build:
