@@ -7,7 +7,7 @@ from deepeval.integrations.langchain import CallbackHandler
 from deepeval.metrics import TaskCompletionMetric, ToolCorrectnessMetric
 from deepeval.test_case import ToolCall, LLMTestCase
 
-from agents import TechDocAgent
+from draft_agent import TechDocAgent
 from settings import BaseModelSettings
 
 golden_input = """

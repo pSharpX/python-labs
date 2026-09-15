@@ -13,7 +13,6 @@ class SaveMarkdownInput(BaseModel):
         description="Nombre del archivo Markdown que se creará, incluyendo la extensión .md."
     )
 
-
 class SaveMarkdownTool(BaseTool):
     name: str = "save_markdown"
     description: str = (
