@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 from neo4j import Driver, GraphDatabase
@@ -7,8 +6,6 @@ from settings import GraphSettings
 from src.catalog.graph.domain.graph_rag_domain import ProductServiceDTO, TargetSegment, HourlyRateDTO, \
     ServiceFootprintDTO
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # =========================================================================
 # Neo4j GraphRAG Service Class
