@@ -1,9 +1,15 @@
+import warnings
+
 from guardrails import Guard, OnFailAction, settings
 from guardrails_ai.detect_pii import DetectPII
 from guardrails_ai.detect_jailbreak import DetectJailbreak
 from guardrails_ai.detect_system_prompt_leakage import DetectSystemPromptLeakage
 from guardrails_ai.regex_match import RegexMatch
 from guardrails_ai.toxic_language import ToxicLanguage
+from transformers import logging
+
+warnings.filterwarnings("ignore")
+logging.set_verbosity_error()
 
 settings.disable_tracing = True
 settings.rc.enable_metrics = False
@@ -22,7 +28,7 @@ def validate_pii(user_input: str):
         DetectPII(
             pii_entities=["EMAIL_ADDRESS", "PHONE_NUMBER", "PERSON", "CREDIT_CARD"],
             on_fail="exception"
-        )
+        ),
     )
     guard.validate(user_input)
 
@@ -36,12 +42,19 @@ def validate_pattern(user_input: str):
 
 def validate_jailbreak(user_input: str):
     guard = Guard().use(
-        DetectJailbreak,
-        threshold=0.81,
-        on_fail="exception"
+        DetectJailbreak(
+            threshold=0.81,
+            on_fail="exception"
+        ),
     )
     guard.validate(user_input)
 
 def validate_system_prompt_leakage(user_input: str):
-    guard = Guard().use(DetectSystemPromptLeakage)
+    guard = Guard().use(
+        DetectSystemPromptLeakage(
+            system_prompt="Eres un sistema especializado en captura y refinamiento de requerimientos",
+            threshold=40,
+            on_fail="exception"
+        ),
+    )
     guard.validate(user_input)

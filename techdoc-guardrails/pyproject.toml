@@ -5,6 +5,7 @@ description = "An AI-powered assistant that transforms functional requirements i
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "deepteam==1.0.9",
     "guardrails-ai>=0.11.0",
     "guardrails-ai-detect-jailbreak>=0.1.6",
     "guardrails-ai-detect-pii>=0.0.6",

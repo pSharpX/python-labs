@@ -1,6 +1,8 @@
 -include .env
 export
 
+HF_HUB_DISABLE_PROGRESS_BARS=1
+
 sync:
 	uv sync --all-groups
 install:
@@ -8,9 +10,6 @@ install:
 
 run:
 	uv run main.py
-scan:
-	uv run security.py
-
 
 # work
 #guard_init:
