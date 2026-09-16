@@ -1,14 +1,15 @@
-from typing import TypedDict, Literal, Optional
+from typing import Literal, Optional
 
+from langchain.agents import AgentState
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel, Field
 
+from agents import TechDocReqScoutAgent
 from config import langfuse_handler
-from prompts import REQ_SCOUT_SYSTEM_PROMPT, \
-    TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
+from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
 from tools import SaveMarkdownTool
 
@@ -30,7 +31,7 @@ class TechDocBuilderOutput(BaseModel):
         description="Versión final del documento técnico, estructurada y preparada para ser presentada al usuario.",
     )
 
-class TechDocBuilderState(TypedDict):
+class TechDocBuilderState(AgentState):
     user_request: str
     resources: list[str]
     requirements: str
@@ -54,9 +55,11 @@ class TechDocBuilderGraph:
         )
         self.__tool = SaveMarkdownTool()
 
-        self.__req_scout_prompt = SystemMessage(content=REQ_SCOUT_SYSTEM_PROMPT)
+        #self.__req_scout_prompt = SystemMessage(content=REQ_SCOUT_SYSTEM_PROMPT)
         self.__tech_architect_prompt = SystemMessage(content=TECH_ARCHITECT_SYSTEM_PROMPT)
         self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATOR_SYSTEM_PROMPT)
+
+        self.__req_scout_agent = TechDocReqScoutAgent()
 
         self.graph = self.__build()
 
@@ -123,7 +126,7 @@ class TechDocBuilderGraph:
         }
 
     def __build(self):
-        self.__builder.add_node("requirements_scout_node", self.__requirements_scout_node)
+        self.__builder.add_node("requirements_scout_node", self.__req_scout_agent.unwrap())
         self.__builder.add_node("tech_architect_node", self.__tech_architect_node)
         self.__builder.add_node("financial_estimator_node", self.__financial_estimator_node)
         self.__builder.add_node("aggregator_node", self.__aggregator_node)

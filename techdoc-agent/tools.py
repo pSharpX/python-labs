@@ -1,17 +1,16 @@
+
+from abc import ABC
 from pathlib import Path
-from typing import Type
+from typing import Generic, TypeVar, Type
 
-from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool
+from langchain_core.tools import BaseTool, ToolException
+from langgraph.prebuilt import ToolRuntime
+from langgraph.types import Command
+from pydantic import BaseModel
 
+from state import TechDocReqScoutState, Priority, Requirement
+from tools_input import SaveMarkdownInput, UpdateFunctionalRequirementInput
 
-class SaveMarkdownInput(BaseModel):
-    content: str = Field(
-        description="Contenido en formato Markdown que se guardará en el archivo."
-    )
-    filename: str = Field(
-        description="Nombre del archivo Markdown que se creará, incluyendo la extensión .md."
-    )
 
 class SaveMarkdownTool(BaseTool):
     name: str = "save_markdown"
@@ -37,3 +36,119 @@ class SaveMarkdownTool(BaseTool):
         output_path.write_text(content, encoding="utf-8")
 
         return f"Markdown file successfully saved to: {output_path}"
+
+    async def _arun(self, content: str, filename: str) -> str:
+        return self._run(content, filename)
+
+
+StateT = TypeVar("StateT")
+
+class StateMutationTool(
+    BaseTool,
+    Generic[StateT],
+    ABC,
+):
+    """
+    Base class for tools that mutate LangGraph agent state.
+    """
+
+    def _validate_runtime(
+        self,
+        runtime: ToolRuntime[StateT] | None,
+    ) -> ToolRuntime[StateT]:
+        if runtime is None:
+            raise ToolException(
+                "Runtime is required for state mutation."
+            )
+
+        return runtime
+
+
+class UpdateFunctionalRequirementTool(
+    StateMutationTool[TechDocReqScoutState]
+):
+    name: str = "update_functional_requirement"
+    description: str = (
+        "Actualiza un requerimiento funcional identificado durante "
+        "el análisis. Utilizar para crear o modificar un requerimiento "
+        "funcional sin inventar información."
+    )
+
+    args_schema: type[BaseModel] = UpdateFunctionalRequirementInput
+
+    def _run(
+        self,
+        requirement_id: str,
+        description: str,
+        priority: Priority,
+        actor: str | None = None,
+        process: str | None = None,
+        acceptance_criteria: list[str] | None = None,
+        dependencies: list[str] | None = None,
+        source: str | None = None,
+        confirmed: bool = False,
+        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
+    ) -> Command:
+        runtime = self._validate_runtime(runtime)
+
+        requirement = Requirement(
+            id=requirement_id,
+            description=description,
+            priority=priority,
+            actor=actor,
+            process=process,
+            acceptance_criteria=acceptance_criteria or [],
+            dependencies=dependencies or [],
+            source=source,
+            confirmed=confirmed,
+        )
+
+        current = list(
+            runtime.state.get(
+                "functional_requirements",
+                [],
+            )
+        )
+
+        replaced = False
+
+        for index, existing in enumerate(current):
+            if existing.id == requirement_id:
+                current[index] = requirement
+                replaced = True
+                break
+
+        if not replaced:
+            current.append(requirement)
+
+        return Command(
+            update={
+                "functional_requirements": current,
+            }
+        )
+
+    async def _arun(
+        self,
+        requirement_id: str,
+        description: str,
+        priority: Priority,
+        actor: str | None = None,
+        process: str | None = None,
+        acceptance_criteria: list[str] | None = None,
+        dependencies: list[str] | None = None,
+        source: str | None = None,
+        confirmed: bool = False,
+        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
+    ) -> Command:
+        return self._run(
+            requirement_id,
+            description,
+            priority,
+            actor,
+            process,
+            acceptance_criteria,
+            dependencies,
+            source,
+            confirmed,
+            runtime
+        )

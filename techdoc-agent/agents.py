@@ -1,24 +1,20 @@
 import warnings
 
-from langchain.agents import create_agent, AgentState
+from langchain.agents import create_agent
 from langchain.agents.middleware import ToolRetryMiddleware, PIIMiddleware
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 
 from prompts import REQ_SCOUT_SYSTEM_PROMPT
 from settings import BaseModelSettings
+from state import TechDocReqScoutState
+
 
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
     module=r"pydantic\..*",
 )
-
-
-class TechDocReqScoutState(AgentState):
-    user_request: str
-    resources: list[str]
-    requirements: str
 
 class TechDocReqScoutAgent:
     def __init__(self):
@@ -29,7 +25,6 @@ class TechDocReqScoutAgent:
             temperature=self.__model_settings.temperature,
         )
         self.__system_prompt = REQ_SCOUT_SYSTEM_PROMPT
-        # noinspection bad-argument-type
         self.__agent = create_agent(
             model=self.__model,
             tools=[
