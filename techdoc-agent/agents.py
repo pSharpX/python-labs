@@ -8,13 +8,27 @@ from langgraph.checkpoint.memory import InMemorySaver
 from prompts import REQ_SCOUT_SYSTEM_PROMPT
 from settings import BaseModelSettings
 from state import TechDocReqScoutState
-
+from tools import UpdateFunctionalRequirementTool, AddMissingInformationTool, AddClientQuestionTool, AddAssumptionTool, \
+    AddFunctionalRiskTool, UpdateScopeTool, AddActorTool, AddProcessTool, AddIntegrationTool, GetAnalysisStatusTool
 
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
     module=r"pydantic\..*",
 )
+
+requirement_scout_tools = [
+    UpdateFunctionalRequirementTool(),
+    AddMissingInformationTool(),
+    AddClientQuestionTool(),
+    AddAssumptionTool(),
+    AddFunctionalRiskTool(),
+    UpdateScopeTool(),
+    AddActorTool(),
+    AddProcessTool(),
+    AddIntegrationTool(),
+    GetAnalysisStatusTool(),
+]
 
 class TechDocReqScoutAgent:
     def __init__(self):
@@ -27,8 +41,7 @@ class TechDocReqScoutAgent:
         self.__system_prompt = REQ_SCOUT_SYSTEM_PROMPT
         self.__agent = create_agent(
             model=self.__model,
-            tools=[
-            ],
+            tools=requirement_scout_tools,
             system_prompt=self.__system_prompt,
             middleware=[
                 #CustomGuardsMiddleware(),

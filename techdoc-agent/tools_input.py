@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from state import Priority
+from state import Priority, Criticality
 
 
 class SaveMarkdownInput(BaseModel):
@@ -52,4 +52,148 @@ class UpdateFunctionalRequirementInput(BaseModel):
     confirmed: bool = Field(
         default=False,
         description="Indica si el requisito ha sido confirmado."
+    )
+
+class AddAssumptionInput(BaseModel):
+    description: str = Field(
+        description="Descripción del supuesto identificado."
+    )
+
+class AddMissingInformationInput(BaseModel):
+    description: str = Field(
+        description="Descripción de la información faltante."
+    )
+
+    criticality: Criticality = Field(
+        description="Nivel de criticidad de la información."
+    )
+
+    reason: str | None = Field(
+        default=None,
+        description="Razón por la que la información es necesaria."
+    )
+
+class AddClientQuestionInput(BaseModel):
+    question: str = Field(
+        description="Pregunta concreta para el cliente."
+    )
+
+    reason: str = Field(
+        description="Razón de la pregunta."
+    )
+
+    related_to: str | None = Field(
+        default=None,
+        description="Requerimiento, proceso o elemento relacionado."
+    )
+
+class AddActorInput(BaseModel):
+    name: str = Field(
+        description="Nombre del actor."
+    )
+
+    actor_type: str = Field(
+        description="Tipo de actor: usuario, área, sistema o tercero."
+    )
+
+    responsibility: str = Field(
+        description="Responsabilidad del actor."
+    )
+
+class AddProcessInput(BaseModel):
+    name: str = Field(
+        description="Nombre del proceso."
+    )
+
+    objective: str = Field(
+        description="Objetivo del proceso."
+    )
+
+    actors: list[str] = Field(
+        default_factory=list,
+        description="Actores involucrados."
+    )
+
+    main_flow: list[str] = Field(
+        default_factory=list,
+        description="Flujo principal conocido."
+    )
+
+    exceptions: list[str] = Field(
+        default_factory=list,
+        description="Excepciones conocidas."
+    )
+
+    result: str | None = Field(
+        default=None,
+        description="Resultado del proceso."
+    )
+
+class UpdateScopeInput(BaseModel):
+    included: list[str] = Field(
+        default_factory=list,
+        description="Elementos incluidos."
+    )
+
+    excluded: list[str] = Field(
+        default_factory=list,
+        description="Elementos excluidos."
+    )
+
+    to_confirm: list[str] = Field(
+        default_factory=list,
+        description="Elementos pendientes de confirmación."
+    )
+
+class AddIntegrationInput(BaseModel):
+    system: str = Field(
+        description="Sistema involucrado."
+    )
+
+    purpose: str = Field(
+        description="Propósito funcional de la integración."
+    )
+
+    data: list[str] = Field(
+        default_factory=list,
+        description="Datos intercambiados."
+    )
+
+    direction: str | None = Field(
+        default=None,
+        description="Dirección del intercambio."
+    )
+
+    frequency: str | None = Field(
+        default=None,
+        description="Frecuencia conocida."
+    )
+
+    status: str = Field(
+        default="To Be Defined",
+        description="Estado de definición."
+    )
+
+class AddFunctionalRiskInput(BaseModel):
+    description: str = Field(
+        description="Descripción del riesgo."
+    )
+
+    impact: str = Field(
+        description="Impacto funcional."
+    )
+
+    cause: str = Field(
+        description="Causa conocida."
+    )
+
+    action_or_validation: str | None = Field(
+        default=None,
+        description="Acción o validación requerida."
+    )
+
+class GetAnalysisStatusInput(BaseModel):
+    include_details: bool = Field(
+        default=False,
+        description="Incluir detalles de elementos pendientes."
     )

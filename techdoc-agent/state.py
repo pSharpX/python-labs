@@ -4,6 +4,8 @@ from langchain.agents import AgentState
 from pydantic import Field, BaseModel
 
 Priority = Literal["must", "should", "could", "to_be_defined"]
+Criticality = Literal["Critical", "Important", "Desirable"]
+Status = Literal["analyzing", "awaiting_client_information", "ready_for_architecture"]
 
 class Requirement(BaseModel):
     id: str
@@ -19,7 +21,6 @@ class Requirement(BaseModel):
     source: str | None = None
     confirmed: bool = False
 
-
 class NonFunctionalRequirement(BaseModel):
     id: str
     category: str
@@ -31,13 +32,11 @@ class NonFunctionalRequirement(BaseModel):
     source: str | None = None
     confirmed: bool = False
 
-
 class Actor(BaseModel):
     name: str
     type: str
     responsibility: str
     source: str | None = None
-
 
 class Process(BaseModel):
     name: str
@@ -48,7 +47,6 @@ class Process(BaseModel):
     exceptions: list[str] = Field(default_factory=list)
     result: str | None = None
 
-
 class Integration(BaseModel):
     system: str
     purpose: str
@@ -58,19 +56,16 @@ class Integration(BaseModel):
     frequency: str | None = None
     status: str = "por confirmar"
 
-
 class Risk(BaseModel):
     description: str
     impact: str
     cause: str
     action_validation: str
 
-
 class Assumption(BaseModel):
     description: str
     requires_validation: bool = True
     source: str | None = None
-
 
 class MissingInformation(BaseModel):
     description: str
@@ -79,13 +74,17 @@ class MissingInformation(BaseModel):
         "important",
         "desirable",
     ]
+    reason: str | None
 
+class ClientQuestion(BaseModel):
+    question: str
+    reason: str
+    related_to: str | None = None
 
 class ProposalScope(BaseModel):
     included: list[str] = Field(default_factory=list)
     excluded: list[str] = Field(default_factory=list)
     to_confirm: list[str] = Field(default_factory=list)
-
 
 class TechDocReqScoutState(AgentState):
     user_request: str
@@ -122,10 +121,11 @@ class TechDocReqScoutState(AgentState):
 
     missing_information: list[MissingInformation]
 
-    questions: list[str]
+    client_questions: list[ClientQuestion]
 
     # Current interaction status
     waiting_for_customer: bool
+    status: Status
 
     # Generated output
     final_brief: str | None
