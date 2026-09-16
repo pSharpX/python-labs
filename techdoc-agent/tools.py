@@ -1,7 +1,7 @@
 
 from abc import ABC
 from pathlib import Path
-from typing import Generic, TypeVar, Type
+from typing import TypeVar, Type
 
 from langchain_core.tools import BaseTool, ToolException
 from langgraph.prebuilt import ToolRuntime
@@ -46,19 +46,15 @@ class SaveMarkdownTool(BaseTool):
 
 StateT = TypeVar("StateT")
 
-class StateMutationTool(
-    BaseTool,
-    Generic[StateT],
-    ABC,
-):
+class StateMutationTool(BaseTool, ABC):
     """
     Base class for tools that mutate LangGraph agent state.
     """
 
     def _validate_runtime(
         self,
-        runtime: ToolRuntime[StateT] | None,
-    ) -> ToolRuntime[StateT]:
+        runtime: ToolRuntime | None,
+    ) -> ToolRuntime:
         if runtime is None:
             raise ToolException(
                 "Runtime is required for state mutation."
@@ -68,7 +64,7 @@ class StateMutationTool(
 
 
 class UpdateFunctionalRequirementTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "update_functional_requirement"
     description: str = (
@@ -158,7 +154,7 @@ class UpdateFunctionalRequirementTool(
 
 
 class AddAssumptionTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_assumption"
     description: str = (
@@ -208,7 +204,7 @@ class AddAssumptionTool(
 
 
 class AddMissingInformationTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_missing_information"
     description: str = (
@@ -264,7 +260,7 @@ class AddMissingInformationTool(
 
 
 class AddClientQuestionTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_client_question"
     description: str = (
@@ -321,7 +317,7 @@ class AddClientQuestionTool(
 
 
 class AddActorTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_actor"
     description: str = (
@@ -373,7 +369,7 @@ class AddActorTool(
 
 
 class AddProcessTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_process"
     description: str = (
@@ -436,7 +432,7 @@ class AddProcessTool(
 
 
 class UpdateScopeTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "update_scope"
     description: str = (
@@ -476,7 +472,7 @@ class UpdateScopeTool(
 
 
 class AddIntegrationTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_integration"
     description: str = (
@@ -533,7 +529,7 @@ class AddIntegrationTool(
 
 
 class AddFunctionalRiskTool(
-    StateMutationTool[TechDocReqScoutState]
+    StateMutationTool
 ):
     name: str = "add_functional_risk"
     description: str = (

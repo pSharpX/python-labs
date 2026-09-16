@@ -1,42 +1,19 @@
-from typing import Literal, Optional
+from typing import Literal
 
-from langchain.agents import AgentState
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
-from pydantic import BaseModel, Field
 
 from agents import TechDocReqScoutAgent
 from config import langfuse_handler
 from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
+from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput
 from tools import SaveMarkdownTool
 
 AgentNodeType = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
 
-class TechDocBuilderInput(BaseModel):
-    user_request: str = Field(
-        description="Solicitud del usuario que contiene los requerimientos funcionales y el objetivo del documento a elaborar.",
-    )
-    resources: Optional[list[str]] = Field(
-        description="Lista de recursos adicionales que contienen requerimientos, contexto o fuentes de información relevantes para elaborar el documento.",
-    )
-
-class TechDocBuilderOutput(BaseModel):
-    raw_document_content: str = Field(
-        description="Contenido completo del documento generado en formato Markdown, listo para su procesamiento o almacenamiento.",
-    )
-    final_document: str = Field(
-        description="Versión final del documento técnico, estructurada y preparada para ser presentada al usuario.",
-    )
-
-class TechDocBuilderState(AgentState):
-    user_request: str
-    resources: list[str]
-    requirements: str
-    technical_document: str
-    financial_document: str
 
 class TechDocBuilderGraph:
     """A langgraph powered workflow that design and write technical-functional proposals and financial documents."""
@@ -55,7 +32,6 @@ class TechDocBuilderGraph:
         )
         self.__tool = SaveMarkdownTool()
 
-        #self.__req_scout_prompt = SystemMessage(content=REQ_SCOUT_SYSTEM_PROMPT)
         self.__tech_architect_prompt = SystemMessage(content=TECH_ARCHITECT_SYSTEM_PROMPT)
         self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATOR_SYSTEM_PROMPT)
 
@@ -80,6 +56,10 @@ class TechDocBuilderGraph:
     def __tech_architect_node(self, state: TechDocBuilderState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
+        print("="*120)
+        print(">> STATE")
+        print("=" * 120)
+        print(state)
         user_message = HumanMessage(state["requirements"])
         messages = [
             self.__tech_architect_prompt,
@@ -172,5 +152,5 @@ class TechDocBuilderGraph:
                 break
             elif question.strip() == "":
                 continue
-            state = self.invoke(input_obj, session_id, question)
+            state = self.invoke(question, input_obj, session_id)
             print(state)

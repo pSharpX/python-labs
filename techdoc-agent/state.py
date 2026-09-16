@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from langchain.agents import AgentState
 from pydantic import Field, BaseModel
@@ -100,13 +100,11 @@ class TechDocReqScoutState(AgentState):
     processes: list[Process]
 
     functional_requirements: list[Requirement]
-
     non_functional_requirements: list[
         NonFunctionalRequirement
     ]
 
     business_rules: list[str]
-
     integrations: list[Integration]
 
     data_and_volumetrics: list[str]
@@ -120,7 +118,6 @@ class TechDocReqScoutState(AgentState):
     assumptions: list[Assumption]
 
     missing_information: list[MissingInformation]
-
     client_questions: list[ClientQuestion]
 
     # Current interaction status
@@ -129,3 +126,25 @@ class TechDocReqScoutState(AgentState):
 
     # Generated output
     final_brief: str | None
+
+class TechDocBuilderInput(TechDocReqScoutState):
+    pass
+    # user_request: str = Field(
+    #     description="Solicitud del usuario que contiene los requerimientos funcionales y el objetivo del documento a elaborar.",
+    # )
+    # resources: Optional[list[str]] = Field(
+    #     description="Lista de recursos adicionales que contienen requerimientos, contexto o fuentes de información relevantes para elaborar el documento.",
+    # )
+
+class TechDocBuilderOutput(BaseModel):
+    raw_document_content: str = Field(
+        description="Contenido completo del documento generado en formato Markdown, listo para su procesamiento o almacenamiento.",
+    )
+    final_document: str = Field(
+        description="Versión final del documento técnico, estructurada y preparada para ser presentada al usuario.",
+    )
+
+class TechDocBuilderState(TechDocReqScoutState):
+    requirements: str
+    technical_document: str
+    financial_document: str

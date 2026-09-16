@@ -31,6 +31,16 @@ requirement_scout_tools = [
 ]
 
 class TechDocReqScoutAgent:
+    """
+    Agente especializado en el levantamiento y análisis de requerimientos.
+
+    Identifica y estructura las necesidades del cliente, transforma los
+    requerimientos en objetivos de negocio claros y establece criterios
+    de aceptación verificables.
+
+    Su propósito es construir un brief funcional completo que sirva como
+    base para las siguientes etapas del proceso de preventa.
+    """
     def __init__(self):
         self.__model_settings = BaseModelSettings()
         self.__model = init_chat_model(
