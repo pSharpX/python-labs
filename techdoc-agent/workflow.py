@@ -9,7 +9,7 @@ from agents import TechDocReqScoutAgent
 from config import langfuse_handler
 from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput
+from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput, Status, TechDocReqScoutState
 from tools import SaveMarkdownTool
 
 AgentNodeType = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
@@ -26,9 +26,10 @@ class TechDocBuilderGraph:
             temperature=self.__settings.temperature,
         )
         self.__builder = StateGraph(
-            state_schema=TechDocBuilderState,
-            input_schema=TechDocBuilderInput,
+            #input_schema=TechDocBuilderInput,
+            input_schema=TechDocReqScoutState,
             output_schema=TechDocBuilderOutput,
+            state_schema=TechDocBuilderState,
         )
         self.__tool = SaveMarkdownTool()
 
@@ -39,25 +40,25 @@ class TechDocBuilderGraph:
 
         self.graph = self.__build()
 
-    def __requirements_scout_node(self, state: TechDocBuilderState):
+    @staticmethod
+    def __pick_retriever(state: TechDocBuilderState) -> AgentNodeType:
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
-        user_request = state["user_request"]
-        resources = state["resources"] if "resources" in state else ""
-        user_message = HumanMessage(state["user_request"])
-        messages = [
-            self.__req_scout_prompt,
-            user_message,
-        ]
-        res = self.__model.invoke(messages)
-        return {
-            "requirements": res.content,
-        }
+
+        print("="*120)
+        print(">> PICK_RETRIEVER STATE")
+        print("=" * 120)
+        print(state)
+        status: Status = state["status"]
+
+        if status == "ready_for_architecture":
+            return "tech_architect_node"
+        return "requirements_scout_node"
 
     def __tech_architect_node(self, state: TechDocBuilderState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
         print("="*120)
-        print(">> STATE")
+        print(">> TECH ARCHITECT STATE")
         print("=" * 120)
         print(state)
         user_message = HumanMessage(state["requirements"])
@@ -112,7 +113,9 @@ class TechDocBuilderGraph:
         self.__builder.add_node("aggregator_node", self.__aggregator_node)
 
         self.__builder.add_edge(START, "requirements_scout_node")
-        self.__builder.add_edge("requirements_scout_node", "tech_architect_node")
+
+        self.__builder.add_conditional_edges("requirements_scout_node", self.__pick_retriever)
+
         self.__builder.add_edge("tech_architect_node", "financial_estimator_node")
         self.__builder.add_edge("financial_estimator_node", "aggregator_node")
         self.__builder.add_edge("aggregator_node", END)
@@ -122,7 +125,10 @@ class TechDocBuilderGraph:
     def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderOutput:
         return self.graph.invoke(
             input={
-                "user_request": question,
+                "user_request": input_obj.get("user_request", ""),
+                "messages": [
+                    HumanMessage(content=question)
+                ],
                 "resources": input_obj.get("resources", []),
             },
             config={
