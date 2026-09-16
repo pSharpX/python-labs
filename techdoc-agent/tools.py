@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Type
 
+from langchain_core.messages import ToolMessage
 from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
@@ -9,7 +10,7 @@ from pydantic import BaseModel
 from state import TechDocReqScoutState, Priority, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
     Process, Integration, Risk, ProposalScope
 from tools_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
-    AddMissingInformationInput, Criticality, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
+    AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
     AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput
 
 
@@ -59,39 +60,27 @@ def update_functional_requirement(
     Actualiza un requerimiento funcional identificado durante el análisis. Utilizar para crear o modificar un requerimiento funcional sin inventar información.
     """
 
-    requirement = Requirement(
-        id=requirement_id,
-        description=description,
-        priority=priority,
-        actor=actor,
-        process=process,
-        acceptance_criteria=acceptance_criteria or [],
-        dependencies=dependencies or [],
-        source=source,
-        confirmed=confirmed,
-    )
-
-    current = list(
-        runtime.state.get(
-            "functional_requirements",
-            [],
-        )
-    )
-
-    replaced = False
-
-    for index, existing in enumerate(current):
-        if existing.id == requirement_id:
-            current[index] = requirement
-            replaced = True
-            break
-
-    if not replaced:
-        current.append(requirement)
-
     return Command(
         update={
-            "functional_requirements": current,
+            "functional_requirements": [
+                Requirement(
+                    id=requirement_id,
+                    description=description,
+                    priority=priority,
+                    actor=actor,
+                    process=process,
+                    acceptance_criteria=acceptance_criteria or [],
+                    dependencies=dependencies or [],
+                    source=source,
+                    confirmed=confirmed,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Functional requirements updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -104,24 +93,20 @@ def add_assumption(
     Registra un supuesto identificado durante el análisis. Cualquier supuesto requiere validación del cliente.
     """
 
-    assumption = Assumption(
-        description=description,
-        requires_validation=True,
-    )
-
-    current = list(
-        runtime.state.get("assumptions", [])
-    )
-
-    if not any(
-            item.description == description
-            for item in current
-    ):
-        current.append(assumption)
-
     return Command(
         update={
-            "assumptions": current,
+            "assumptions": [
+                Assumption(
+                    description=description,
+                    requires_validation=True,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Assumptions updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -129,35 +114,29 @@ def add_assumption(
 def add_missing_information(
     runtime: ToolRuntime[TechDocReqScoutState],
     description: str,
-    criticality: Criticality,
+    criticality: str,
     reason: str | None = None,
 ) -> Command:
     """
     Registra información faltante que debe ser validada con el cliente. No asumir valores no proporcionados.
     """
-    item = MissingInformation(
-        description=description,
-        criticality=criticality,
-        reason=reason,
-    )
-
-    current = list(
-        runtime.state.get(
-            "missing_information",
-            [],
-        )
-    )
-
-    if not any(
-            x.description == description
-            for x in current
-    ):
-        current.append(item)
 
     return Command(
         update={
-            "missing_information": current,
+            "missing_information": [
+                MissingInformation(
+                    description=description,
+                    criticality=criticality,
+                    reason=reason,
+                )
+            ],
             "status": "awaiting_client_information",
+            "messages": [
+                ToolMessage(
+                    content=f"Missing Information updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -172,29 +151,22 @@ def add_client_question(
     Registra una pregunta concreta para el cliente. Utilizar únicamente para resolver ambigüedades, confirmar alcance o completar información necesaria.
     """
 
-    item = ClientQuestion(
-        question=question,
-        reason=reason,
-        related_to=related_to,
-    )
-
-    current = list(
-        runtime.state.get(
-            "client_questions",
-            [],
-        )
-    )
-
-    if not any(
-            x.question == question
-            for x in current
-    ):
-        current.append(item)
-
     return Command(
         update={
-            "client_questions": current,
-            "status": "awaiting_client_information",
+            "client_questions": [
+                ClientQuestion(
+                    question=question,
+                    reason=reason,
+                    related_to=related_to,
+                )
+            ],
+            #"status": "awaiting_client_information",
+            "messages": [
+                ToolMessage(
+                    content=f"Client Questions updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -209,25 +181,21 @@ def add_actor(
     Registra un actor identificado durante el análisis funcional. Solo utilizar información explícitamente proporcionada.
     """
 
-    actor = Actor(
-        name=name,
-        type=actor_type,
-        responsibility=responsibility,
-    )
-
-    current = list(
-        runtime.state.get("actors", [])
-    )
-
-    if not any(
-            x.name == name
-            for x in current
-    ):
-        current.append(actor)
-
     return Command(
         update={
-            "actors": current,
+            "actors": [
+                Actor(
+                    name=name,
+                    type=actor_type,
+                    responsibility=responsibility,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Actors updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -244,30 +212,25 @@ def add_process(
     """
     Registra un proceso funcional identificado durante el análisis. No introducir pasos técnicos ni decisiones de arquitectura.
     """
-    process = Process(
-        name=name,
-        objective=objective,
-        actors=actors,
-        main_flow=main_flow,
-        exceptions=exceptions,
-        result=result,
-    )
-
-    current = list(
-        runtime.state.get("processes", [])
-    )
-
-    current = [
-        item
-        for item in current
-        if item.name != name
-    ]
-
-    current.append(process)
 
     return Command(
         update={
-            "processes": current,
+            "processes": [
+                Process(
+                    name=name,
+                    objective=objective,
+                    actors=actors,
+                    main_flow=main_flow,
+                    exceptions=exceptions,
+                    result=result,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Processes updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -281,13 +244,20 @@ def update_scope(
     """
     Actualiza el alcance funcional separando elementos incluidos, excluidos y pendientes de confirmación.
     """
+
     return Command(
         update={
             "scope": ProposalScope(
                 included=included,
                 excluded=excluded,
                 to_confirm=to_confirm,
-            )
+            ),
+            "messages": [
+                ToolMessage(
+                    content=f"Scope updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -305,24 +275,24 @@ def add_integration(
     Registra una integración funcional identificada. No seleccionar protocolos, tecnologías o servicios técnicos.
     """
 
-    integration = Integration(
-        system=system,
-        purpose=purpose,
-        data=data,
-        direction=direction,
-        frequency=frequency,
-        status=status,
-    )
-
-    current = list(
-        runtime.state.get("integrations", [])
-    )
-
-    current.append(integration)
-
     return Command(
         update={
-            "integrations": current,
+            "integrations": [
+                Integration(
+                    system=system,
+                    purpose=purpose,
+                    data=data,
+                    direction=direction,
+                    frequency=frequency,
+                    status=status,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Integrations updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -338,22 +308,22 @@ def add_functional_risk(
     Registra un riesgo funcional relacionado con ambigüedades, dependencias, restricciones o vacíos.
     """
 
-    risk = Risk(
-        description=description,
-        impact=impact,
-        cause=cause,
-        action_validation=action_or_validation,
-    )
-
-    current = list(
-        runtime.state.get("risks", [])
-    )
-
-    current.append(risk)
-
     return Command(
         update={
-            "risks": current,
+            "risks": [
+                Risk(
+                    description=description,
+                    impact=impact,
+                    cause=cause,
+                    action_validation=action_or_validation,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Functional risk updated successfully.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
         }
     )
 
@@ -407,7 +377,7 @@ def get_analysis_status(
         "risks": len(
             state.get("risks", [])
         ),
-        "status": state.get("status"),
+        "status": state.get("status", "analyzing"),
     }
 
     if include_details:

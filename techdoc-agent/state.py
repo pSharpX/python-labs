@@ -1,10 +1,11 @@
-from typing import Literal, Optional
+from operator import add
+from typing import Literal, Annotated
 
 from langchain.agents import AgentState
 from pydantic import Field, BaseModel
 
 Priority = Literal["must", "should", "could", "to_be_defined"]
-Criticality = Literal["Critical", "Important", "Desirable"]
+Criticality = Literal["critical", "important", "desirable"]
 Status = Literal["analyzing", "awaiting_client_information", "ready_for_architecture"]
 
 class Requirement(BaseModel):
@@ -93,32 +94,34 @@ class TechDocReqScoutState(AgentState):
     context: str | None
     problem_need: str | None
 
-    objectives: list[str]
-    expected_results: list[str]
+    objectives: Annotated[list[str], add]
+    expected_results: Annotated[list[str], add]
 
-    actors: list[Actor]
-    processes: list[Process]
+    actors: Annotated[list[Actor], add]
+    processes: Annotated[list[Process], add]
 
-    functional_requirements: list[Requirement]
-    non_functional_requirements: list[
+    functional_requirements: Annotated[list[Requirement], add]
+    non_functional_requirements: Annotated[list[
         NonFunctionalRequirement
-    ]
+    ], add]
 
-    business_rules: list[str]
-    integrations: list[Integration]
+    business_rules: Annotated[list[str], add]
+    integrations: Annotated[list[Integration], add]
 
-    data_and_volumetrics: list[str]
+    data_and_volumetrics: Annotated[list[str], add]
 
     scope: ProposalScope
 
-    dependencies: list[str]
-    constraints: list[str]
+    dependencies: Annotated[list[str], add]
+    constraints: Annotated[list[str], add]
 
-    risks: list[Risk]
-    assumptions: list[Assumption]
+    risks: Annotated[list[Risk], add]
+    assumptions: Annotated[list[Assumption], add]
 
-    missing_information: list[MissingInformation]
-    client_questions: list[ClientQuestion]
+    missing_information: Annotated[list[
+        MissingInformation
+    ], add]
+    client_questions: Annotated[list[ClientQuestion], add]
 
     # Current interaction status
     waiting_for_customer: bool
