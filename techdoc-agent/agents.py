@@ -1,15 +1,15 @@
 import warnings
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import ToolRetryMiddleware, PIIMiddleware
+from langchain.agents.middleware import ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 
 from prompts import REQ_SCOUT_SYSTEM_PROMPT
 from settings import BaseModelSettings
 from state import TechDocReqScoutState
-from tools import UpdateFunctionalRequirementTool, AddMissingInformationTool, AddClientQuestionTool, AddAssumptionTool, \
-    AddFunctionalRiskTool, UpdateScopeTool, AddActorTool, AddProcessTool, AddIntegrationTool, GetAnalysisStatusTool
+from tools import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, add_actor, \
+    add_client_question, add_missing_information, add_assumption, update_functional_requirement
 
 warnings.filterwarnings(
     "ignore",
@@ -18,16 +18,16 @@ warnings.filterwarnings(
 )
 
 requirement_scout_tools = [
-    UpdateFunctionalRequirementTool(),
-    AddMissingInformationTool(),
-    AddClientQuestionTool(),
-    AddAssumptionTool(),
-    AddFunctionalRiskTool(),
-    UpdateScopeTool(),
-    AddActorTool(),
-    AddProcessTool(),
-    AddIntegrationTool(),
-    GetAnalysisStatusTool(),
+    update_functional_requirement,
+    add_assumption,
+    add_missing_information,
+    add_client_question,
+    add_actor,
+    add_process,
+    update_scope,
+    add_functional_risk,
+    add_integration,
+    get_analysis_status,
 ]
 
 class TechDocReqScoutAgent:
@@ -55,9 +55,9 @@ class TechDocReqScoutAgent:
             system_prompt=self.__system_prompt,
             middleware=[
                 #CustomGuardsMiddleware(),
-                PIIMiddleware("api_key", detector=r"sk-[a-zA-Z0-9]{32}", strategy="block"),
-                PIIMiddleware("credit_card", strategy="mask"),
-                PIIMiddleware("email", strategy="redact"),
+                #PIIMiddleware("api_key", detector=r"sk-[a-zA-Z0-9]{32}", strategy="block"),
+                #PIIMiddleware("credit_card", strategy="mask"),
+                #PIIMiddleware("email", strategy="redact"),
                 ToolRetryMiddleware(
                     max_retries=3,
                     backoff_factor=2.0,

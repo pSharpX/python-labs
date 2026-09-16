@@ -1,9 +1,7 @@
-
-from abc import ABC
 from pathlib import Path
-from typing import TypeVar, Type
+from typing import Type
 
-from langchain_core.tools import BaseTool, ToolException
+from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 from pydantic import BaseModel
@@ -44,629 +42,389 @@ class SaveMarkdownTool(BaseTool):
         return self._run(content, filename)
 
 
-StateT = TypeVar("StateT")
-
-class StateMutationTool(BaseTool, ABC):
+@tool(args_schema=UpdateFunctionalRequirementInput)
+def update_functional_requirement(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    requirement_id: str,
+    description: str,
+    priority: Priority,
+    actor: str | None = None,
+    process: str | None = None,
+    acceptance_criteria: list[str] | None = None,
+    dependencies: list[str] | None = None,
+    source: str | None = None,
+    confirmed: bool = False,
+) -> Command:
     """
-    Base class for tools that mutate LangGraph agent state.
+    Actualiza un requerimiento funcional identificado durante el análisis. Utilizar para crear o modificar un requerimiento funcional sin inventar información.
     """
 
-    def _validate_runtime(
-        self,
-        runtime: ToolRuntime | None,
-    ) -> ToolRuntime:
-        if runtime is None:
-            raise ToolException(
-                "Runtime is required for state mutation."
-            )
-
-        return runtime
-
-
-class UpdateFunctionalRequirementTool(
-    StateMutationTool
-):
-    name: str = "update_functional_requirement"
-    description: str = (
-        "Actualiza un requerimiento funcional identificado durante "
-        "el análisis. Utilizar para crear o modificar un requerimiento "
-        "funcional sin inventar información."
+    requirement = Requirement(
+        id=requirement_id,
+        description=description,
+        priority=priority,
+        actor=actor,
+        process=process,
+        acceptance_criteria=acceptance_criteria or [],
+        dependencies=dependencies or [],
+        source=source,
+        confirmed=confirmed,
     )
 
-    args_schema: type[BaseModel] = UpdateFunctionalRequirementInput
-
-    def _run(
-        self,
-        requirement_id: str,
-        description: str,
-        priority: Priority,
-        actor: str | None = None,
-        process: str | None = None,
-        acceptance_criteria: list[str] | None = None,
-        dependencies: list[str] | None = None,
-        source: str | None = None,
-        confirmed: bool = False,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        requirement = Requirement(
-            id=requirement_id,
-            description=description,
-            priority=priority,
-            actor=actor,
-            process=process,
-            acceptance_criteria=acceptance_criteria or [],
-            dependencies=dependencies or [],
-            source=source,
-            confirmed=confirmed,
+    current = list(
+        runtime.state.get(
+            "functional_requirements",
+            [],
         )
+    )
 
-        current = list(
-            runtime.state.get(
+    replaced = False
+
+    for index, existing in enumerate(current):
+        if existing.id == requirement_id:
+            current[index] = requirement
+            replaced = True
+            break
+
+    if not replaced:
+        current.append(requirement)
+
+    return Command(
+        update={
+            "functional_requirements": current,
+        }
+    )
+
+@tool(args_schema=AddAssumptionInput)
+def add_assumption(
+    description: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Registra un supuesto identificado durante el análisis. Cualquier supuesto requiere validación del cliente.
+    """
+
+    assumption = Assumption(
+        description=description,
+        requires_validation=True,
+    )
+
+    current = list(
+        runtime.state.get("assumptions", [])
+    )
+
+    if not any(
+            item.description == description
+            for item in current
+    ):
+        current.append(assumption)
+
+    return Command(
+        update={
+            "assumptions": current,
+        }
+    )
+
+@tool(args_schema=AddMissingInformationInput)
+def add_missing_information(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    description: str,
+    criticality: Criticality,
+    reason: str | None = None,
+) -> Command:
+    """
+    Registra información faltante que debe ser validada con el cliente. No asumir valores no proporcionados.
+    """
+    item = MissingInformation(
+        description=description,
+        criticality=criticality,
+        reason=reason,
+    )
+
+    current = list(
+        runtime.state.get(
+            "missing_information",
+            [],
+        )
+    )
+
+    if not any(
+            x.description == description
+            for x in current
+    ):
+        current.append(item)
+
+    return Command(
+        update={
+            "missing_information": current,
+            "status": "awaiting_client_information",
+        }
+    )
+
+@tool(args_schema=AddClientQuestionInput)
+def add_client_question(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    question: str,
+    reason: str,
+    related_to: str | None = None,
+) -> Command:
+    """
+    Registra una pregunta concreta para el cliente. Utilizar únicamente para resolver ambigüedades, confirmar alcance o completar información necesaria.
+    """
+
+    item = ClientQuestion(
+        question=question,
+        reason=reason,
+        related_to=related_to,
+    )
+
+    current = list(
+        runtime.state.get(
+            "client_questions",
+            [],
+        )
+    )
+
+    if not any(
+            x.question == question
+            for x in current
+    ):
+        current.append(item)
+
+    return Command(
+        update={
+            "client_questions": current,
+            "status": "awaiting_client_information",
+        }
+    )
+
+@tool(args_schema=AddActorInput)
+def add_actor(
+    name: str,
+    actor_type: str,
+    responsibility: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+):
+    """
+    Registra un actor identificado durante el análisis funcional. Solo utilizar información explícitamente proporcionada.
+    """
+
+    actor = Actor(
+        name=name,
+        type=actor_type,
+        responsibility=responsibility,
+    )
+
+    current = list(
+        runtime.state.get("actors", [])
+    )
+
+    if not any(
+            x.name == name
+            for x in current
+    ):
+        current.append(actor)
+
+    return Command(
+        update={
+            "actors": current,
+        }
+    )
+
+@tool(args_schema=AddProcessInput)
+def add_process(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    name: str,
+    objective: str,
+    actors: list[str],
+    main_flow: list[str],
+    exceptions: list[str],
+    result: str | None = None,
+):
+    """
+    Registra un proceso funcional identificado durante el análisis. No introducir pasos técnicos ni decisiones de arquitectura.
+    """
+    process = Process(
+        name=name,
+        objective=objective,
+        actors=actors,
+        main_flow=main_flow,
+        exceptions=exceptions,
+        result=result,
+    )
+
+    current = list(
+        runtime.state.get("processes", [])
+    )
+
+    current = [
+        item
+        for item in current
+        if item.name != name
+    ]
+
+    current.append(process)
+
+    return Command(
+        update={
+            "processes": current,
+        }
+    )
+
+@tool(args_schema=UpdateScopeInput)
+def update_scope(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    included: list[str],
+    excluded: list[str],
+    to_confirm: list[str],
+) -> Command:
+    """
+    Actualiza el alcance funcional separando elementos incluidos, excluidos y pendientes de confirmación.
+    """
+    return Command(
+        update={
+            "scope": ProposalScope(
+                included=included,
+                excluded=excluded,
+                to_confirm=to_confirm,
+            )
+        }
+    )
+
+@tool(args_schema=AddIntegrationInput)
+def add_integration(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    system: str,
+    purpose: str,
+    data: list[str],
+    direction: str | None = None,
+    frequency: str | None = None,
+    status: str = "To Be Defined",
+) -> Command:
+    """
+    Registra una integración funcional identificada. No seleccionar protocolos, tecnologías o servicios técnicos.
+    """
+
+    integration = Integration(
+        system=system,
+        purpose=purpose,
+        data=data,
+        direction=direction,
+        frequency=frequency,
+        status=status,
+    )
+
+    current = list(
+        runtime.state.get("integrations", [])
+    )
+
+    current.append(integration)
+
+    return Command(
+        update={
+            "integrations": current,
+        }
+    )
+
+@tool(args_schema=AddFunctionalRiskInput)
+def add_functional_risk(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    description: str,
+    impact: str,
+    cause: str,
+    action_or_validation: str | None = None,
+) -> Command:
+    """
+    Registra un riesgo funcional relacionado con ambigüedades, dependencias, restricciones o vacíos.
+    """
+
+    risk = Risk(
+        description=description,
+        impact=impact,
+        cause=cause,
+        action_validation=action_or_validation,
+    )
+
+    current = list(
+        runtime.state.get("risks", [])
+    )
+
+    current.append(risk)
+
+    return Command(
+        update={
+            "risks": current,
+        }
+    )
+
+@tool(args_schema=GetAnalysisStatusInput)
+def get_analysis_status(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    include_details: bool = False,
+) -> str:
+    """
+    Obtiene el estado actual del análisis funcional, incluyendo requisitos, información faltante y preguntas abiertas.
+    """
+
+    state = runtime.state
+    result = {
+        "requirements": len(
+            state.get(
                 "functional_requirements",
                 [],
             )
-        )
-
-        replaced = False
-
-        for index, existing in enumerate(current):
-            if existing.id == requirement_id:
-                current[index] = requirement
-                replaced = True
-                break
-
-        if not replaced:
-            current.append(requirement)
-
-        return Command(
-            update={
-                "functional_requirements": current,
-            }
-        )
-
-    async def _arun(
-        self,
-        requirement_id: str,
-        description: str,
-        priority: Priority,
-        actor: str | None = None,
-        process: str | None = None,
-        acceptance_criteria: list[str] | None = None,
-        dependencies: list[str] | None = None,
-        source: str | None = None,
-        confirmed: bool = False,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(
-            requirement_id,
-            description,
-            priority,
-            actor,
-            process,
-            acceptance_criteria,
-            dependencies,
-            source,
-            confirmed,
-            runtime
-        )
-
-
-class AddAssumptionTool(
-    StateMutationTool
-):
-    name: str = "add_assumption"
-    description: str = (
-        "Registra un supuesto identificado durante el análisis. "
-        "Todo supuesto requiere validación del cliente."
-    )
-
-    args_schema: type[BaseModel] = AddAssumptionInput
-
-    def _run(
-        self,
-        description: str,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        assumption = Assumption(
-            description=description,
-            requires_validation=True,
-        )
-
-        current = list(
-            runtime.state.get("assumptions", [])
-        )
-
-        if not any(
-                item.description == description
-                for item in current
-        ):
-            current.append(assumption)
-
-        return Command(
-            update={
-                "assumptions": current,
-            }
-        )
-
-    async def _arun(
-        self,
-        description: str,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(
-            description,
-            runtime
-        )
-
-
-class AddMissingInformationTool(
-    StateMutationTool
-):
-    name: str = "add_missing_information"
-    description: str = (
-        "Registra información faltante que debe ser validada "
-        "con el cliente. No asumir valores no proporcionados."
-    )
-
-    args_schema: type[BaseModel] = AddMissingInformationInput
-
-    def _run(
-        self,
-        description: str,
-        criticality: Criticality,
-        reason: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        item = MissingInformation(
-            description=description,
-            criticality=criticality,
-            reason=reason,
-        )
-
-        current = list(
-            runtime.state.get(
+        ),
+        "non_functional_requirements": len(
+            state.get(
+                "non_functional_requirements",
+                [],
+            )
+        ),
+        "actors": len(
+            state.get("actors", [])
+        ),
+        "processes": len(
+            state.get("processes", [])
+        ),
+        "integrations": len(
+            state.get("integrations", [])
+        ),
+        "missing_information": len(
+            state.get(
                 "missing_information",
                 [],
             )
-        )
-
-        if not any(
-                x.description == description
-                for x in current
-        ):
-            current.append(item)
-
-        return Command(
-            update={
-                "missing_information": current,
-                "status": "awaiting_client_information",
-            }
-        )
-
-    async def _arun(
-        self,
-        description: str,
-        criticality: Criticality,
-        reason: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(description, criticality, reason, runtime)
-
-
-class AddClientQuestionTool(
-    StateMutationTool
-):
-    name: str = "add_client_question"
-    description: str = (
-        "Registra una pregunta concreta para el cliente. "
-        "Utilizar únicamente para resolver ambigüedades, "
-        "confirmar alcance o completar información necesaria."
-    )
-
-    args_schema: type[BaseModel] = AddClientQuestionInput
-
-    def _run(
-        self,
-        question: str,
-        reason: str,
-        related_to: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        item = ClientQuestion(
-            question=question,
-            reason=reason,
-            related_to=related_to,
-        )
-
-        current = list(
-            runtime.state.get(
+        ),
+        "client_questions": len(
+            state.get(
                 "client_questions",
                 [],
             )
-        )
+        ),
+        "assumptions": len(
+            state.get("assumptions", [])
+        ),
+        "risks": len(
+            state.get("risks", [])
+        ),
+        "status": state.get("status"),
+    }
 
-        if not any(
-                x.question == question
-                for x in current
-        ):
-            current.append(item)
-
-        return Command(
-            update={
-                "client_questions": current,
-                "status": "awaiting_client_information",
-            }
-        )
-
-    async def _arun(
-        self,
-        question: str,
-        reason: str,
-        related_to: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(question, reason, related_to, runtime)
-
-
-class AddActorTool(
-    StateMutationTool
-):
-    name: str = "add_actor"
-    description: str = (
-        "Registra un actor identificado durante el análisis funcional. "
-        "Solo utilizar información explícitamente proporcionada."
-    )
-
-    args_schema: type[BaseModel] = AddActorInput
-
-    def _run(
-        self,
-        name: str,
-        actor_type: str,
-        responsibility: str,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ):
-        runtime = self._validate_runtime(runtime)
-
-        actor = Actor(
-            name=name,
-            type=actor_type,
-            responsibility=responsibility,
-        )
-
-        current = list(
-            runtime.state.get("actors", [])
-        )
-
-        if not any(
-                x.name == name
-                for x in current
-        ):
-            current.append(actor)
-
-        return Command(
-            update={
-                "actors": current,
-            }
-        )
-
-    async def _arun(
-        self,
-        name: str,
-        actor_type: str,
-        responsibility: str,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(name, actor_type, responsibility, runtime)
-
-
-class AddProcessTool(
-    StateMutationTool
-):
-    name: str = "add_process"
-    description: str = (
-        "Registra un proceso funcional identificado durante el análisis. "
-        "No introducir pasos técnicos ni decisiones de arquitectura."
-    )
-
-    args_schema: type[BaseModel] = AddProcessInput
-
-    def _run(
-        self,
-        name: str,
-        objective: str,
-        actors: list[str],
-        main_flow: list[str],
-        exceptions: list[str],
-        result: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ):
-        runtime = self._validate_runtime(runtime)
-
-        process = Process(
-            name=name,
-            objective=objective,
-            actors=actors,
-            main_flow=main_flow,
-            exceptions=exceptions,
-            result=result,
-        )
-
-        current = list(
-            runtime.state.get("processes", [])
-        )
-
-        current = [
-            item
-            for item in current
-            if item.name != name
+    if include_details:
+        result["missing_information_details"] = [
+            item.model_dump()
+            for item in state.get(
+                "missing_information",
+                [],
+            )
         ]
 
-        current.append(process)
-
-        return Command(
-            update={
-                "processes": current,
-            }
-        )
-
-    async def _arun(
-        self,
-        name: str,
-        objective: str,
-        actors: list[str],
-        main_flow: list[str],
-        exceptions: list[str],
-        result: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(name, objective, actors, main_flow, exceptions, result, runtime)
-
-
-class UpdateScopeTool(
-    StateMutationTool
-):
-    name: str = "update_scope"
-    description: str = (
-        "Actualiza el alcance funcional separando elementos "
-        "incluidos, excluidos y pendientes de confirmación."
-    )
-
-    args_schema: type[BaseModel] = UpdateScopeInput
-
-    def _run(
-        self,
-        included: list[str],
-        excluded: list[str],
-        to_confirm: list[str],
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        return Command(
-            update={
-                "scope": ProposalScope(
-                    included=included,
-                    excluded=excluded,
-                    to_confirm=to_confirm,
-                )
-            }
-        )
-
-    async def _arun(
-        self,
-        included: list[str],
-        excluded: list[str],
-        to_confirm: list[str],
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(included, excluded, to_confirm, runtime)
-
-
-class AddIntegrationTool(
-    StateMutationTool
-):
-    name: str = "add_integration"
-    description: str = (
-        "Registra una integración funcional identificada. "
-        "No seleccionar protocolos, tecnologías o servicios técnicos."
-    )
-
-    args_schema: type[BaseModel] = AddIntegrationInput
-
-    def _run(
-        self,
-        system: str,
-        purpose: str,
-        data: list[str],
-        direction: str | None = None,
-        frequency: str | None = None,
-        status: str = "To Be Defined",
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        integration = Integration(
-            system=system,
-            purpose=purpose,
-            data=data,
-            direction=direction,
-            frequency=frequency,
-            status=status,
-        )
-
-        current = list(
-            runtime.state.get("integrations", [])
-        )
-
-        current.append(integration)
-
-        return Command(
-            update={
-                "integrations": current,
-            }
-        )
-
-    async def _arun(
-        self,
-        system: str,
-        purpose: str,
-        data: list[str],
-        direction: str | None = None,
-        frequency: str | None = None,
-        status: str = "To Be Defined",
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(system, purpose, data, direction, frequency, status, runtime)
-
-
-class AddFunctionalRiskTool(
-    StateMutationTool
-):
-    name: str = "add_functional_risk"
-    description: str = (
-        "Registra un riesgo funcional relacionado con "
-        "ambigüedades, dependencias, restricciones o vacíos."
-    )
-
-    args_schema: type[BaseModel] = AddFunctionalRiskInput
-
-    def _run(
-        self,
-        description: str,
-        impact: str,
-        cause: str,
-        action_or_validation: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        runtime = self._validate_runtime(runtime)
-
-        risk = Risk(
-            description=description,
-            impact=impact,
-            cause=cause,
-            action_validation=action_or_validation,
-        )
-
-        current = list(
-            runtime.state.get("risks", [])
-        )
-
-        current.append(risk)
-
-        return Command(
-            update={
-                "risks": current,
-            }
-        )
-
-    async def _arun(
-        self,
-        description: str,
-        impact: str,
-        cause: str,
-        action_or_validation: str | None = None,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> Command:
-        return self._run(description, impact, cause, action_or_validation, runtime)
-
-
-class GetAnalysisStatusTool(
-    BaseTool
-):
-    name: str = "get_analysis_status"
-    description: str = (
-        "Obtiene el estado actual del análisis funcional, "
-        "incluyendo requisitos, información faltante y preguntas abiertas."
-    )
-
-    args_schema: type[BaseModel] = GetAnalysisStatusInput
-
-    def _run(
-        self,
-        include_details: bool = False,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> str:
-        if runtime is None:
-            raise ToolException(
-                "Runtime is required."
+        result["client_questions_details"] = [
+            item.model_dump()
+            for item in state.get(
+                "client_questions",
+                [],
             )
+        ]
 
-        state = runtime.state
-
-        result = {
-            "requirements": len(
-                state.get(
-                    "functional_requirements",
-                    [],
-                )
-            ),
-            "non_functional_requirements": len(
-                state.get(
-                    "non_functional_requirements",
-                    [],
-                )
-            ),
-            "actors": len(
-                state.get("actors", [])
-            ),
-            "processes": len(
-                state.get("processes", [])
-            ),
-            "integrations": len(
-                state.get("integrations", [])
-            ),
-            "missing_information": len(
-                state.get(
-                    "missing_information",
-                    [],
-                )
-            ),
-            "client_questions": len(
-                state.get(
-                    "client_questions",
-                    [],
-                )
-            ),
-            "assumptions": len(
-                state.get("assumptions", [])
-            ),
-            "risks": len(
-                state.get("risks", [])
-            ),
-            "status": state.get("status"),
-        }
-
-        if include_details:
-            result["missing_information_details"] = [
-                item.model_dump()
-                for item in state.get(
-                    "missing_information",
-                    [],
-                )
-            ]
-
-            result["client_questions_details"] = [
-                item.model_dump()
-                for item in state.get(
-                    "client_questions",
-                    [],
-                )
-            ]
-
-        return str(result)
-
-    async def _arun(
-        self,
-        include_details: bool = False,
-        runtime: ToolRuntime[TechDocReqScoutState] | None = None,
-    ) -> str:
-        return self._run(include_details, runtime)
+    return str(result)
