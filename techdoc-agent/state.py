@@ -4,9 +4,9 @@ from typing import Literal, Annotated
 from langchain.agents import AgentState
 from pydantic import Field, BaseModel
 
-Priority = Literal["must", "should", "could", "to_be_defined"]
-Criticality = Literal["critical", "important", "desirable"]
-Status = Literal["analyzing", "awaiting_client_information", "ready_for_architecture"]
+from constants import Priority
+from reducers import replace_string, merge_status
+
 
 class Requirement(BaseModel):
     id: str
@@ -91,8 +91,8 @@ class TechDocReqScoutState(AgentState):
     user_request: str
     resources: list[str]
     # Canonical functional analysis
-    context: str | None
-    problem_need: str | None
+    context: Annotated[str, replace_string]
+    problem_need: Annotated[str, replace_string]
 
     objectives: Annotated[list[str], add]
     expected_results: Annotated[list[str], add]
@@ -125,7 +125,7 @@ class TechDocReqScoutState(AgentState):
 
     # Current interaction status
     waiting_for_customer: bool
-    status: Status
+    status: Annotated[str, merge_status]
 
     # Generated output
     final_brief: str | None

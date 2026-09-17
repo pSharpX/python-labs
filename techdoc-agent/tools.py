@@ -8,10 +8,12 @@ from langgraph.types import Command
 from pydantic import BaseModel
 
 from state import TechDocReqScoutState, Priority, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
-    Process, Integration, Risk, ProposalScope
+    Process, Integration, Risk, ProposalScope, NonFunctionalRequirement
 from tools_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
     AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
-    AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput
+    AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput, UpdateNonFunctionalRequirementInput, \
+    UpdateContextInput, UpdateProblemNeedInput, AddBusinessRuleInput, AddDependencyInput, AddConstraintInput, \
+    AddDataVolumetricInput, AddObjectiveInput, AddExpectedResultInput, SetAnalysisStatusInput
 
 
 class SaveMarkdownTool(BaseTool):
@@ -42,6 +44,235 @@ class SaveMarkdownTool(BaseTool):
     async def _arun(self, content: str, filename: str) -> str:
         return self._run(content, filename)
 
+@tool(args_schema=UpdateContextInput)
+def update_context(
+    context: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Actualiza el contexto funcional del análisis.
+    Usar cuando exista información confirmada sobre la situación actual, motivación o contexto del cliente.
+    """
+
+    return Command(
+        update={
+            "context": context,
+            "messages": [
+                ToolMessage(
+                    content=f"Estado actualizado correctamente",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool(args_schema=UpdateProblemNeedInput)
+def update_problem_need(
+    problem_need: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Actualiza el problema o necesidad funcional identificada.
+    Solo debe utilizarse cuando la información esté sustentada por el cliente o por información explícitamente proporcionada.
+    """
+
+    return Command(
+        update={
+            "problem_need": problem_need,
+            "messages": [
+                ToolMessage(
+                    content=f"Estado actualizado correctamente",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("agregar_objetivo", args_schema=AddObjectiveInput)
+def add_objective(
+    objective: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Agrega un objetivo explícitamente identificado en la solicitud del cliente. No agregues objetivos inferidos.
+    """
+
+    return Command(
+        update={
+            "objectives": [objective],
+            "messages": [
+                ToolMessage(
+                    content="Objetivo agregado.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("agregar_resultado_esperado", args_schema=AddExpectedResultInput)
+def add_expected_result(
+    expected_result: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Agrega un resultado esperado explícitamente identificado en la solicitud del cliente.
+    """
+
+    return Command(
+        update={
+            "expected_results": [expected_result],
+            "messages": [
+                ToolMessage(
+                    content="Resultado esperado agregado.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("actualizar_estado_analisis", args_schema=SetAnalysisStatusInput)
+def set_analysis_status(
+    status: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Actualiza el estado general del análisis funcional.
+    Usa 'analyzing' mientras el análisis está en progreso, 'awaiting_client_information' cuando existe información crítica pendiente del cliente, y 'ready_for_architecture' únicamente cuando el análisis funcional está suficientemente completo.
+    """
+
+    return Command(
+        update={
+            "status": status,
+            "messages": [
+                ToolMessage(
+                    content=f"Estado actualizado a '{status}'.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("agregar_regla_negocio", args_schema=AddBusinessRuleInput)
+def add_business_rule(
+    rule: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Registra una regla de negocio identificada explícitamente.
+    """
+
+    return Command(
+        update={
+            "business_rules": [rule],
+            "messages": [
+                ToolMessage(
+                    content="Regla de negocio agregada.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("agregar_dependencia", args_schema=AddDependencyInput)
+def add_dependency(
+    dependency: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Registra una dependencia funcional identificada en el análisis.
+    """
+
+    return Command(
+        update={
+            "dependencies": [dependency],
+            "messages": [
+                ToolMessage(
+                    content="Dependencia agregada.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("agregar_restriccion", args_schema=AddConstraintInput)
+def add_constraint(
+    constraint: str,
+    runtime: ToolRuntime[TechDocReqScoutState],
+) -> Command:
+    """
+    Registra una restricción funcional explícitamente identificada.
+    """
+
+    return Command(
+        update={
+            "constraints": [constraint],
+            "messages": [
+                ToolMessage(
+                    content="Restricción agregada.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool("agregar_dato_volumetria", args_schema=AddDataVolumetricInput)
+def add_data_volumetric(
+    information: str,
+    runtime: ToolRuntime,
+) -> Command:
+    """
+    Registra información conocida sobre datos, cantidades, frecuencias o volumetrías.
+    """
+
+    return Command(
+        update={
+            "data_and_volumetrics": [information],
+            "messages": [
+                ToolMessage(
+                    content="Información de datos o volumetría agregada.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+@tool(args_schema=UpdateNonFunctionalRequirementInput)
+def update_non_functional_requirement(
+    runtime: ToolRuntime[TechDocReqScoutState],
+    requirement_id: str,
+    category: str,
+    description: str,
+    priority: Priority,
+    acceptance_criteria: list[str] | None = None,
+    source: str | None = None,
+    confirmed: bool = False,
+) -> Command:
+    """
+    Actualiza un requerimiento no funcional identificado durante el análisis.
+    Utilizar para crear o modificar un requerimiento no funcional sin inventar información.
+    """
+
+    return Command(
+        update={
+            "non_functional_requirements": [
+                NonFunctionalRequirement(
+                    id=requirement_id,
+                    category=category,
+                    description=description,
+                    priority=priority,
+                    acceptance_criteria=acceptance_criteria or [],
+                    source=source,
+                    confirmed=confirmed,
+                )
+            ],
+            "messages": [
+                ToolMessage(
+                    content=f"Estado actualizado correctamente",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
 
 @tool(args_schema=UpdateFunctionalRequirementInput)
 def update_functional_requirement(
@@ -77,7 +308,7 @@ def update_functional_requirement(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Functional requirements updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -103,7 +334,7 @@ def add_assumption(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Assumptions updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -133,7 +364,7 @@ def add_missing_information(
             "status": "awaiting_client_information",
             "messages": [
                 ToolMessage(
-                    content=f"Missing Information updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -163,7 +394,7 @@ def add_client_question(
             #"status": "awaiting_client_information",
             "messages": [
                 ToolMessage(
-                    content=f"Client Questions updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -192,7 +423,7 @@ def add_actor(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Actors updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -227,7 +458,7 @@ def add_process(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Processes updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -254,7 +485,7 @@ def update_scope(
             ),
             "messages": [
                 ToolMessage(
-                    content=f"Scope updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -289,7 +520,7 @@ def add_integration(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Integrations updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -320,7 +551,7 @@ def add_functional_risk(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Functional risk updated successfully.",
+                    content=f"Estado actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],

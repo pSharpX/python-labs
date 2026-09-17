@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from state import Priority, Criticality
+from constants import Priority, Criticality, AnalysisStatus
 
 
 class SaveMarkdownInput(BaseModel):
@@ -9,6 +9,26 @@ class SaveMarkdownInput(BaseModel):
     )
     filename: str = Field(
         description="Nombre del archivo Markdown que se creará, incluyendo la extensión .md."
+    )
+
+class UpdateContextInput(BaseModel):
+    context: str = Field(
+        description="Contexto funcional del analisis."
+    )
+
+class UpdateProblemNeedInput(BaseModel):
+    problem_need: str = Field(
+        description="Problema o necesidad funcional identificada."
+    )
+
+class AddObjectiveInput(BaseModel):
+    objective: str = Field(
+        description="El objetivo explícitamente identificado."
+    )
+
+class AddExpectedResultInput(BaseModel):
+    expected_result: str = Field(
+        description="El resultado esperado explícitamente identificado."
     )
 
 class UpdateFunctionalRequirementInput(BaseModel):
@@ -42,6 +62,38 @@ class UpdateFunctionalRequirementInput(BaseModel):
     dependencies: list[str] = Field(
         default_factory=list,
         description="Dependencias conocidas."
+    )
+
+    source: str | None = Field(
+        default=None,
+        description="Fuente del requisito."
+    )
+
+    confirmed: bool = Field(
+        default=False,
+        description="Indica si el requisito ha sido confirmado."
+    )
+
+class UpdateNonFunctionalRequirementInput(BaseModel):
+    requirement_id: str = Field(
+        description="Identificador del requisito no funcional."
+    )
+
+    category: str = Field(
+        description="Categoria actual del requisito no funcional."
+    )
+
+    description: str = Field(
+        description="Descripción actual del requisito no funcional."
+    )
+
+    priority: Priority = Field(
+        description="Prioridad del requisito."
+    )
+
+    acceptance_criteria: list[str] = Field(
+        default_factory=list,
+        description="Criterios de aceptación proporcionados o confirmados explícitamente."
     )
 
     source: str | None = Field(
@@ -190,6 +242,31 @@ class AddFunctionalRiskInput(BaseModel):
     action_or_validation: str | None = Field(
         default=None,
         description="Acción o validación requerida."
+    )
+
+class AddBusinessRuleInput(BaseModel):
+    rule: str = Field(
+        description="La regla de negocio a registrar."
+    )
+
+class AddDependencyInput(BaseModel):
+    dependency: str = Field(
+        description="La dependencia funcional a registrar."
+    )
+
+class AddConstraintInput(BaseModel):
+    constraint: str = Field(
+        description="La restricción funcional a registrar."
+    )
+
+class AddDataVolumetricInput(BaseModel):
+    information: str = Field(
+        description="La información sobre datos, cantidades, frecuencias o volumetrías."
+    )
+
+class SetAnalysisStatusInput(BaseModel):
+    status: AnalysisStatus = Field(
+        description="El estado general del análisis funcional a establecer."
     )
 
 class GetAnalysisStatusInput(BaseModel):

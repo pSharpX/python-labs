@@ -7,9 +7,10 @@ from langgraph.graph import StateGraph, START, END
 
 from agents import TechDocReqScoutAgent
 from config import langfuse_handler
+from constants import AnalysisStatus
 from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput, Status, TechDocReqScoutState
+from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput, TechDocReqScoutState
 from tools import SaveMarkdownTool
 
 AgentNodeType = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
@@ -44,11 +45,7 @@ class TechDocBuilderGraph:
     def __pick_retriever(state: TechDocBuilderState) -> AgentNodeType:
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
-        print("="*120)
-        print(">> PICK_RETRIEVER STATE")
-        print("=" * 120)
-        print(state)
-        status: Status = state["status"]
+        status: AnalysisStatus = state["status"]
 
         if status == "ready_for_architecture":
             return "tech_architect_node"
