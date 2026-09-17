@@ -264,7 +264,7 @@ class AddDataVolumetricInput(BaseModel):
         description="La información sobre datos, cantidades, frecuencias o volumetrías."
     )
 
-class SetAnalysisStatusInput(BaseModel):
+class UpdateAnalysisStatusInput(BaseModel):
     status: AnalysisStatus = Field(
         description="El estado general del análisis funcional a establecer."
     )

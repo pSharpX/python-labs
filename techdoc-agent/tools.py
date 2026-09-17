@@ -13,7 +13,7 @@ from tools_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, Add
     AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
     AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput, UpdateNonFunctionalRequirementInput, \
     UpdateContextInput, UpdateProblemNeedInput, AddBusinessRuleInput, AddDependencyInput, AddConstraintInput, \
-    AddDataVolumetricInput, AddObjectiveInput, AddExpectedResultInput, SetAnalysisStatusInput
+    AddDataVolumetricInput, AddObjectiveInput, AddExpectedResultInput, UpdateAnalysisStatusInput
 
 
 class SaveMarkdownTool(BaseTool):
@@ -44,7 +44,7 @@ class SaveMarkdownTool(BaseTool):
     async def _arun(self, content: str, filename: str) -> str:
         return self._run(content, filename)
 
-@tool(args_schema=UpdateContextInput)
+@tool("actualizar_contexto", args_schema=UpdateContextInput)
 def update_context(
     context: str,
     runtime: ToolRuntime[TechDocReqScoutState],
@@ -66,7 +66,7 @@ def update_context(
         }
     )
 
-@tool(args_schema=UpdateProblemNeedInput)
+@tool("actualizar_necesidad_problema", args_schema=UpdateProblemNeedInput)
 def update_problem_need(
     problem_need: str,
     runtime: ToolRuntime[TechDocReqScoutState],
@@ -130,8 +130,8 @@ def add_expected_result(
         }
     )
 
-@tool("actualizar_estado_analisis", args_schema=SetAnalysisStatusInput)
-def set_analysis_status(
+@tool("actualizar_estado_analisis", args_schema=UpdateAnalysisStatusInput)
+def update_analysis_status(
     status: str,
     runtime: ToolRuntime[TechDocReqScoutState],
 ) -> Command:
@@ -236,7 +236,7 @@ def add_data_volumetric(
         }
     )
 
-@tool(args_schema=UpdateNonFunctionalRequirementInput)
+@tool("actualizar_requerimiento_no_funcional", args_schema=UpdateNonFunctionalRequirementInput)
 def update_non_functional_requirement(
     runtime: ToolRuntime[TechDocReqScoutState],
     requirement_id: str,
@@ -274,7 +274,7 @@ def update_non_functional_requirement(
         }
     )
 
-@tool(args_schema=UpdateFunctionalRequirementInput)
+@tool("actualizar_requerimiento_funcional", args_schema=UpdateFunctionalRequirementInput)
 def update_functional_requirement(
     runtime: ToolRuntime[TechDocReqScoutState],
     requirement_id: str,
@@ -315,7 +315,7 @@ def update_functional_requirement(
         }
     )
 
-@tool(args_schema=AddAssumptionInput)
+@tool("agregar_supuesto", args_schema=AddAssumptionInput)
 def add_assumption(
     description: str,
     runtime: ToolRuntime[TechDocReqScoutState],
@@ -341,7 +341,7 @@ def add_assumption(
         }
     )
 
-@tool(args_schema=AddMissingInformationInput)
+@tool("agregar_information_faltante", args_schema=AddMissingInformationInput)
 def add_missing_information(
     runtime: ToolRuntime[TechDocReqScoutState],
     description: str,
@@ -371,7 +371,7 @@ def add_missing_information(
         }
     )
 
-@tool(args_schema=AddClientQuestionInput)
+@tool("agregar_pregunta_cliente", args_schema=AddClientQuestionInput)
 def add_client_question(
     runtime: ToolRuntime[TechDocReqScoutState],
     question: str,
@@ -401,7 +401,7 @@ def add_client_question(
         }
     )
 
-@tool(args_schema=AddActorInput)
+@tool("agregar_actor", args_schema=AddActorInput)
 def add_actor(
     name: str,
     actor_type: str,
@@ -430,7 +430,7 @@ def add_actor(
         }
     )
 
-@tool(args_schema=AddProcessInput)
+@tool("agregar_proceso", args_schema=AddProcessInput)
 def add_process(
     runtime: ToolRuntime[TechDocReqScoutState],
     name: str,
@@ -465,7 +465,7 @@ def add_process(
         }
     )
 
-@tool(args_schema=UpdateScopeInput)
+@tool("agregar_alcance_funcional", args_schema=UpdateScopeInput)
 def update_scope(
     runtime: ToolRuntime[TechDocReqScoutState],
     included: list[str],
@@ -492,7 +492,7 @@ def update_scope(
         }
     )
 
-@tool(args_schema=AddIntegrationInput)
+@tool("agregar_integracion", args_schema=AddIntegrationInput)
 def add_integration(
     runtime: ToolRuntime[TechDocReqScoutState],
     system: str,
@@ -527,7 +527,7 @@ def add_integration(
         }
     )
 
-@tool(args_schema=AddFunctionalRiskInput)
+@tool("agregar_riesgo_funcional", args_schema=AddFunctionalRiskInput)
 def add_functional_risk(
     runtime: ToolRuntime[TechDocReqScoutState],
     description: str,
@@ -558,7 +558,7 @@ def add_functional_risk(
         }
     )
 
-@tool(args_schema=GetAnalysisStatusInput)
+@tool("obtener_estado_analisis_actual", args_schema=GetAnalysisStatusInput)
 def get_analysis_status(
     runtime: ToolRuntime[TechDocReqScoutState],
     include_details: bool = False,

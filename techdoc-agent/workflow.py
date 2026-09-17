@@ -54,10 +54,6 @@ class TechDocBuilderGraph:
     def __tech_architect_node(self, state: TechDocBuilderState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
-        print("="*120)
-        print(">> TECH ARCHITECT STATE")
-        print("=" * 120)
-        print(state)
         user_message = HumanMessage(state["requirements"])
         messages = [
             self.__tech_architect_prompt,
