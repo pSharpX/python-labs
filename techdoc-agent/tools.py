@@ -7,8 +7,10 @@ from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 from pydantic import BaseModel
 
-from state import TechDocReqScoutState, Priority, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
-    Process, Integration, Risk, ProposalScope, NonFunctionalRequirement
+from constants import Priority
+from models import NonFunctionalRequirement, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
+    Process, ProposalScope, Integration, Risk
+from state import TechDocReqScoutState
 from tools_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
     AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
     AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput, UpdateNonFunctionalRequirementInput, \
@@ -59,7 +61,7 @@ def update_context(
             "context": context,
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Contexto actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -81,7 +83,7 @@ def update_problem_need(
             "problem_need": problem_need,
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Problema y/o necesidad actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -102,7 +104,7 @@ def add_objective(
             "objectives": [objective],
             "messages": [
                 ToolMessage(
-                    content="Objetivo agregado.",
+                    content="Objetivo actualizado correctamente.",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -123,7 +125,7 @@ def add_expected_result(
             "expected_results": [expected_result],
             "messages": [
                 ToolMessage(
-                    content="Resultado esperado agregado.",
+                    content="Resultado actualizado correctamente.",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -166,7 +168,7 @@ def add_business_rule(
             "business_rules": [rule],
             "messages": [
                 ToolMessage(
-                    content="Regla de negocio agregada.",
+                    content="Regla de negocio actualizado correctamente.",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -187,7 +189,7 @@ def add_dependency(
             "dependencies": [dependency],
             "messages": [
                 ToolMessage(
-                    content="Dependencia agregada.",
+                    content="Dependencia actualizado correctamente.",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -208,7 +210,7 @@ def add_constraint(
             "constraints": [constraint],
             "messages": [
                 ToolMessage(
-                    content="Restricción agregada.",
+                    content="Restricción actualizado correctamente.",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -229,7 +231,7 @@ def add_data_volumetric(
             "data_and_volumetrics": [information],
             "messages": [
                 ToolMessage(
-                    content="Información de datos o volumetría agregada.",
+                    content="Información de datos o volumetría actualizado correctamente.",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -267,7 +269,7 @@ def update_non_functional_requirement(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Requerimientos no funcionales actualizados correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -308,7 +310,7 @@ def update_functional_requirement(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Requerimientos funcionales actualizados correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -334,7 +336,7 @@ def add_assumption(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Supuesto actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -364,7 +366,7 @@ def add_missing_information(
             "status": "awaiting_client_information",
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Información faltante actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -394,7 +396,7 @@ def add_client_question(
             #"status": "awaiting_client_information",
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Preguntas para el cliente actualizados correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -423,7 +425,7 @@ def add_actor(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Actor actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -458,7 +460,7 @@ def add_process(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Proceso actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -485,7 +487,7 @@ def update_scope(
             ),
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Alcance funcional actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -520,7 +522,7 @@ def add_integration(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Integración actualizado correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],
@@ -551,7 +553,7 @@ def add_functional_risk(
             ],
             "messages": [
                 ToolMessage(
-                    content=f"Estado actualizado correctamente",
+                    content=f"Riesgo funcionales actualizados correctamente",
                     tool_call_id=runtime.tool_call_id,
                 )
             ],

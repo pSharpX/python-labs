@@ -14,7 +14,7 @@ from state import TechDocBuilderState, TechDocReqScoutState, Requirements
 from tools import SaveMarkdownTool
 
 AgentNode = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
-AgentPreNode = Literal["pre_tech_architect_node", AgentNode]
+AgentPreNode = Literal["pre_tech_architect_node", AgentNode, END]
 
 
 class TechDocBuilderGraph:
@@ -48,7 +48,7 @@ class TechDocBuilderGraph:
 
         if status == "ready_for_architecture":
             return "pre_tech_architect_node"
-        return "requirements_scout_node"
+        return END
 
     @staticmethod
     def __pre_stage_node(state: TechDocBuilderState) -> AgentPreNode:
@@ -170,4 +170,4 @@ class TechDocBuilderGraph:
             elif question.strip() == "":
                 continue
             state = self.invoke(question, input_obj, session_id)
-            print(state["messages"][-1])
+            print(state["messages"][-1].content)
