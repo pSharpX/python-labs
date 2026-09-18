@@ -255,6 +255,39 @@ class Requirements(BaseModel):
     #     ),
     # )
 
+    @classmethod
+    def from_state(cls, state: dict) -> "Requirements":
+        return cls(
+            context=state.get("context", ""),
+            problem_need=state.get("problem_need", ""),
+            objectives=state.get("objectives", []),
+            expected_results=state.get("expected_results", []),
+            actors=state.get("actors", []),
+            processes=state.get("processes", []),
+            functional_requirements=state.get(
+                "functional_requirements", []
+            ),
+            non_functional_requirements=state.get(
+                "non_functional_requirements", []
+            ),
+            business_rules=state.get("business_rules", []),
+            integrations=state.get("integrations", []),
+            data_and_volumetrics=state.get(
+                "data_and_volumetrics", []
+            ),
+            scope=state.get("scope"),
+            dependencies=state.get("dependencies", []),
+            constraints=state.get("constraints", []),
+            risks=state.get("risks", []),
+            assumptions=state.get("assumptions", []),
+            # missing_information=state.get(
+            #     "missing_information", []
+            # ),
+            # client_questions=state.get(
+            #     "client_questions", []
+            # ),
+        )
+
 class TechDocReqScoutState(AgentState):
     user_request: str
     resources: list[str]

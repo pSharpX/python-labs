@@ -1,17 +1,16 @@
-import json
 from typing import Literal
 
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
-from agents import TechDocReqScoutAgent, requirement_scout_tools
+from agents import TechDocReqScoutAgent
 from config import langfuse_handler
 from constants import AnalysisStatus
 from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput, TechDocReqScoutState, Requirements
+from state import TechDocBuilderState, TechDocReqScoutState, Requirements
 from tools import SaveMarkdownTool
 
 AgentNode = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
@@ -29,9 +28,7 @@ class TechDocBuilderGraph:
             temperature=self.__settings.temperature,
         )
         self.__builder = StateGraph(
-            #input_schema=TechDocBuilderInput,
             input_schema=TechDocReqScoutState,
-            #output_schema=TechDocBuilderOutput,
             state_schema=TechDocBuilderState,
         )
         self.__tool = SaveMarkdownTool()
@@ -57,28 +54,7 @@ class TechDocBuilderGraph:
     def __pre_stage_node(state: TechDocBuilderState) -> AgentPreNode:
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
-        requirements = Requirements(
-            context=state.get("context", ""),
-            problem_need=state.get("problem_need", ""),
-            objectives=state.get("objectives", []),
-            expected_results=state.get("expected_results", []),
-            actors=state.get("actors", []),
-            processes=state.get("processes", []),
-            functional_requirements=state.get("functional_requirements", []),
-            non_functional_requirements=state.get(
-                "non_functional_requirements", []
-            ),
-            business_rules=state.get("business_rules", []),
-            integrations=state.get("integrations", []),
-            data_and_volumetrics=state.get("data_and_volumetrics", []),
-            scope=state.get("scope"),
-            dependencies=state.get("dependencies", []),
-            constraints=state.get("constraints", []),
-            risks=state.get("risks", []),
-            assumptions=state.get("assumptions", []),
-            #missing_information=state.get("missing_information", []),
-            #client_questions=state.get("client_questions", []),
-        )
+        requirements = Requirements.from_state(state)
 
         return {
             "requirements": requirements,
@@ -87,11 +63,7 @@ class TechDocBuilderGraph:
     def __tech_architect_node(self, state: TechDocBuilderState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
-        print("="*120)
-        print("TECH_ARCHI")
-        print("=" * 120)
         requirements = state["requirements"]
-        print(requirements)
         user_message = HumanMessage(content=requirements.model_dump_json(indent=2))
         messages = [
             self.__tech_architect_prompt,
@@ -135,7 +107,12 @@ class TechDocBuilderGraph:
         self.__tool._run(financial_document, "financial_document.md")
         return {
             "raw_document_content": output,
-            "final_document": output
+            "final_document": output,
+            "messages": [
+                AIMessage(
+                    content="Propuesta generada exitosamente!"
+                )
+            ]
         }
 
     def __build(self):
@@ -156,7 +133,7 @@ class TechDocBuilderGraph:
 
         return self.__builder.compile(checkpointer=InMemorySaver())
 
-    def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderOutput:
+    def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderState:
         return self.graph.invoke(
             input={
                 "user_request": input_obj.get("user_request", ""),
@@ -193,4 +170,4 @@ class TechDocBuilderGraph:
             elif question.strip() == "":
                 continue
             state = self.invoke(question, input_obj, session_id)
-            print(state)
+            print(state["messages"][-1])
