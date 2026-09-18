@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 
 from langchain.chat_models import init_chat_model
@@ -5,15 +6,16 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
-from agents import TechDocReqScoutAgent
+from agents import TechDocReqScoutAgent, requirement_scout_tools
 from config import langfuse_handler
 from constants import AnalysisStatus
 from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput, TechDocReqScoutState
+from state import TechDocBuilderState, TechDocBuilderInput, TechDocBuilderOutput, TechDocReqScoutState, Requirements
 from tools import SaveMarkdownTool
 
-AgentNodeType = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
+AgentNode = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
+AgentPreNode = Literal["pre_tech_architect_node", AgentNode]
 
 
 class TechDocBuilderGraph:
@@ -29,7 +31,7 @@ class TechDocBuilderGraph:
         self.__builder = StateGraph(
             #input_schema=TechDocBuilderInput,
             input_schema=TechDocReqScoutState,
-            output_schema=TechDocBuilderOutput,
+            #output_schema=TechDocBuilderOutput,
             state_schema=TechDocBuilderState,
         )
         self.__tool = SaveMarkdownTool()
@@ -42,19 +44,55 @@ class TechDocBuilderGraph:
         self.graph = self.__build()
 
     @staticmethod
-    def __pick_retriever(state: TechDocBuilderState) -> AgentNodeType:
+    def __pick_retriever(state: TechDocBuilderState) -> AgentPreNode:
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
         status: AnalysisStatus = state["status"]
 
         if status == "ready_for_architecture":
-            return "tech_architect_node"
+            return "pre_tech_architect_node"
         return "requirements_scout_node"
+
+    @staticmethod
+    def __pre_stage_node(state: TechDocBuilderState) -> AgentPreNode:
+        """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
+
+        requirements = Requirements(
+            context=state.get("context", ""),
+            problem_need=state.get("problem_need", ""),
+            objectives=state.get("objectives", []),
+            expected_results=state.get("expected_results", []),
+            actors=state.get("actors", []),
+            processes=state.get("processes", []),
+            functional_requirements=state.get("functional_requirements", []),
+            non_functional_requirements=state.get(
+                "non_functional_requirements", []
+            ),
+            business_rules=state.get("business_rules", []),
+            integrations=state.get("integrations", []),
+            data_and_volumetrics=state.get("data_and_volumetrics", []),
+            scope=state.get("scope"),
+            dependencies=state.get("dependencies", []),
+            constraints=state.get("constraints", []),
+            risks=state.get("risks", []),
+            assumptions=state.get("assumptions", []),
+            #missing_information=state.get("missing_information", []),
+            #client_questions=state.get("client_questions", []),
+        )
+
+        return {
+            "requirements": requirements,
+        }
 
     def __tech_architect_node(self, state: TechDocBuilderState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
-        user_message = HumanMessage(state["requirements"])
+        print("="*120)
+        print("TECH_ARCHI")
+        print("=" * 120)
+        requirements = state["requirements"]
+        print(requirements)
+        user_message = HumanMessage(content=requirements.model_dump_json(indent=2))
         messages = [
             self.__tech_architect_prompt,
             user_message,
@@ -80,7 +118,8 @@ class TechDocBuilderGraph:
     def __aggregator_node(self, state: TechDocBuilderState):
         """Aggregator Node collect all the document pieces and prepare the final document proposal."""
 
-        requirements = state["requirements"]
+        requirements_obj: Requirements = state["requirements"]
+        requirements = requirements_obj.model_dump_json(indent=2)
         technical_document = state["technical_document"]
         financial_document = state["financial_document"]
         output = f"""
@@ -102,6 +141,7 @@ class TechDocBuilderGraph:
     def __build(self):
         self.__builder.add_node("requirements_scout_node", self.__req_scout_agent.unwrap())
         self.__builder.add_node("tech_architect_node", self.__tech_architect_node)
+        self.__builder.add_node("pre_tech_architect_node", self.__pre_stage_node)
         self.__builder.add_node("financial_estimator_node", self.__financial_estimator_node)
         self.__builder.add_node("aggregator_node", self.__aggregator_node)
 
@@ -109,6 +149,7 @@ class TechDocBuilderGraph:
 
         self.__builder.add_conditional_edges("requirements_scout_node", self.__pick_retriever)
 
+        self.__builder.add_edge("pre_tech_architect_node", "tech_architect_node")
         self.__builder.add_edge("tech_architect_node", "financial_estimator_node")
         self.__builder.add_edge("financial_estimator_node", "aggregator_node")
         self.__builder.add_edge("aggregator_node", END)
