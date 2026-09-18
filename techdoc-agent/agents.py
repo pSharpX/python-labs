@@ -5,6 +5,7 @@ from langchain.agents.middleware import ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 
+from config import serde
 from prompts import REQ_SCOUT_SYSTEM_PROMPT
 from settings import BaseModelSettings
 from state import TechDocReqScoutState
@@ -78,7 +79,7 @@ class TechDocReqScoutAgent:
             ],
             name="techdoc-reqscout-agent",
             state_schema=TechDocReqScoutState,
-            checkpointer=InMemorySaver()
+            checkpointer=InMemorySaver(serde=serde)
         )
 
     def unwrap(self):

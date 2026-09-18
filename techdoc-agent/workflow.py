@@ -6,16 +6,16 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
 from agents import TechDocReqScoutAgent
-from config import langfuse_handler
+from config import langfuse_handler, serde
 from constants import AnalysisStatus
 from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
 from settings import BaseModelSettings
 from state import TechDocBuilderState, TechDocReqScoutState, Requirements
 from tools import SaveMarkdownTool
 
+
 AgentNode = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
 AgentPreNode = Literal["pre_tech_architect_node", AgentNode, END]
-
 
 class TechDocBuilderGraph:
     """A langgraph powered workflow that design and write technical-functional proposals and financial documents."""
@@ -131,7 +131,7 @@ class TechDocBuilderGraph:
         self.__builder.add_edge("financial_estimator_node", "aggregator_node")
         self.__builder.add_edge("aggregator_node", END)
 
-        return self.__builder.compile(checkpointer=InMemorySaver())
+        return self.__builder.compile(checkpointer=InMemorySaver(serde=serde))
 
     def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderState:
         return self.graph.invoke(
