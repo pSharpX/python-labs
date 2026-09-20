@@ -1,11 +1,10 @@
-
 from .fastmcp_client import FastMCPHttpClient
 
 
-class MicrosoftLearnClient(FastMCPHttpClient):
+class AWSMCPClient(FastMCPHttpClient):
 
     def __init__(
         self,
-        url: str = "https://learn.microsoft.com/api/mcp",
+        url: str = "https://aws-mcp.us-east-1.api.aws/mcp",
     ):
         super().__init__(url)
