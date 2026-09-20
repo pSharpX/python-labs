@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Client
+#from fastmcp import Client
 
 
 class FastMCPHttpClient:
@@ -21,25 +21,26 @@ class FastMCPHttpClient:
         self.headers = headers or {}
 
     async def list_tools(self) -> list[Any]:
-        async with Client(
-            self.url,
-            headers=self.headers,
-        ) as client:
-            result = await client.list_tools()
-            return result
+        pass
+        # async with Client(
+        #     self.url,
+        #     headers=self.headers,
+        # ) as client:
+        #     result = await client.list_tools()
+        #     return result
 
     async def call_tool(
         self,
         tool_name: str,
         arguments: dict[str, Any] | None = None,
     ) -> Any:
-
-        async with Client(
-            self.url,
-            headers=self.headers,
-        ) as client:
-
-            return await client.call_tool(
-                tool_name,
-                arguments or {},
-            )
+        pass
+        # async with Client(
+        #     self.url,
+        #     headers=self.headers,
+        # ) as client:
+        #
+        #     return await client.call_tool(
+        #         tool_name,
+        #         arguments or {},
+        #     )
