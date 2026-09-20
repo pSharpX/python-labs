@@ -1,5 +1,5 @@
 from .requirements import SYSTEM_PROMPT as REQUIREMENTS_SYSTEM_PROMPT
-from .architect import SYSTEM_PROMPT as ARCHITECT_SYSTEM_PROMPT
+from .tech_architect import SYSTEM_PROMPT as ARCHITECT_SYSTEM_PROMPT
 from .financial_estimator import SYSTEM_PROMPT as FINANCIAL_ESTIMATE_SYSTEM_PROMPT
 from .shared import TECHDOC_SYSTEM_PROMPT
 
