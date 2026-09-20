@@ -9,18 +9,19 @@ from tools.mcp.aws_client import AWSMCPClient
 class SearchAWSDocsInput(BaseModel):
     query: str = Field(
         description=(
-            "AWS architecture or service question. "
-            "Examples: Lambda vs ECS, SQS vs SNS, "
-            "API Gateway architecture, VPC design."
+            "Pregunta sobre arquitectura o servicios de AWS. "
+            "Ejemplos: Lambda vs. ECS, SQS vs. SNS, arquitectura de API Gateway, diseño de VPC."
         )
     )
 
 class SearchAWSDocsTool(BaseTool):
-    name: str = "search_aws_docs"
+    name: str = "buscar_documentation_aws"
     description: str = (
-        "Search current official AWS documentation and "
-        "architecture guidance. Use this when evaluating "
-        "AWS services or AWS architecture."
+        "Consulta información técnica actualizada "
+        "de AWS para apoyar decisiones de arquitectura. "
+        "Utiliza esta herramienta para investigar "
+        "servicios, capacidades, patrones de arquitectura, "
+        "limitaciones y buenas prácticas de AWS."
     )
 
     args_schema: type[BaseModel] = SearchAWSDocsInput

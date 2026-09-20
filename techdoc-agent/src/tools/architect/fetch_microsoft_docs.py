@@ -8,14 +8,17 @@ from tools.mcp.microsoft_client import MicrosoftLearnClient
 
 class MicrosoftDocsFetchInput(BaseModel):
     url: str = Field(
-        description="Microsoft Learn article URL to retrieve."
+        description="URL del artículo de Microsoft Learn que se desea consultar."
     )
 
 class FetchMicrosoftDocsTool(BaseTool):
-    name: str = "fetch_microsoft_doc"
+    name: str = "obtener_documentacion_microsoft"
     description: str = (
-        "Fetch a complete Microsoft Learn article after "
-        "a relevant document has been identified."
+        "Obtiene el contenido completo de un artículo "
+        "de Microsoft Learn previamente identificado. "
+        "Utiliza esta herramienta cuando necesites "
+        "revisar en detalle una documentación técnica "
+        "antes de tomar una decisión arquitectónica."
     )
 
     args_schema: type[BaseModel] = MicrosoftDocsFetchInput
