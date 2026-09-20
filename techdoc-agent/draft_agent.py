@@ -8,9 +8,9 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
 from config import langfuse_handler
-from prompts import TECHDOC_SYSTEM_PROMPT
+from src.prompts import TECHDOC_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from tools import SaveMarkdownTool
+from src.tools.requirements import SaveMarkdownTool
 
 
 class TechDocState(AgentState):

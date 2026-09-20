@@ -6,10 +6,10 @@ from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 
 from config import serde
-from prompts import REQ_SCOUT_SYSTEM_PROMPT
+from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from state import TechDocReqScoutState
-from tools import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, add_actor, \
+from src.state.requirements import TechDocReqScoutState
+from src.tools.requirements import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, add_actor, \
     add_client_question, add_missing_information, add_assumption, update_functional_requirement, \
     update_non_functional_requirement, add_data_volumetric, add_constraint, add_dependency, add_business_rule, \
     update_analysis_status, add_expected_result, add_objective, update_problem_need, update_context
@@ -61,7 +61,7 @@ class TechDocReqScoutAgent:
             model_provider=self.__model_settings.provider,
             temperature=self.__model_settings.temperature,
         )
-        self.__system_prompt = REQ_SCOUT_SYSTEM_PROMPT
+        self.__system_prompt = REQUIREMENTS_SYSTEM_PROMPT
         self.__agent = create_agent(
             model=self.__model,
             tools=requirement_scout_tools,

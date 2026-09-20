@@ -5,13 +5,14 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
-from agents import TechDocReqScoutAgent
+from .agents import TechDocReqScoutAgent
 from config import langfuse_handler, serde
-from constants import AnalysisStatus
-from prompts import TECH_ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATOR_SYSTEM_PROMPT
+from .shared.constants import AnalysisStatus
+from .prompts import ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATE_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from state import TechDocBuilderState, TechDocReqScoutState, Requirements
-from tools import SaveMarkdownTool
+from .state import TechDocBuilderState
+from .state.requirements import TechDocReqScoutState, Requirements
+from .tools.requirements import SaveMarkdownTool
 
 
 AgentNode = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
@@ -33,8 +34,8 @@ class TechDocBuilderGraph:
         )
         self.__tool = SaveMarkdownTool()
 
-        self.__tech_architect_prompt = SystemMessage(content=TECH_ARCHITECT_SYSTEM_PROMPT)
-        self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATOR_SYSTEM_PROMPT)
+        self.__tech_architect_prompt = SystemMessage(content=ARCHITECT_SYSTEM_PROMPT)
+        self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATE_SYSTEM_PROMPT)
 
         self.__req_scout_agent = TechDocReqScoutAgent()
 

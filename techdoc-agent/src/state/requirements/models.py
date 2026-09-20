@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field, BaseModel
 
-from constants import Priority
+from src.shared.constants import Priority
 
 
 class Requirement(BaseModel):

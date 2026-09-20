@@ -7,11 +7,10 @@ from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 from pydantic import BaseModel
 
-from constants import Priority
-from models import NonFunctionalRequirement, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
-    Process, ProposalScope, Integration, Risk
-from state import TechDocReqScoutState
-from tools_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
+from src.shared import Priority
+from src.state.requirements import NonFunctionalRequirement, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
+    Process, ProposalScope, Integration, Risk, TechDocReqScoutState
+from .state_manager_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
     AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
     AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput, UpdateNonFunctionalRequirementInput, \
     UpdateContextInput, UpdateProblemNeedInput, AddBusinessRuleInput, AddDependencyInput, AddConstraintInput, \
@@ -27,7 +26,7 @@ class SaveMarkdownTool(BaseTool):
     )
     args_schema: Type[BaseModel] = SaveMarkdownInput
 
-    output_dir: str = "./docs/outcomes"
+    output_dir: str = "../../../docs/outcomes"
 
     def _run(self, content: str, filename: str) -> str:
         output_path = Path(self.output_dir) / filename

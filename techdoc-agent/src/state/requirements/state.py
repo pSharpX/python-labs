@@ -2,11 +2,12 @@ from typing import Annotated
 
 from langchain.agents import AgentState
 
-from models import Process, Actor, Requirement, NonFunctionalRequirement, Integration, ProposalScope, Risk, Assumption, \
+from .models import Process, Actor, Requirement, NonFunctionalRequirement, Integration, ProposalScope, Risk, Assumption, \
     MissingInformation, ClientQuestion, Requirements
-from reducers import replace_string, merge_status, merge_strings, merge_actors, merge_processes, merge_requirements, \
+from .reducers import merge_status, merge_actors, merge_processes, merge_requirements, \
     merge_non_functional_requirements, merge_integrations, merge_risks, merge_assumptions, merge_missing_information, \
     merge_client_questions
+from src.shared import replace_string, merge_strings
 
 
 class TechDocReqScoutState(AgentState):
@@ -53,23 +54,3 @@ class TechDocReqScoutState(AgentState):
 
     # Generated output
     final_brief: str | None
-
-# class TechDocBuilderInput(TechDocReqScoutState):
-#     user_request: str = Field(
-#         description="Solicitud del usuario que contiene los requerimientos funcionales y el objetivo del documento a elaborar.",
-#     )
-#     resources: Optional[list[str]] = Field(
-#         description="Lista de recursos adicionales que contienen requerimientos, contexto o fuentes de información relevantes para elaborar el documento.",
-#     )
-#
-# class TechDocBuilderOutput(BaseModel):
-#     raw_document_content: str = Field(
-#         description="Contenido completo del documento generado en formato Markdown, listo para su procesamiento o almacenamiento.",
-#     )
-#     final_document: str = Field(
-#         description="Versión final del documento técnico, estructurada y preparada para ser presentada al usuario.",
-#     )
-
-class TechDocBuilderState(TechDocReqScoutState):
-    technical_document: str
-    financial_document: str

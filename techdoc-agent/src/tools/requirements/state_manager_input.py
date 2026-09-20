@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from constants import Priority, Criticality, AnalysisStatus
+from src.shared.constants import Priority, Criticality, AnalysisStatus
 
 
 class SaveMarkdownInput(BaseModel):
