@@ -5,7 +5,8 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
-from .agents import TechDocReqScoutAgent
+from .tools.mcp import MCPToolsAdapter, MCPSettings
+from .agents import TechDocArchitectAgent, TechDocReqScoutAgent
 from config import langfuse_handler, serde
 from .shared.constants import AnalysisStatus
 from .prompts import ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATE_SYSTEM_PROMPT
@@ -37,7 +38,9 @@ class TechDocBuilderGraph:
         self.__tech_architect_prompt = SystemMessage(content=ARCHITECT_SYSTEM_PROMPT)
         self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATE_SYSTEM_PROMPT)
 
+        self.__mcp_adapter = MCPToolsAdapter.create(MCPSettings)
         self.__req_scout_agent = TechDocReqScoutAgent()
+        self.__tech_architect_agent = TechDocArchitectAgent(self.__mcp_adapter)
 
         self.graph = self.__build()
 
@@ -118,7 +121,8 @@ class TechDocBuilderGraph:
 
     def __build(self):
         self.__builder.add_node("requirements_scout_node", self.__req_scout_agent.unwrap())
-        self.__builder.add_node("tech_architect_node", self.__tech_architect_node)
+        #self.__builder.add_node("tech_architect_node", self.__tech_architect_node)
+        self.__builder.add_node("tech_architect_node", self.__tech_architect_agent.unwrap())
         self.__builder.add_node("pre_tech_architect_node", self.__pre_stage_node)
         self.__builder.add_node("financial_estimator_node", self.__financial_estimator_node)
         self.__builder.add_node("aggregator_node", self.__aggregator_node)

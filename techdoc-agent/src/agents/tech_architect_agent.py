@@ -6,7 +6,7 @@ from config import serde
 from settings import BaseModelSettings
 from src.prompts import ARCHITECT_SYSTEM_PROMPT
 from src.state.requirements import TechDocReqScoutState
-from tools.mcp import MCPToolsAdapter, MCPSettings
+from src.tools.mcp import MCPToolsAdapter, MCPSettings
 
 
 class TechDocArchitectAgent:
@@ -48,7 +48,7 @@ class TechDocArchitectAgent:
 
     @classmethod
     async def create(cls, mcp_settings: MCPSettings, ) -> "TechDocArchitectAgent":
-        mcp_tools_adapter = await MCPToolsAdapter.create(mcp_settings)
+        mcp_tools_adapter = await MCPToolsAdapter.acreate(mcp_settings)
 
         return cls(mcp_tools_adapter=mcp_tools_adapter)
 
