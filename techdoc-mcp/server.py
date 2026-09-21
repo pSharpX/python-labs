@@ -71,6 +71,9 @@ async def health_check(request: Request) -> PlainTextResponse:
     return PlainTextResponse("OK")
 
 if __name__ == "__main__":
+    print("="*120)
+    print(">> Registering TechDoc Tools")
+    print("=" * 120)
     techdoc_db_tools = TechDocDBTools()
     techdoc_graph_tools = TechDocGraphRAGTools()
 
