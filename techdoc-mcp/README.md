@@ -25,3 +25,41 @@ An AI-powered assistant that transforms functional requirements into structured 
 (:SegmentationCriterion {id, criterion, smbDescription, corporateDescription})
 ```
 
+## Check MCP Tools
+
+### Using CURL
+
+1. Get MCP-Session
+```
+curl -i \
+  -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"initialize",
+    "params":{
+      "protocolVersion":"2025-11-25",
+      "capabilities":{},
+      "clientInfo":{
+        "name":"curl",
+        "version":"1.0"
+      }
+    }
+  }'
+```
+
+
+2. Get Tools List
+```
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Mcp-Session-Id: ${mcp-session-id}" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/list",
+    "params": {}
+  }'
+```
