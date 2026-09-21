@@ -22,14 +22,12 @@ class MCPToolsAdapter:
             self,
             mcp_client: MultiServerMCPClient,
             discovered_tools: list[BaseTool],
-            selected_tools: list[BaseTool],
     ):
         self.__mcp_client = mcp_client
         self.__discovered_tools = discovered_tools
-        self.__selected_tools = selected_tools
 
     @classmethod
-    async def acreate(cls, settings: MCPSettings, allowed_tools: list[str],) -> "MCPToolsAdapter":
+    async def acreate(cls, settings: MCPSettings) -> "MCPToolsAdapter":
         mcp_client = MultiServerMCPClient(
 {
                 "microsoft": {
@@ -40,19 +38,18 @@ class MCPToolsAdapter:
                     "transport": "http",
                     "url": settings.aws_url,
                 },
-                "techdoc-mcp": {
-                    "transport": "http",
-                    "url": settings.techdoc_url,
-                },
+                # "techdoc-mcp": {
+                #     "transport": "http",
+                #     "url": settings.techdoc_url,
+                # },
             },
             tool_name_prefix=True,
         )
         discovered_tools = await mcp_client.get_tools()
-        selected_tools = [tool for tool in discovered_tools if tool.name in allowed_tools]
-        return cls(mcp_client, discovered_tools, selected_tools)
+        return cls(mcp_client, discovered_tools)
 
     @classmethod
-    def create(cls, settings: MCPSettings, allowed_tools: list[str],) -> "MCPToolsAdapter":
+    def create(cls, settings: MCPSettings) -> "MCPToolsAdapter":
         mcp_client = MultiServerMCPClient(
             {
                 "microsoft": {
@@ -63,18 +60,18 @@ class MCPToolsAdapter:
                     "transport": "http",
                     "url": settings.aws_url,
                 },
-                "techdoc-mcp": {
-                    "transport": "http",
-                    "url": settings.techdoc_url,
-                },
+                # "techdoc-mcp": {
+                #     "transport": "http",
+                #     "url": settings.techdoc_url,
+                # },
             },
             tool_name_prefix=True,
         )
         discovered_tools = asyncio.run(mcp_client.get_tools())
         for tool in discovered_tools:
             print(f"MCP tool discovered: {tool.name}")
-        selected_tools = [tool for tool in discovered_tools if tool.name in allowed_tools]
-        return cls(mcp_client, discovered_tools, selected_tools)
+        return cls(mcp_client, discovered_tools)
 
-    def get_tools(self) -> List[BaseTool]:
-        return self.__selected_tools
+    def get_tools(self, allowed_tools: list[str]) -> List[BaseTool]:
+        selected_tools = [tool for tool in self.__discovered_tools if tool.name in allowed_tools]
+        return selected_tools

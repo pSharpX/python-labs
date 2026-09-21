@@ -1,12 +1,12 @@
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
+from langchain_core.tools import BaseTool
 from langgraph.checkpoint.memory import InMemorySaver
 
 from config import serde
 from settings import BaseModelSettings
 from src.prompts import ARCHITECT_SYSTEM_PROMPT
 from src.state.requirements import TechDocReqScoutState
-from src.tools.mcp import MCPToolsAdapter, MCPSettings
 
 
 class TechDocArchitectAgent:
@@ -29,7 +29,7 @@ class TechDocArchitectAgent:
     técnica y arquitectónica que sirva como base para las siguientes etapas
     del proceso de preventa.
     """
-    def __init__(self, mcp_tools_adapter: MCPToolsAdapter,):
+    def __init__(self, tools: list[BaseTool]):
         self.__model_settings = BaseModelSettings()
         self.__model = init_chat_model(
             model=self.__model_settings.model_name,
@@ -39,18 +39,12 @@ class TechDocArchitectAgent:
         self.__system_prompt = ARCHITECT_SYSTEM_PROMPT
         self.__agent = create_agent(
             model=self.__model,
-            tools=mcp_tools_adapter.get_tools(),
+            tools=tools,
             system_prompt=self.__system_prompt,
             name="techdoc-architect-agent",
             state_schema=TechDocReqScoutState,
             checkpointer=InMemorySaver(serde=serde)
         )
-
-    @classmethod
-    async def create(cls, mcp_settings: MCPSettings, allowed_tools: list[str]) -> "TechDocArchitectAgent":
-        mcp_tools_adapter = await MCPToolsAdapter.acreate(mcp_settings, allowed_tools)
-
-        return cls(mcp_tools_adapter=mcp_tools_adapter)
 
     def unwrap(self):
         return self.__agent
