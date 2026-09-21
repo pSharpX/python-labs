@@ -8,4 +8,6 @@ class MCPSettings(BaseSettings, case_sensitive=False):
     techdoc_url: str = Field("http://localhost:8000/mcp", max_length=1000, min_length=5)
     microsoft_learn_url: str = Field("https://learn.microsoft.com/api/mcp", max_length=1000, min_length=5)
     aws_url: str = Field("https://aws-mcp.us-east-1.api.aws/mcp", max_length=1000, min_length=5)
+
+    allowed_tools: list[str] = []
     #azure_url: str = Field("", max_length=1000, min_length=5)

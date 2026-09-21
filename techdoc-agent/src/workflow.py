@@ -38,7 +38,12 @@ class TechDocBuilderGraph:
         self.__tech_architect_prompt = SystemMessage(content=ARCHITECT_SYSTEM_PROMPT)
         self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATE_SYSTEM_PROMPT)
 
-        self.__mcp_adapter = MCPToolsAdapter.create(MCPSettings)
+        self.__mcp_adapter = MCPToolsAdapter.create(MCPSettings(), [
+            "microsoft_search",
+            "microsoft_fetch",
+            "aws_search",
+            "techdoc_get_catalog",
+        ])
         self.__req_scout_agent = TechDocReqScoutAgent()
         self.__tech_architect_agent = TechDocArchitectAgent(self.__mcp_adapter)
 

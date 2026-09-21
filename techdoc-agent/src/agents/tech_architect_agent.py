@@ -47,8 +47,8 @@ class TechDocArchitectAgent:
         )
 
     @classmethod
-    async def create(cls, mcp_settings: MCPSettings, ) -> "TechDocArchitectAgent":
-        mcp_tools_adapter = await MCPToolsAdapter.acreate(mcp_settings)
+    async def create(cls, mcp_settings: MCPSettings, allowed_tools: list[str]) -> "TechDocArchitectAgent":
+        mcp_tools_adapter = await MCPToolsAdapter.acreate(mcp_settings, allowed_tools)
 
         return cls(mcp_tools_adapter=mcp_tools_adapter)
 

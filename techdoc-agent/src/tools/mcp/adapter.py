@@ -21,13 +21,15 @@ class MCPToolsAdapter:
     def __init__(
             self,
             mcp_client: MultiServerMCPClient,
-            tools: list[BaseTool],
+            discovered_tools: list[BaseTool],
+            selected_tools: list[BaseTool],
     ):
         self.__mcp_client = mcp_client
-        self.__tools = tools
+        self.__discovered_tools = discovered_tools
+        self.__selected_tools = selected_tools
 
     @classmethod
-    async def acreate(cls, settings: MCPSettings) -> "MCPToolsAdapter":
+    async def acreate(cls, settings: MCPSettings, allowed_tools: list[str],) -> "MCPToolsAdapter":
         mcp_client = MultiServerMCPClient(
 {
                 "microsoft": {
@@ -45,11 +47,12 @@ class MCPToolsAdapter:
             },
             tool_name_prefix=True,
         )
-        tools = await mcp_client.get_tools()
-        return cls(mcp_client, tools)
+        discovered_tools = await mcp_client.get_tools()
+        selected_tools = [tool for tool in discovered_tools if tool.name in allowed_tools]
+        return cls(mcp_client, discovered_tools, selected_tools)
 
     @classmethod
-    def create(cls, settings: MCPSettings) -> "MCPToolsAdapter":
+    def create(cls, settings: MCPSettings, allowed_tools: list[str],) -> "MCPToolsAdapter":
         mcp_client = MultiServerMCPClient(
             {
                 "microsoft": {
@@ -67,8 +70,11 @@ class MCPToolsAdapter:
             },
             tool_name_prefix=True,
         )
-        tools = asyncio.run(mcp_client.get_tools())
-        return cls(mcp_client, tools)
+        discovered_tools = asyncio.run(mcp_client.get_tools())
+        for tool in discovered_tools:
+            print(f"MCP tool discovered: {tool.name}")
+        selected_tools = [tool for tool in discovered_tools if tool.name in allowed_tools]
+        return cls(mcp_client, discovered_tools, selected_tools)
 
     def get_tools(self) -> List[BaseTool]:
-        return self.__tools
+        return self.__selected_tools
