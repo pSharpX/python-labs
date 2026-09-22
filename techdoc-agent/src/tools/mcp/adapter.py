@@ -68,8 +68,8 @@ class MCPToolsAdapter:
             tool_name_prefix=True,
         )
         discovered_tools = asyncio.run(mcp_client.get_tools())
-        for tool in discovered_tools:
-            print(f"MCP tool discovered: {tool.name}")
+        # for tool in discovered_tools:
+        #     print(f"MCP tool discovered: {tool.name}")
         return cls(mcp_client, discovered_tools)
 
     def get_tools(self, allowed_tools: list[str]) -> List[BaseTool]:
