@@ -2,15 +2,15 @@ from typing import Annotated
 
 from langchain.agents import AgentState
 
-from src.shared import replace_string, merge_strings
-from state import Process, Actor, Requirement, NonFunctionalRequirement, Integration, ProposalScope, Risk, Assumption, \
+from src.shared import replace_string, merge_strings, merge_status
+from src.state import Process, Actor, Requirement, NonFunctionalRequirement, Integration, ProposalScope, Risk, Assumption, \
     MissingInformation, ClientQuestion
-from .reducers import merge_status, merge_actors, merge_processes, merge_requirements, \
+from .reducers import merge_actors, merge_processes, merge_requirements, \
     merge_non_functional_requirements, merge_integrations, merge_risks, merge_assumptions, merge_missing_information, \
     merge_client_questions
 
 
-class RequirementsState(AgentState):
+class RequirementsAgentState(AgentState):
     user_request: str
     resources: list[str]
     # Canonical functional analysis

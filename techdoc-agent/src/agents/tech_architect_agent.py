@@ -6,7 +6,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from config import serde
 from settings import BaseModelSettings
 from src.prompts import ARCHITECT_SYSTEM_PROMPT
-from state.architect import TechArchitectState
+from src.state.architect import TechArchitectAgentState
 
 
 class TechDocArchitectAgent:
@@ -42,7 +42,7 @@ class TechDocArchitectAgent:
             tools=tools,
             system_prompt=self.__system_prompt,
             name="techdoc-architect-agent",
-            state_schema=TechArchitectState,
+            state_schema=TechArchitectAgentState,
             checkpointer=InMemorySaver(serde=serde)
         )
 

@@ -1,34 +1,11 @@
 from src.shared import (
     upsert_model_by_id,
     upsert_by_key,
-    upsert_model_by_description,
-    AnalysisStatus,
-    STATUS_PRIORITY
+    upsert_model_by_description
 )
-from state.models import Requirement, NonFunctionalRequirement, Actor, Process, Integration, Risk, Assumption, \
+from src.state.models import Requirement, NonFunctionalRequirement, Actor, Process, Integration, Risk, Assumption, \
     MissingInformation, ClientQuestion
 
-
-def merge_status(
-    current: AnalysisStatus | None,
-    update: AnalysisStatus | None,
-) -> AnalysisStatus:
-    """
-    Resolve concurrent status updates deterministically.
-
-    A more advanced state is never downgraded by another concurrent update.
-    """
-    if not current:
-        return update
-
-    if not update:
-        return current
-
-    return (
-        update
-        if STATUS_PRIORITY[update] > STATUS_PRIORITY[current]
-        else current
-    )
 
 def merge_requirements(
     current: list[Requirement],

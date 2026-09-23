@@ -1,6 +1,6 @@
-from .state import TechArchitectState
+from .state import TechArchitectAgentState
 
 
 __all__ = [
-    "TechArchitectState",
+    "TechArchitectAgentState",
 ]

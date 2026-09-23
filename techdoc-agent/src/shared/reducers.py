@@ -3,6 +3,8 @@ from typing import TypeVar, Sequence, Any
 
 from pydantic import BaseModel
 
+from .constants import AnalysisStatus, STATUS_PRIORITY
+
 T = TypeVar("T", bound=BaseModel)
 
 def replace_string(current: str | None, update: str | None) -> str | None:
@@ -117,4 +119,25 @@ def upsert_model_by_description(
         updates,
         model_type=model_type,
         key=lambda item: item.description,
+    )
+
+def merge_status(
+    current: AnalysisStatus | None,
+    update: AnalysisStatus | None,
+) -> AnalysisStatus:
+    """
+    Resolve concurrent status updates deterministically.
+
+    A more advanced state is never downgraded by another concurrent update.
+    """
+    if not current:
+        return update
+
+    if not update:
+        return current
+
+    return (
+        update
+        if STATUS_PRIORITY[update] > STATUS_PRIORITY[current]
+        else current
     )

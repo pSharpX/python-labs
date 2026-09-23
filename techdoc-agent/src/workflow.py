@@ -9,10 +9,10 @@ from config import serde
 from settings import BaseModelSettings
 from .agents import TechDocArchitectAgent, TechDocReqScoutAgent
 from .configs import AgentTokenLogger, langfuse_handler
-from .prompts import ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATE_SYSTEM_PROMPT
+from .prompts import FINANCIAL_ESTIMATE_SYSTEM_PROMPT
 from .shared.constants import AnalysisStatus
 from .state import WorkflowState, Requirements
-from .state.requirements import RequirementsState
+from .state.requirements import RequirementsAgentState
 from .tools.architect import update_technical_document
 from .tools.mcp import MCPToolsAdapter, MCPSettings
 from .tools.requirements import SaveMarkdownTool
@@ -31,12 +31,11 @@ class TechDocBuilderGraph:
             temperature=self.__settings.temperature,
         )
         self.__builder = StateGraph(
-            input_schema=RequirementsState,
+            input_schema=RequirementsAgentState,
             state_schema=WorkflowState,
         )
         self.__tool = SaveMarkdownTool()
 
-        self.__tech_architect_prompt = SystemMessage(content=ARCHITECT_SYSTEM_PROMPT)
         self.__financial_estimator_prompt = SystemMessage(content=FINANCIAL_ESTIMATE_SYSTEM_PROMPT)
 
         self.__mcp_settings = MCPSettings()
@@ -81,7 +80,6 @@ class TechDocBuilderGraph:
         requirements = state["requirements"]
         user_message = HumanMessage(content=requirements.model_dump_json(indent=2))
         messages = [
-            self.__tech_architect_prompt,
             user_message,
         ]
         res = self.__tech_architect_agent.invoke(
@@ -92,6 +90,7 @@ class TechDocBuilderGraph:
             config=config,
         )
         return {
+            "messages": res["messages"],
             "technical_document": res["messages"][-1].content,
         }
 
@@ -105,6 +104,11 @@ class TechDocBuilderGraph:
         ]
         res = self.__model.invoke(messages)
         return {
+            "messages": [
+                self.__financial_estimator_prompt,
+                user_message,
+                res
+            ],
             "financial_document": res.content,
         }
 

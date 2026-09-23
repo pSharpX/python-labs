@@ -3,14 +3,14 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 
-from state.architect import TechArchitectState
+from src.state.architect import TechArchitectAgentState
 from .state_manager_input import UpdateTechnicalDocumentInput
 
 
 @tool("update_technical_document", args_schema=UpdateTechnicalDocumentInput)
 def update_technical_document(
         technical_document: str,
-        runtime: ToolRuntime[TechArchitectState]
+        runtime: ToolRuntime[TechArchitectAgentState]
 ) -> Command:
     """
     Actualiza el documento técnico-funcional generado por el Arquitecto
