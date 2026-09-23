@@ -1,6 +1,6 @@
-from src.state.requirements import TechDocReqScoutState
+from src.state.requirements import RequirementsState
 
 
-class TechDocBuilderState(TechDocReqScoutState):
+class WorkflowState(RequirementsState):
     technical_document: str
     financial_document: str

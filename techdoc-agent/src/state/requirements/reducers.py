@@ -5,7 +5,7 @@ from src.shared import (
     AnalysisStatus,
     STATUS_PRIORITY
 )
-from .models import Requirement, NonFunctionalRequirement, Actor, Process, Integration, Risk, Assumption, \
+from state.models import Requirement, NonFunctionalRequirement, Actor, Process, Integration, Risk, Assumption, \
     MissingInformation, ClientQuestion
 
 

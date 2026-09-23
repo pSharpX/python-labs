@@ -11,8 +11,8 @@ from .agents import TechDocArchitectAgent, TechDocReqScoutAgent
 from .configs import AgentTokenLogger, langfuse_handler
 from .prompts import ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATE_SYSTEM_PROMPT
 from .shared.constants import AnalysisStatus
-from .state import TechDocBuilderState
-from .state.requirements import TechDocReqScoutState, Requirements
+from .state import WorkflowState, Requirements
+from .state.requirements import RequirementsState
 from .tools.architect import update_technical_document
 from .tools.mcp import MCPToolsAdapter, MCPSettings
 from .tools.requirements import SaveMarkdownTool
@@ -31,8 +31,8 @@ class TechDocBuilderGraph:
             temperature=self.__settings.temperature,
         )
         self.__builder = StateGraph(
-            input_schema=TechDocReqScoutState,
-            state_schema=TechDocBuilderState,
+            input_schema=RequirementsState,
+            state_schema=WorkflowState,
         )
         self.__tool = SaveMarkdownTool()
 
@@ -56,7 +56,7 @@ class TechDocBuilderGraph:
         self.graph = self.__build()
 
     @staticmethod
-    def __pick_retriever(state: TechDocBuilderState) -> AgentPreNode:
+    def __pick_retriever(state: WorkflowState) -> AgentPreNode:
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
         status: AnalysisStatus = state["status"]
@@ -66,7 +66,7 @@ class TechDocBuilderGraph:
         return END
 
     @staticmethod
-    def __pre_stage_node(state: TechDocBuilderState) -> AgentPreNode:
+    def __pre_stage_node(state: WorkflowState) -> AgentPreNode:
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
         requirements = Requirements.from_state(state)
@@ -75,7 +75,7 @@ class TechDocBuilderGraph:
             "requirements": requirements,
         }
 
-    def __tech_architect_agent_node(self, state: TechDocBuilderState, config):
+    def __tech_architect_agent_node(self, state: WorkflowState, config):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
         requirements = state["requirements"]
@@ -95,7 +95,7 @@ class TechDocBuilderGraph:
             "technical_document": res["messages"][-1].content,
         }
 
-    def __financial_estimator_node(self, state: TechDocBuilderState):
+    def __financial_estimator_node(self, state: WorkflowState):
         """Financial Estimator Node calculate the effort, the cost and commercial conditions."""
 
         user_message = HumanMessage(state["technical_document"])
@@ -108,7 +108,7 @@ class TechDocBuilderGraph:
             "financial_document": res.content,
         }
 
-    def __aggregator_node(self, state: TechDocBuilderState):
+    def __aggregator_node(self, state: WorkflowState):
         """Aggregator Node collect all the document pieces and prepare the final document proposal."""
 
         requirements_obj: Requirements = state["requirements"]
@@ -154,7 +154,7 @@ class TechDocBuilderGraph:
 
         return self.__builder.compile(checkpointer=InMemorySaver(serde=serde))
 
-    def invoke(self, question: str, input_obj: dict, session_id: str) -> TechDocBuilderState:
+    def invoke(self, question: str, input_obj: dict, session_id: str) -> WorkflowState:
         return self.graph.invoke(
             input={
                 "user_request": input_obj.get("user_request", ""),

@@ -1,24 +1,17 @@
-import warnings
-
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 
 from config import serde
-from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
 from settings import BaseModelSettings
-from src.state.requirements import TechDocReqScoutState
-from src.tools.requirements import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, add_actor, \
+from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
+from src.state.requirements import RequirementsState
+from src.tools.requirements import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, \
+    add_actor, \
     add_client_question, add_missing_information, add_assumption, update_functional_requirement, \
     update_non_functional_requirement, add_data_volumetric, add_constraint, add_dependency, add_business_rule, \
     update_analysis_status, add_expected_result, add_objective, update_problem_need, update_context
-
-warnings.filterwarnings(
-    "ignore",
-    category=UserWarning,
-    module=r"pydantic\..*",
-)
 
 requirement_scout_tools = [
     update_functional_requirement,
@@ -78,7 +71,7 @@ class TechDocReqScoutAgent:
                 ),
             ],
             name="techdoc-reqscout-agent",
-            state_schema=TechDocReqScoutState,
+            state_schema=RequirementsState,
             checkpointer=InMemorySaver(serde=serde)
         )
 

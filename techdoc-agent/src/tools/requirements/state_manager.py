@@ -8,8 +8,9 @@ from langgraph.types import Command
 from pydantic import BaseModel
 
 from src.shared import Priority
-from src.state.requirements import NonFunctionalRequirement, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
-    Process, ProposalScope, Integration, Risk, TechDocReqScoutState
+from src.state import NonFunctionalRequirement, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
+    Process, ProposalScope, Integration, Risk
+from src.state.requirements import RequirementsState
 from .state_manager_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
     AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \
     AddIntegrationInput, AddFunctionalRiskInput, GetAnalysisStatusInput, UpdateNonFunctionalRequirementInput, \
@@ -48,7 +49,7 @@ class SaveMarkdownTool(BaseTool):
 @tool("actualizar_contexto", args_schema=UpdateContextInput)
 def update_context(
     context: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Actualiza el contexto funcional del análisis.
@@ -70,7 +71,7 @@ def update_context(
 @tool("actualizar_problema_necesidad", args_schema=UpdateProblemNeedInput)
 def update_problem_need(
     problem_need: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Actualiza el problema o necesidad funcional identificada.
@@ -92,7 +93,7 @@ def update_problem_need(
 @tool("agregar_objetivo", args_schema=AddObjectiveInput)
 def add_objective(
     objective: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Agrega un objetivo explícitamente identificado en la solicitud del cliente. No agregues objetivos inferidos.
@@ -113,7 +114,7 @@ def add_objective(
 @tool("agregar_resultado_esperado", args_schema=AddExpectedResultInput)
 def add_expected_result(
     expected_result: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Agrega un resultado esperado explícitamente identificado en la solicitud del cliente.
@@ -134,7 +135,7 @@ def add_expected_result(
 @tool("actualizar_estado_analisis", args_schema=UpdateAnalysisStatusInput)
 def update_analysis_status(
     status: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Actualiza el estado general del análisis funcional.
@@ -156,7 +157,7 @@ def update_analysis_status(
 @tool("agregar_regla_negocio", args_schema=AddBusinessRuleInput)
 def add_business_rule(
     rule: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Registra una regla de negocio identificada explícitamente.
@@ -177,7 +178,7 @@ def add_business_rule(
 @tool("agregar_dependencia", args_schema=AddDependencyInput)
 def add_dependency(
     dependency: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Registra una dependencia funcional identificada en el análisis.
@@ -198,7 +199,7 @@ def add_dependency(
 @tool("agregar_restriccion", args_schema=AddConstraintInput)
 def add_constraint(
     constraint: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Registra una restricción funcional explícitamente identificada.
@@ -239,7 +240,7 @@ def add_data_volumetric(
 
 @tool("actualizar_requerimiento_no_funcional", args_schema=UpdateNonFunctionalRequirementInput)
 def update_non_functional_requirement(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     requirement_id: str,
     category: str,
     description: str,
@@ -277,7 +278,7 @@ def update_non_functional_requirement(
 
 @tool("actualizar_requerimiento_funcional", args_schema=UpdateFunctionalRequirementInput)
 def update_functional_requirement(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     requirement_id: str,
     description: str,
     priority: Priority,
@@ -319,7 +320,7 @@ def update_functional_requirement(
 @tool("agregar_supuesto", args_schema=AddAssumptionInput)
 def add_assumption(
     description: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ) -> Command:
     """
     Registra un supuesto identificado durante el análisis. Cualquier supuesto requiere validación del cliente.
@@ -344,7 +345,7 @@ def add_assumption(
 
 @tool("agregar_information_faltante", args_schema=AddMissingInformationInput)
 def add_missing_information(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     description: str,
     criticality: str,
     reason: str | None = None,
@@ -374,7 +375,7 @@ def add_missing_information(
 
 @tool("agregar_pregunta_cliente", args_schema=AddClientQuestionInput)
 def add_client_question(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     question: str,
     reason: str,
     related_to: str | None = None,
@@ -407,7 +408,7 @@ def add_actor(
     name: str,
     actor_type: str,
     responsibility: str,
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
 ):
     """
     Registra un actor identificado durante el análisis funcional. Solo utilizar información explícitamente proporcionada.
@@ -433,7 +434,7 @@ def add_actor(
 
 @tool("agregar_proceso", args_schema=AddProcessInput)
 def add_process(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     name: str,
     objective: str,
     actors: list[str],
@@ -468,7 +469,7 @@ def add_process(
 
 @tool("agregar_alcance_funcional", args_schema=UpdateScopeInput)
 def update_scope(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     included: list[str],
     excluded: list[str],
     to_confirm: list[str],
@@ -495,7 +496,7 @@ def update_scope(
 
 @tool("agregar_integracion", args_schema=AddIntegrationInput)
 def add_integration(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     system: str,
     purpose: str,
     data: list[str],
@@ -530,7 +531,7 @@ def add_integration(
 
 @tool("agregar_riesgo_funcional", args_schema=AddFunctionalRiskInput)
 def add_functional_risk(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     description: str,
     impact: str,
     cause: str,
@@ -561,7 +562,7 @@ def add_functional_risk(
 
 @tool("obtener_estado_analisis_actual", args_schema=GetAnalysisStatusInput)
 def get_analysis_status(
-    runtime: ToolRuntime[TechDocReqScoutState],
+    runtime: ToolRuntime[RequirementsState],
     include_details: bool = False,
 ) -> str:
     """

@@ -2,15 +2,15 @@ from typing import Annotated
 
 from langchain.agents import AgentState
 
-from .models import Process, Actor, Requirement, NonFunctionalRequirement, Integration, ProposalScope, Risk, Assumption, \
-    MissingInformation, ClientQuestion, Requirements
+from src.shared import replace_string, merge_strings
+from state import Process, Actor, Requirement, NonFunctionalRequirement, Integration, ProposalScope, Risk, Assumption, \
+    MissingInformation, ClientQuestion
 from .reducers import merge_status, merge_actors, merge_processes, merge_requirements, \
     merge_non_functional_requirements, merge_integrations, merge_risks, merge_assumptions, merge_missing_information, \
     merge_client_questions
-from src.shared import replace_string, merge_strings
 
 
-class TechDocReqScoutState(AgentState):
+class RequirementsState(AgentState):
     user_request: str
     resources: list[str]
     # Canonical functional analysis
@@ -32,7 +32,6 @@ class TechDocReqScoutState(AgentState):
     integrations: Annotated[list[Integration], merge_integrations]
 
     data_and_volumetrics: Annotated[list[str], merge_strings]
-
     scope: ProposalScope
 
     dependencies: Annotated[list[str], merge_strings]
@@ -46,14 +45,4 @@ class TechDocReqScoutState(AgentState):
     ], merge_missing_information]
     client_questions: Annotated[list[ClientQuestion], merge_client_questions]
 
-    # Current interaction status
-    waiting_for_customer: bool
     status: Annotated[str, merge_status]
-
-    requirements: Requirements
-
-    # Generated output
-    final_brief: str | None
-
-    technical_document: str | None
-    financial_document: str | None
