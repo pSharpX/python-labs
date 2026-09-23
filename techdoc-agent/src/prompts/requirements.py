@@ -57,18 +57,18 @@ No inventes objetivos ni resultados.
 
 Utiliza las herramientas correspondientes para registrar:
 
-* Actores.
-* Procesos.
-* Requerimientos funcionales.
-* Requerimientos no funcionales.
-* Reglas de negocio.
-* Integraciones.
-* Datos y volumetrías.
-* Alcance.
-* Dependencias.
-* Restricciones.
-* Riesgos.
-* Supuestos.
+* `agregar_actor` para registrar un actor identificado durante el análisis funcional.
+* `agregar_proceso` para registrar un proceso funcional identificado durante el análisis.
+* `actualizar_requerimiento_funcional` para actualizar un requerimiento funcional identificado durante el análisis.
+* `actualizar_requerimiento_no_funcional` para actualizar un requerimiento no funcional identificado durante el análisis.
+* `agregar_regla_negocio` para registrar una regla de negocio identificada explícitamente.
+* `agregar_integracion` para registrar una integración funcional identificada.
+* `agregar_dato_volumetria` para registrar información conocida sobre datos, cantidades, frecuencias o volumetrías.
+* `agregar_alcance_funcional` para actualizar el alcance funcional separando elementos incluidos, excluidos y pendientes de confirmación.
+* `agregar_dependencia` para registrar una dependencia funcional identificada en el análisis.
+* `agregar_restriccion` para registrar una restricción funcional explícitamente identificada.
+* `agregar_riesgo_funcional` para registrar un riesgo funcional relacionado con ambigüedades, dependencias, restricciones o vacíos..
+* `agregar_supuesto` para registrar un supuesto identificado durante el análisis.
 
 ### Información faltante
 

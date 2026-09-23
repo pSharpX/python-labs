@@ -54,3 +54,6 @@ class TechDocReqScoutState(AgentState):
 
     # Generated output
     final_brief: str | None
+
+    technical_document: str | None
+    financial_document: str | None

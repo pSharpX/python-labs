@@ -67,7 +67,7 @@ def update_context(
         }
     )
 
-@tool("actualizar_necesidad_problema", args_schema=UpdateProblemNeedInput)
+@tool("actualizar_problema_necesidad", args_schema=UpdateProblemNeedInput)
 def update_problem_need(
     problem_need: str,
     runtime: ToolRuntime[TechDocReqScoutState],

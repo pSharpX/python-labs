@@ -1,11 +1,17 @@
+from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
+from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 
+from src.state.requirements import TechDocReqScoutState
 from .state_manager_input import UpdateTechnicalDocumentInput
 
 
 @tool("update_technical_document", args_schema=UpdateTechnicalDocumentInput)
-def update_technical_document(technical_document: str) -> Command:
+def update_technical_document(
+        technical_document: str,
+        runtime: ToolRuntime[TechDocReqScoutState]
+) -> Command:
     """
     Actualiza el documento técnico-funcional generado por el Arquitecto
     de Soluciones en el estado del workflow.
@@ -24,6 +30,12 @@ def update_technical_document(technical_document: str) -> Command:
 
     return Command(
         update={
-            "technical_document": technical_document.strip()
-        }
+            "technical_document": technical_document.strip(),
+            "messages": [
+                ToolMessage(
+                    content=f"technical_document actualizado correctamente",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        },
     )

@@ -5,16 +5,17 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
-from .tools.mcp import MCPToolsAdapter, MCPSettings
-from .agents import TechDocArchitectAgent, TechDocReqScoutAgent
-from config import langfuse_handler, serde
-from .shared.constants import AnalysisStatus
-from .prompts import ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATE_SYSTEM_PROMPT
+from config import serde
 from settings import BaseModelSettings
+from .agents import TechDocArchitectAgent, TechDocReqScoutAgent
+from .configs import AgentTokenLogger, langfuse_handler
+from .prompts import ARCHITECT_SYSTEM_PROMPT, FINANCIAL_ESTIMATE_SYSTEM_PROMPT
+from .shared.constants import AnalysisStatus
 from .state import TechDocBuilderState
 from .state.requirements import TechDocReqScoutState, Requirements
+from .tools.architect import update_technical_document
+from .tools.mcp import MCPToolsAdapter, MCPSettings
 from .tools.requirements import SaveMarkdownTool
-
 
 AgentNode = Literal["requirements_scout_node", "tech_architect_node", "financial_estimator_node"]
 AgentPreNode = Literal["pre_tech_architect_node", AgentNode, END]
@@ -41,10 +42,16 @@ class TechDocBuilderGraph:
         self.__mcp_settings = MCPSettings()
         self.__mcp_adapter = MCPToolsAdapter.create(self.__mcp_settings)
 
+        tools = self.__mcp_adapter.get_tools(
+            allowed_tools=self.__mcp_settings.allowed_tools
+        )
+
         self.__req_scout_agent = TechDocReqScoutAgent()
         self.__tech_architect_agent = TechDocArchitectAgent(
-            tools=self.__mcp_settings.allowed_tools
-        )
+            tools=tools.extend([
+                update_technical_document
+            ])
+        ).unwrap()
 
         self.graph = self.__build()
 
@@ -68,7 +75,7 @@ class TechDocBuilderGraph:
             "requirements": requirements,
         }
 
-    def __tech_architect_node(self, state: TechDocBuilderState):
+    def __tech_architect_agent_node(self, state: TechDocBuilderState, config):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
         requirements = state["requirements"]
@@ -77,9 +84,15 @@ class TechDocBuilderGraph:
             self.__tech_architect_prompt,
             user_message,
         ]
-        res = self.__model.invoke(messages)
+        res = self.__tech_architect_agent.invoke(
+            input={
+                "messages": messages,
+                "requirements": requirements
+            },
+            config=config,
+        )
         return {
-            "technical_document": res.content,
+            "technical_document": res["messages"][-1].content,
         }
 
     def __financial_estimator_node(self, state: TechDocBuilderState):
@@ -125,8 +138,7 @@ class TechDocBuilderGraph:
 
     def __build(self):
         self.__builder.add_node("requirements_scout_node", self.__req_scout_agent.unwrap())
-        #self.__builder.add_node("tech_architect_node", self.__tech_architect_node)
-        self.__builder.add_node("tech_architect_node", self.__tech_architect_agent.unwrap())
+        self.__builder.add_node("tech_architect_node", self.__tech_architect_agent_node)
         self.__builder.add_node("pre_tech_architect_node", self.__pre_stage_node)
         self.__builder.add_node("financial_estimator_node", self.__financial_estimator_node)
         self.__builder.add_node("aggregator_node", self.__aggregator_node)
@@ -152,7 +164,10 @@ class TechDocBuilderGraph:
                 "resources": input_obj.get("resources", []),
             },
             config={
-                "callbacks": [langfuse_handler],
+                "callbacks": [
+                    langfuse_handler,
+                    AgentTokenLogger(),
+                ],
                 "metadata": {
                     "langfuse_user_id": input_obj["user_id"],
                     "langfuse_session_id": session_id,
