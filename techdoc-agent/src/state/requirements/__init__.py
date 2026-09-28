@@ -3,9 +3,11 @@ from .reducers import (merge_requirements, merge_actors, merge_assumptions, merg
                       merge_integrations, merge_missing_information, merge_non_functional_requirements,
                       merge_processes, merge_risks, upsert_model_by_description)
 from .state import RequirementsAgentState
+from .output import RequirementsOutputSchema
 
 
 __all__ = [
+    "RequirementsOutputSchema",
     "RequirementsAgentState",
     "merge_risks",
     "merge_processes",

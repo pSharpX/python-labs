@@ -1,9 +1,37 @@
-from typing import Literal
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Literal, List, Optional
 
 from pydantic import Field, BaseModel
 
-from src.shared.constants import Priority
+from .constants import Priority
 
+class ProposalStatus(str, Enum):
+    INITIALIZING = "initializing"
+    ANALYZING_REQUIREMENTS = "analyzing_requirements"
+    AWAITING_REQUIREMENTS = "awaiting_requirements"
+    REQUIREMENTS_READY = "requirements_ready"
+    BUILDING_TECHNICAL_PROPOSAL = "building_technical_proposal"
+    TECHNICAL_PROPOSAL_READY = "technical_proposal_ready"
+    BUILDING_FINANCIAL_PROPOSAL = "building_financial_proposal"
+    AWAITING_FINANCIAL_APPROVAL = "awaiting_financial_approval"
+    APPROVED = "approved"
+    REVISION_REQUIRED = "revision_required"
+    ERROR = "error"
+    COMPLETED = "completed"
+
+class UserApprovalAction(str, Enum):
+    APPROVE = "approve"
+    REQUEST_CHANGES = "request_changes"
+    REVISE_REQUIREMENTS = "revise_requirements"
+
+# --- Revision Tracking ---
+class ProposalRevision(BaseModel):
+    revision: int
+    changed_by: str
+    changed_fields: List[str]
+    reason: Optional[str] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Requirement(BaseModel):
     id: str
@@ -234,23 +262,23 @@ class Requirements(BaseModel):
         ),
     )
 
-    # missing_information: list[MissingInformation] = Field(
-    #     default_factory=list,
-    #     description=(
-    #         "Información relevante que aún no está disponible o no ha sido "
-    #         "confirmada y que puede ser necesaria para completar el análisis "
-    #         "de requerimientos o diseñar la solución."
-    #     ),
-    # )
-    #
-    # client_questions: list[ClientQuestion] = Field(
-    #     default_factory=list,
-    #     description=(
-    #         "Preguntas que deben realizarse al cliente para aclarar "
-    #         "ambigüedades, validar supuestos, completar información faltante "
-    #         "o tomar decisiones necesarias para continuar con el análisis."
-    #     ),
-    # )
+    missing_information: list[MissingInformation] = Field(
+        default_factory=list,
+        description=(
+            "Información relevante que aún no está disponible o no ha sido "
+            "confirmada y que puede ser necesaria para completar el análisis "
+            "de requerimientos o diseñar la solución."
+        ),
+    )
+
+    client_questions: list[ClientQuestion] = Field(
+        default_factory=list,
+        description=(
+            "Preguntas que deben realizarse al cliente para aclarar "
+            "ambigüedades, validar supuestos, completar información faltante "
+            "o tomar decisiones necesarias para continuar con el análisis."
+        ),
+    )
 
     @classmethod
     def from_state(cls, state: dict) -> "Requirements":
@@ -277,10 +305,58 @@ class Requirements(BaseModel):
             constraints=state.get("constraints", []),
             risks=state.get("risks", []),
             assumptions=state.get("assumptions", []),
-            # missing_information=state.get(
-            #     "missing_information", []
-            # ),
-            # client_questions=state.get(
-            #     "client_questions", []
-            # ),
+            missing_information=state.get(
+                "missing_information", []
+            ),
+            client_questions=state.get(
+                "client_questions", []
+            ),
         )
+
+class DocumentationSource(BaseModel):
+    title: str
+    url: str
+    source: str
+    relevance: str
+
+
+class ArchitectureComponent(BaseModel):
+    name: str
+    responsibility: str
+    technology: str | None = None
+
+
+class TechnologyDecision(BaseModel):
+    decision: str
+    rationale: str
+    alternatives: list[str] = Field(default_factory=list)
+
+
+class TechnicalIntegration(BaseModel):
+    name: str
+    mechanism: str
+    purpose: str
+
+
+class SecurityDesign(BaseModel):
+    controls: list[str] = Field(default_factory=list)
+
+
+class ScalabilityDesign(BaseModel):
+    strategy: list[str] = Field(default_factory=list)
+
+
+class AvailabilityDesign(BaseModel):
+    strategy: list[str] = Field(default_factory=list)
+
+
+class ObservabilityDesign(BaseModel):
+    strategy: list[str] = Field(default_factory=list)
+
+
+class DeploymentDesign(BaseModel):
+    strategy: list[str] = Field(default_factory=list)
+
+
+class DataArchitecture(BaseModel):
+    strategy: str

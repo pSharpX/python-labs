@@ -1,10 +1,10 @@
+
 from src.shared import (
     upsert_model_by_id,
     upsert_by_key,
-    upsert_model_by_description
-)
-from src.state.models import Requirement, NonFunctionalRequirement, Actor, Process, Integration, Risk, Assumption, \
-    MissingInformation, ClientQuestion
+    upsert_model_by_description, Requirement, NonFunctionalRequirement,
+    Actor, Process, Integration, Risk, Assumption,
+    MissingInformation, ClientQuestion)
 
 
 def merge_requirements(

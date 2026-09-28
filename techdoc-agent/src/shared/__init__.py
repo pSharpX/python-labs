@@ -1,6 +1,12 @@
 from .reducers import replace_string, merge_strings, upsert_by_key, upsert_model_by_id, upsert_model_by_description, merge_status
 from .constants import AnalysisStatus, Criticality, Priority, STATUS_PRIORITY
 
+from .models import (Requirements, ClientQuestion, MissingInformation, Assumption, Integration,
+                           NonFunctionalRequirement, Requirement, Process, ProposalScope, Actor, Risk,
+                           ProposalStatus, UserApprovalAction, ProposalRevision, DocumentationSource, ArchitectureComponent,
+                           TechnologyDecision, TechnicalIntegration, SecurityDesign, ScalabilityDesign, AvailabilityDesign,
+                           ObservabilityDesign, DeploymentDesign, DataArchitecture)
+
 
 __all__ = [
     "replace_string",
@@ -12,5 +18,29 @@ __all__ = [
     "AnalysisStatus",
     "Criticality",
     "Priority",
-    "STATUS_PRIORITY"
+    "STATUS_PRIORITY",
+    "Requirements",
+    "ClientQuestion",
+    "MissingInformation",
+    "Assumption",
+    "Integration",
+    "NonFunctionalRequirement",
+    "Requirement",
+    "Process",
+    "ProposalScope",
+    "Actor",
+    "Risk",
+    "ProposalStatus",
+    "UserApprovalAction",
+    "ProposalRevision",
+    "DocumentationSource",
+    "ArchitectureComponent",
+    "TechnologyDecision",
+    "TechnicalIntegration",
+    "SecurityDesign",
+    "ScalabilityDesign",
+    "AvailabilityDesign",
+    "ObservabilityDesign",
+    "DeploymentDesign",
+    "DataArchitecture",
 ]

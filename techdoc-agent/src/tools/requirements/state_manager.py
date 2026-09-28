@@ -7,9 +7,9 @@ from langgraph.prebuilt import ToolRuntime
 from langgraph.types import Command
 from pydantic import BaseModel
 
-from src.shared import Priority
-from src.state import NonFunctionalRequirement, Requirement, Assumption, MissingInformation, ClientQuestion, Actor, \
-    Process, ProposalScope, Integration, Risk
+from src.shared import (Priority, NonFunctionalRequirement, Requirement, Assumption,
+                        MissingInformation, ClientQuestion, Actor, Process, ProposalScope,
+                        Integration, Risk)
 from src.state.requirements import RequirementsAgentState
 from .state_manager_input import SaveMarkdownInput, UpdateFunctionalRequirementInput, AddAssumptionInput, \
     AddMissingInformationInput, AddClientQuestionInput, AddActorInput, AddProcessInput, UpdateScopeInput, \

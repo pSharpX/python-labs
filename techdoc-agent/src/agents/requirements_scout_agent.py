@@ -1,19 +1,21 @@
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
 from config import serde
 from settings import BaseModelSettings
 from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
-from src.state.requirements import RequirementsAgentState
+from src.state.requirements import RequirementsAgentState, RequirementsOutputSchema
 from src.tools.requirements import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, \
     add_actor, \
     add_client_question, add_missing_information, add_assumption, update_functional_requirement, \
     update_non_functional_requirement, add_data_volumetric, add_constraint, add_dependency, add_business_rule, \
     update_analysis_status, add_expected_result, add_objective, update_problem_need, update_context
 
-requirement_scout_tools = [
+
+tools = [
     update_functional_requirement,
     update_non_functional_requirement,
     add_assumption,
@@ -36,7 +38,7 @@ requirement_scout_tools = [
     update_context,
 ]
 
-class TechDocReqScoutAgent:
+class RequirementsScoutAgent:
     """
     Agente especializado en el levantamiento y análisis de requerimientos.
 
@@ -57,7 +59,7 @@ class TechDocReqScoutAgent:
         self.__system_prompt = REQUIREMENTS_SYSTEM_PROMPT
         self.__agent = create_agent(
             model=self.__model,
-            tools=requirement_scout_tools,
+            tools=tools,
             system_prompt=self.__system_prompt,
             middleware=[
                 #CustomGuardsMiddleware(),
@@ -72,8 +74,25 @@ class TechDocReqScoutAgent:
             ],
             name="techdoc-reqscout-agent",
             state_schema=RequirementsAgentState,
+            response_format=RequirementsOutputSchema,
             checkpointer=InMemorySaver(serde=serde)
         )
+
+    def run(self, raw_requirements: str) -> RequirementsOutputSchema:
+        result = self.__agent.invoke({
+            "messages": [
+                HumanMessage(content=raw_requirements)
+            ]
+        })
+        return result["structured_response"]
+
+    async def arun(self, raw_requirements: str) -> RequirementsOutputSchema:
+        result = await self.__agent.ainvoke({
+            "messages": [
+                HumanMessage(content=raw_requirements)
+            ]
+        })
+        return result["structured_response"]
 
     def unwrap(self):
         return self.__agent
