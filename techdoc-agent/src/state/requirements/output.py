@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.shared import (Actor, Process, Integration, ProposalScope, MissingInformation,
-                        NonFunctionalRequirement, Requirement)
+                        NonFunctionalRequirement, Requirement, ClientQuestion)
 
 
 class RequirementsOutputSchema(BaseModel):
@@ -29,7 +29,7 @@ class RequirementsOutputSchema(BaseModel):
     risks: list[str] = Field(default_factory=list)
 
     missing_information: list[MissingInformation] = Field(default_factory=list)
-    client_questions: list[str] = Field(default_factory=list)
+    client_questions: list[ClientQuestion] = Field(default_factory=list)
     ready_for_architecture: bool = False
 
     readiness_reason: str = ""

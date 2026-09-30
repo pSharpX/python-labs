@@ -35,5 +35,7 @@ class RequirementsAgentState(TypedDict):
     client_questions: list[ClientQuestion]
 
     ready_for_architecture: bool
+    readiness_reason: str
+
     status: str
     version: int

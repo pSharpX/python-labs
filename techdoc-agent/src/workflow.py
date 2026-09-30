@@ -1,10 +1,14 @@
+import os
+from typing import Any
+
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
-from langgraph.types import interrupt
+from langgraph.types import interrupt, Command
 
 from config import serde
-from settings import BaseModelSettings
+from settings import BaseModelSettings, ApplicationSettings
+from shared import UserApprovalAction
 from src.routing import route_after_requirements, route_after_technical, route_after_financial, route_after_approval
 from src.shared import ProposalRevision, ProposalStatus
 from src.state.financial_estimator import FinancialEstimatorOutputSchema, FinancialEstimatorAgentState
@@ -21,12 +25,16 @@ class TechDocBuilderGraph:
     """A langgraph powered workflow that design and write technical-functional proposals and financial documents."""
 
     def __init__(self):
-        self.__settings = BaseModelSettings()
+        self.__app_settings = ApplicationSettings()
+        self.__model_settings = BaseModelSettings()
         self.__model = init_chat_model(
-            model=self.__settings.model_name,
-            model_provider=self.__settings.provider,
-            temperature=self.__settings.temperature,
+            model=self.__model_settings.model_name,
+            model_provider=self.__model_settings.provider,
+            temperature=self.__model_settings.temperature,
         )
+        self.__callbacks = [
+            langfuse_handler
+        ]
         self.__builder = StateGraph(
             state_schema=WorkflowState,
         )
@@ -42,7 +50,7 @@ class TechDocBuilderGraph:
         self.__financial_estimator_agent = FinancialEstimatorAgent()
 
         # Initialize workflow
-        self.graph = self.__build()
+        self.__graph = self.__build()
 
     @staticmethod
     def initialize_proposal(state: WorkflowState):
@@ -120,7 +128,7 @@ class TechDocBuilderGraph:
         response = interrupt({
             "type": "requirements_clarification",
             "message": "Los requisitos aún están incompletos. Por favor, comparte la información que falta para que podamos continuar.",
-            "questions": req.get("client_questions", []),
+            "questions": req.get("client_questions", [ req.get("readiness_reason", "") ]),
             "missing_information": [
                 x if isinstance(x, dict) else x.model_dump() for x in
                                     req.get("missing_information", [])
@@ -301,44 +309,118 @@ class TechDocBuilderGraph:
 
         return self.__builder.compile(checkpointer=InMemorySaver(serde=serde))
 
-    def invoke(self, question: str, input_obj: dict, session_id: str) -> WorkflowState:
-        return self.graph.invoke(
-            input={
-                "user_request": question,
-                "resources": input_obj.get("resources", []),
-                "proposal_id": "proposal-demo-001",
+    def __get_config(self, user_id, session_id) -> dict[str, Any]:
+        return {
+            "callbacks": self.__callbacks,
+            "metadata": {
+                "langfuse_user_id": user_id,
+                "langfuse_session_id": session_id,
+                "langfuse_tags": [
+                    f"environment:{os.getenv('ENVIRONMENT',"dev")}",
+                    "framework:langgraph",
+                    f"owner:{self.__app_settings.owner}",
+                    f"application:{self.__app_settings.name}",
+                    f"component:{self.__app_settings.component}"
+                ]
             },
-            config={
-                "callbacks": [
-                    langfuse_handler,
-                ],
-                "metadata": {
-                    "langfuse_user_id": input_obj["user_id"],
-                    "langfuse_session_id": session_id,
-                    "langfuse_tags": [
-                        "environment:dev",
-                        "framework:langgraph",
-                        "application:techdoc-builder-workflow",
-                        "component:builder-workflow"
-                    ]
-                },
-                "configurable": {
-                    "thread_id": session_id
-                }
+            "configurable": {
+                "thread_id": session_id
             }
+        }
+
+    def invoke(self, initial_input: dict | Command[Any], session_id: str) -> WorkflowState:
+        return self.__graph.invoke(
+            input=initial_input,
+            config=self.__get_config(session_id, session_id),
         )
 
     def start(self, input_obj: dict, session_id: str):
         print("Welcome to TechDoc Builder Workflow, your helpful assistant!")
         print("Start typing ('c' for exit) >> ")
+        config = {
+            "configurable": {
+                "thread_id": session_id
+            }
+        }
+        proposal_id = f"proposal-{session_id}"
         while True:
             question = input()
             if question == "c":
                 break
             elif question.strip() == "":
                 continue
-            state = self.invoke(question, input_obj, session_id)
-            print(state)
+
+            initial_input = {
+                "user_request": question,
+                "resources": input_obj.get("resources", []),
+                "proposal_id": input_obj.get("proposal_id", proposal_id),
+            }
+            print(f"=== Starting Proposal Workflow [{proposal_id}] ===")
+
+            state = self.invoke(
+                initial_input=initial_input,
+                session_id=session_id
+            )
+
+            print(f"\n[Stage 1] Current Status: {state['status']}")
+
+            # Check interrupt for missing info if requirements were incomplete
+            snapshot = self.__graph.get_state(config)
+            if snapshot.next and "awaiting_requirements" in snapshot.next:
+                print("\n--> Interrupt Triggered: Missing Requirements Information")
+                print("Questions:", snapshot.tasks[0].interrupts[0].value["questions"])
+
+                # Resume with clarifications
+                self.invoke(
+                    initial_input=Command(resume={
+                        "raw_requirements": "The system must support 50,000 active daily users using OAuth2 / Microsoft Entra ID."
+                    }),
+                    session_id=session_id
+                )
+
+            # Check next snapshot (Financial Approval Interrupt)
+            snapshot = self.__graph.get_state(config)
+            if snapshot.next and "request_financial_approval" in snapshot.next:
+                fin = snapshot.values["financial_estimation"]
+                print(f"\n--> Interrupt Triggered: Financial Approval Requested")
+                print(f"    Version: Technical v{fin['technical_proposal_version']}")
+                print(f"    Total Cost: ${fin['total']} {fin['currency']} ({fin['estimated_hours']} Hours)")
+
+                # Demonstrate Revision Flow: Request Requirement Change (Revisions v2)
+                print("\n--- User Requests Requirement Revision (v2) ---")
+                self.invoke(
+                    initial_input=Command(resume={
+                        "action": UserApprovalAction.REVISE_REQUIREMENTS.value,
+                        "feedback": "Add multi-region disaster recovery and Azure Cosmos DB storage."
+                    }),
+                    session_id=session_id
+                )
+
+            # Inspect refreshed financial state after auto-propagation of changes
+            snapshot = self.__graph.get_state(config)
+            if snapshot.next and "request_financial_approval" in snapshot.next:
+                fin_v2 = snapshot.values["financial_estimation"]
+                req_v2 = snapshot.values["requirements"]
+                tech_v2 = snapshot.values["technical_architecture"]
+
+                print(f"\n--> Interrupt Triggered: Revised Proposal Approval Requested")
+                print(f"    Requirements Version: v{req_v2['version']}")
+                print(f"    Technical Version: v{tech_v2['version']} (Input Req v{tech_v2['requirements_version']})")
+                print(
+                    f"    Financial Version: v{fin_v2['version']} (Input Tech v{fin_v2['technical_proposal_version']})")
+                print(f"    New Total: ${fin_v2['total']} {fin_v2['currency']}")
+
+                # Final Approval
+                print("\n--- User Approves Financial Proposal ---")
+                final_state = self.__graph.invoke(
+                    Command(resume={"action": UserApprovalAction.APPROVE.value}),
+                    config=config
+                )
+
+                print(f"\n=== Workflow Complete ===")
+                print(f"Final Status: {final_state['status']}")
+                print(
+                    f"Requirements v{final_state['requirements']['version']} -> Tech v{final_state['technical_architecture']['version']} -> Financial v{final_state['financial_estimation']['version']}")
 
     def draw_graph(self):
-        self.graph.get_graph().draw_mermaid_png(output_file_path="techdoc_workflow.png")
+        self.__graph.get_graph().draw_mermaid_png(output_file_path="techdoc_workflow.png")
