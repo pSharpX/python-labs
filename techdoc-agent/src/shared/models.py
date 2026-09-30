@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
 from typing import Literal, List, Optional
 
@@ -360,3 +361,17 @@ class DeploymentDesign(BaseModel):
 
 class DataArchitecture(BaseModel):
     strategy: str
+
+
+class ServiceItem(BaseModel):
+    service_id: str
+    name: str
+    hours: Decimal
+    hourly_rate: Decimal
+    currency: str
+
+
+class EffortItem(BaseModel):
+    service_id: str
+    description: str
+    hours: Decimal

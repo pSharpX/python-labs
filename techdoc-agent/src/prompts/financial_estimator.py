@@ -172,21 +172,6 @@ Justificar el nivel asignado.
 
 ---
 
-# RESUMEN PARA AGENTE DE PRESENTACIÓN
-
-Incluir únicamente:
-
-- Precio final.
-- Forma de pago.
-- Duración.
-- Principales componentes del servicio.
-- Supuestos relevantes.
-- Exclusiones relevantes.
-- Riesgos relevantes.
-- Aspectos comerciales importantes.
-
----
-
 # VALIDACIÓN FINAL OBLIGATORIA
 
 Verificar:
@@ -203,4 +188,8 @@ Verificar:
 10. No existen condiciones comerciales no autorizadas.
 
 Si detectas inconsistencias, indícalas antes de presentar la propuesta económica.
+
+# Output
+
+Devuelva una propuesta de esfuerzo estructurada y declare claramente los supuestos.
 """

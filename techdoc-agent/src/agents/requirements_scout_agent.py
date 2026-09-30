@@ -8,35 +8,9 @@ from config import serde
 from settings import BaseModelSettings
 from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
 from src.state.requirements import RequirementsAgentState, RequirementsOutputSchema
-from src.tools.requirements import get_analysis_status, add_functional_risk, add_integration, update_scope, add_process, \
-    add_actor, \
-    add_client_question, add_missing_information, add_assumption, update_functional_requirement, \
-    update_non_functional_requirement, add_data_volumetric, add_constraint, add_dependency, add_business_rule, \
-    update_analysis_status, add_expected_result, add_objective, update_problem_need, update_context
 
 
-tools = [
-    update_functional_requirement,
-    update_non_functional_requirement,
-    add_assumption,
-    add_missing_information,
-    add_client_question,
-    add_actor,
-    add_process,
-    update_scope,
-    add_functional_risk,
-    add_integration,
-    get_analysis_status,
-    add_data_volumetric,
-    add_constraint,
-    add_dependency,
-    add_business_rule,
-    update_analysis_status,
-    add_expected_result,
-    add_objective,
-    update_problem_need,
-    update_context,
-]
+tools = []
 
 class RequirementsScoutAgent:
     """

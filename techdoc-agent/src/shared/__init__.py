@@ -5,7 +5,7 @@ from .models import (Requirements, ClientQuestion, MissingInformation, Assumptio
                            NonFunctionalRequirement, Requirement, Process, ProposalScope, Actor, Risk,
                            ProposalStatus, UserApprovalAction, ProposalRevision, DocumentationSource, ArchitectureComponent,
                            TechnologyDecision, TechnicalIntegration, SecurityDesign, ScalabilityDesign, AvailabilityDesign,
-                           ObservabilityDesign, DeploymentDesign, DataArchitecture)
+                           ObservabilityDesign, DeploymentDesign, DataArchitecture, ServiceItem, EffortItem)
 
 
 __all__ = [
@@ -43,4 +43,6 @@ __all__ = [
     "ObservabilityDesign",
     "DeploymentDesign",
     "DataArchitecture",
+    "ServiceItem",
+    "EffortItem",
 ]

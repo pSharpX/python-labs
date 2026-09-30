@@ -2,10 +2,12 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from src.shared import ServiceItem, EffortItem
+
 
 class FinancialEstimatorOutputSchema(BaseModel):
-    #service_items: list[ServiceItem] = Field(default_factory=list)
-    #effort_breakdown: list[EffortItem] = Field(default_factory=list)
+    service_items: list[ServiceItem] = Field(default_factory=list)
+    effort_breakdown: list[EffortItem] = Field(default_factory=list)
     hourly_rate: Decimal | None = None
     estimated_hours: Decimal | None = None
     subtotal: Decimal | None = None

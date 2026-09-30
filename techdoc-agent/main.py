@@ -5,6 +5,7 @@ from src import TechDocBuilderGraph
 
 def start_agent():
     agent = TechDocBuilderGraph()
+    agent.draw_graph()
     agent.start(
         input_obj={
             "user_id": str(uuid.uuid4()),

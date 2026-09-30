@@ -28,7 +28,6 @@ class TechDocBuilderGraph:
             temperature=self.__settings.temperature,
         )
         self.__builder = StateGraph(
-            input_schema=RequirementsAgentState,
             state_schema=WorkflowState,
         )
         self.__tool = SaveMarkdownTool()
@@ -46,7 +45,7 @@ class TechDocBuilderGraph:
         self.graph = self.__build()
 
     @staticmethod
-    async def initialize_proposal(state: WorkflowState):
+    def initialize_proposal(state: WorkflowState):
         revision_request = state.get("revision_request")
         if state.get("proposal_id") and revision_request:
             revision = state.get("revision", 0) + 1
@@ -116,7 +115,7 @@ class TechDocBuilderGraph:
         }
 
     @staticmethod
-    async def awaiting_requirements(state: WorkflowState):
+    def awaiting_requirements(state: WorkflowState):
         req: RequirementsAgentState = state["requirements"]
         response = interrupt({
             "type": "requirements_clarification",
@@ -186,7 +185,7 @@ class TechDocBuilderGraph:
         fin_state: FinancialEstimatorAgentState = {
             "technical_proposal_version": tech["version"],
             #"service_items": service_items,
-            #"effort_breakdown": res.effort_breakdown,
+            "effort_breakdown": res.effort_breakdown,
             #"hourly_rate": subtotal / total_hours if total_hours > 0 else Decimal("0.00"),
             #"estimated_hours": total_hours,
             "currency": "USD",
@@ -250,14 +249,14 @@ class TechDocBuilderGraph:
         raise ValueError("action must be approve or request_changes")
 
     @staticmethod
-    async def failed_node(state: WorkflowState):
+    def failed_node(state: WorkflowState):
         return {
             "current_stage": "failed",
             "status": ProposalStatus.ERROR.value
         }
 
     @staticmethod
-    async def complete_node(state: WorkflowState):
+    def complete_node(state: WorkflowState):
         financial = state.get("financial_estimation") or {}
         if financial.get("approval_status") != "approved":
             raise ValueError("Cannot complete without financial approval")
@@ -340,3 +339,6 @@ class TechDocBuilderGraph:
                 continue
             state = self.invoke(question, input_obj, session_id)
             print(state)
+
+    def draw_graph(self):
+        self.graph.get_graph().draw_mermaid_png(output_file_path="techdoc_workflow.png")

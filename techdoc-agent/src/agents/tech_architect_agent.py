@@ -9,9 +9,9 @@ from config import serde
 from settings import BaseModelSettings
 from src.prompts import ARCHITECT_SYSTEM_PROMPT
 from src.state.architect import TechArchitectAgentState, TechArchitectOutputSchema
-from src.tools.architect import update_technical_document
 from src.tools.mcp import MCPSettings, MCPToolsAdapter
 
+tools = []
 
 class TechArchitectAgent:
     """
@@ -44,18 +44,17 @@ class TechArchitectAgent:
 
         self.__mcp_settings = MCPSettings()
         self.__mcp_adapter = mcp_adapter
-        tools = self.__mcp_adapter.get_tools(
+        mcp_tools = self.__mcp_adapter.get_tools(
             allowed_tools=self.__mcp_settings.allowed_tools
         )
 
         self.__agent = create_agent(
             model=self.__model,
-            tools=tools.extend([
-                update_technical_document
-            ]),
+            tools=tools.extend(mcp_tools),
             system_prompt=self.__system_prompt,
             name="techdoc-architect-agent",
             state_schema=TechArchitectAgentState,
+            response_format=TechArchitectOutputSchema,
             checkpointer=InMemorySaver(serde=serde)
         )
 
