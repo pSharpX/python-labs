@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Literal, List, Optional
+from typing import Literal, List, Optional, Self
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, model_validator, ConfigDict
 
+from .enums import UserAction
 from .constants import Priority
 
 class ProposalStatus(str, Enum):
@@ -34,84 +35,251 @@ class ProposalRevision(BaseModel):
     reason: Optional[str] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class UserResponse(BaseModel):
+    """What a human sends when resuming an interrupted workflow."""
+
+    action: UserAction
+    feedback: str | None = None  # request_changes
+    information: str | None = None  # provide_information
+    changes: str | None = None  # change_requirements
+    changed_by: str = "user"
+    reason: str | None = None
+
+    @model_validator(mode="after")
+    def _required_payload(self) -> Self:
+        needed = {
+            UserAction.REQUEST_CHANGES: "feedback",
+            UserAction.PROVIDE_INFORMATION: "information",
+            UserAction.CHANGE_REQUIREMENTS: "changes",
+        }.get(self.action)
+        if needed and not (getattr(self, needed) or "").strip():
+            raise ValueError(f"action '{self.action.value}' requires a non-empty '{needed}'")
+        return self
+
+class PendingInput(BaseModel):
+    """Free text from the user waiting to be folded into the requirements."""
+
+    kind: Literal["clarification", "change"]
+    text: str
+    changed_by: str = "user"
+    reason: str | None = None
+
 class Requirement(BaseModel):
-    id: str
-    description: str
-    priority: Priority = "to_be_defined"
+    model_config = ConfigDict(extra="forbid")
 
-    actor: str | None = None
-    process: str | None = None
+    id: str = Field(
+        description="Identificador único del requerimiento (ej. 'RF-001')."
+    )
+    description: str = Field(
+        description="Descripción clara, concisa y orientada a la acción de lo que el sistema debe hacer."
+    )
+    priority: Priority = Field(
+        default="to_be_defined",
+        description="Nivel de prioridad o urgencia del requerimiento para el proyecto.",
+    )
 
-    acceptance_criteria: list[str] = Field(default_factory=list)
-    dependencies: list[str] = Field(default_factory=list)
+    actor: str | None = Field(
+        default=None,
+        description="Nombre del actor o rol principal que interactúa con este requerimiento.",
+    )
+    process: str | None = Field(
+        default=None,
+        description="Nombre del proceso de negocio al que pertenece o respalda este requerimiento.",
+    )
 
-    source: str | None = None
-    confirmed: bool = False
+    acceptance_criteria: list[str] = Field(
+        default_factory=list,
+        description="Criterios verificables que determinan si el requerimiento ha sido implementado exitosamente.",
+    )
+    dependencies: list[str] = Field(
+        default_factory=list,
+        description="IDs o descripciones de otros requerimientos o componentes necesarios para este requerimiento.",
+    )
+
+    source: str | None = Field(
+        default=None,
+        description="Origen o referencia en el texto original del cliente de donde se extrajo este requerimiento.",
+    )
+    confirmed: bool = Field(
+        default=False,
+        description="Indica si el requerimiento ha sido explícitamente confirmado por el cliente o si es una inferencia.",
+    )
 
 class NonFunctionalRequirement(BaseModel):
-    id: str
-    category: str
-    description: str
-    priority: Priority = "to_be_defined"
+    model_config = ConfigDict(extra="forbid")
 
-    acceptance_criteria: list[str] = Field(default_factory=list)
+    id: str = Field(
+        description="Identificador único del requerimiento no funcional (ej. 'RNF-001')."
+    )
+    category: str = Field(
+        description="Categoría del requerimiento no funcional (ej. 'Seguridad', 'Rendimiento', 'Disponibilidad', 'Escalabilidad', 'Mantenibilidad')."
+    )
+    description: str = Field(
+        description="Detalle del atributo de calidad o restricción técnica exigida al sistema."
+    )
+    priority: Priority = Field(
+        default="to_be_defined",
+        description="Nivel de prioridad del requerimiento no funcional.",
+    )
 
-    source: str | None = None
-    confirmed: bool = False
+    acceptance_criteria: list[str] = Field(
+        default_factory=list,
+        description="Métricas o criterios cuantitativos/cualitativos para validar este requerimiento (ej. 'Tiempo de respuesta menor a 200ms').",
+    )
+
+    source: str | None = Field(
+        default=None,
+        description="Origen o referencia dentro de la solicitud del cliente.",
+    )
+    confirmed: bool = Field(
+        default=False,
+        description="Indica si esta restricción o métrica está confirmada por el cliente.",
+    )
 
 class Actor(BaseModel):
-    name: str
-    type: str
-    responsibility: str
-    source: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(
+        description="Nombre del actor, rol de usuario o sistema externo (ej. 'Administrador', 'Sistema ERP')."
+    )
+    type: str = Field(
+        description="Tipo de actor (ej. 'Usuario final', 'Administrador de sistema', 'Sistema externo', 'Batch process')."
+    )
+    responsibility: str = Field(
+        description="Descripción de la responsabilidad o rol principal del actor dentro de la solución."
+    )
+    source: str | None = Field(
+        default=None,
+        description="Origen o mención del actor en el requerimiento del cliente.",
+    )
 
 class Process(BaseModel):
-    name: str
-    objective: str
-    actors: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
 
-    main_flow: list[str] = Field(default_factory=list)
-    exceptions: list[str] = Field(default_factory=list)
-    result: str | None = None
+    name: str = Field(
+        description="Nombre del proceso de negocio (ej. 'Procesamiento de órdenes de compra')."
+    )
+    objective: str = Field(
+        description="Objetivo de negocio que persigue la ejecución de este proceso."
+    )
+    actors: list[str] = Field(
+        default_factory=list,
+        description="Lista de actores o roles que participan directamente en la ejecución de este proceso.",
+    )
+
+    main_flow: list[str] = Field(
+        default_factory=list,
+        description="Secuencia paso a paso del flujo principal o 'camino feliz' del proceso.",
+    )
+    exceptions: list[str] = Field(
+        default_factory=list,
+        description="Escenarios alternativos, errores o desviaciones respecto al flujo principal.",
+    )
+    result: str | None = Field(
+        default=None,
+        description="Resultado esperado o estado final del negocio al completar exitosamente el proceso.",
+    )
 
 class Integration(BaseModel):
-    system: str
-    purpose: str
-    data: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
 
-    direction: str | None = None
-    frequency: str | None = None
-    status: str = "por confirmar"
+    system: str = Field(
+        description="Nombre del sistema objetivo o API con el cual se realizará la integración."
+    )
+    purpose: str = Field(
+        description="Propósito técnico o de negocio de la integración (ej. 'Sincronizar inventario')."
+    )
+    data: list[str] = Field(
+        default_factory=list,
+        description="Tipos de datos o entidades intercambiadas a través de la integración (ej. ['Clientes', 'Facturas']).",
+    )
+    direction: str | None = Field(
+        default=None,
+        description="Dirección del flujo de datos (ej. 'Entrante', 'Saliente', 'Bidireccional').",
+    )
+    frequency: str | None = Field(
+        default=None,
+        description="Frecuencia o patrón de comunicación (ej. 'Tiempo real', 'Batch diario', 'Event-driven').",
+    )
+    status: str = Field(
+        default="por confirmar",
+        description="Estado de definición técnica de la integración (ej. 'Definido', 'Por confirmar', 'Deprecado').",
+    )
 
 class Risk(BaseModel):
-    description: str
-    impact: str
-    cause: str
-    action_validation: str
+    model_config = ConfigDict(extra="forbid")
+
+    description: str = Field(
+        description="Descripción detallada del riesgo o evento incierto identificable."
+    )
+    impact: str = Field(
+        description="Efecto o consecuencia negativa en el proyecto si el riesgo se materializa (ej. 'Alto', 'Desviación de tiempo', 'Costo adicional')."
+    )
+    cause: str = Field(
+        description="Causa raíz o factor desencadenante del riesgo."
+    )
+    action_validation: str = Field(
+        description="Acción propuesta para mitigar, prevenir o validar el riesgo con el cliente."
+    )
 
 class Assumption(BaseModel):
-    description: str
-    requires_validation: bool = True
-    source: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    description: str = Field(
+        description="Premisa o supuesto considerado como verdadero para avanzar con la propuesta."
+    )
+    requires_validation: bool = Field(
+        default=True,
+        description="Indica si el supuesto requiere ser confirmado o aceptado explícitamente por el cliente.",
+    )
+    source: str | None = Field(
+        default=None,
+        description="Origen o contexto del que surge el supuesto.",
+    )
 
 class MissingInformation(BaseModel):
-    description: str
-    criticality: Literal[
-        "critical",
-        "important",
-        "desirable",
-    ]
-    reason: str | None
+    model_config = ConfigDict(extra="forbid")
+
+    description: str = Field(
+        description="Detalle de la información no proporcionada o vacíos conceptuales detectados."
+    )
+    criticality: Literal["critical", "important", "desirable"] = Field(
+        description="Nivel de criticidad del vacío de información para la estimación y diseño arquitectónico."
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Explicación de por qué esta información faltante afecta la fase actual de la propuesta.",
+    )
 
 class ClientQuestion(BaseModel):
-    question: str
-    reason: str
-    related_to: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+    question: str = Field(
+        description="Pregunta concreta, clara y formal formulada directamente para el cliente."
+    )
+    reason: str = Field(
+        description="Justificación técnica o de negocio de por qué es indispensable realizar esta pregunta."
+    )
+    related_to: str | None = Field(
+        default=None,
+        description="Elemento, proceso, requerimiento o sección del proyecto con el que se relaciona la pregunta.",
+    )
 
 class ProposalScope(BaseModel):
-    included: list[str] = Field(default_factory=list)
-    excluded: list[str] = Field(default_factory=list)
-    to_confirm: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
+
+    included: list[str] = Field(
+        default_factory=list,
+        description="Lista explícita de entregables, funcionalidades o componentes incluidos dentro del alcance (In-Scope).",
+    )
+    excluded: list[str] = Field(
+        default_factory=list,
+        description="Lista explícita de funcionalidades, integraciones o actividades que NO forman parte del alcance (Out-of-Scope).",
+    )
+    to_confirm: list[str] = Field(
+        default_factory=list,
+        description="Elementos pendientes de validación o decisión por parte del cliente para determinar si entran en el alcance.",
+    )
 
 class Requirements(BaseModel):
     context: str = Field(

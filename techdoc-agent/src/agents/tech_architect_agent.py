@@ -8,7 +8,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from config import serde
 from settings import BaseModelSettings
 from src.prompts import ARCHITECT_SYSTEM_PROMPT
-from src.state.architect import TechArchitectAgentState, TechArchitectOutputSchema
+from src.state.architect import TechArchitectOutputSchema
 from src.tools.mcp import MCPSettings, MCPToolsAdapter
 
 tools = []
@@ -53,9 +53,8 @@ class TechArchitectAgent:
             tools=tools.extend(mcp_tools),
             system_prompt=self.__system_prompt,
             name="techdoc-architect-agent",
-            state_schema=TechArchitectAgentState,
             response_format=TechArchitectOutputSchema,
-            checkpointer=InMemorySaver(serde=serde)
+            #checkpointer=InMemorySaver(serde=serde)
         )
 
     def run(self, requirements: dict) -> TechArchitectOutputSchema:

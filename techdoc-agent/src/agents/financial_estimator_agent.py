@@ -8,7 +8,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from config import serde
 from settings import BaseModelSettings
 from src.prompts import FINANCIAL_ESTIMATE_SYSTEM_PROMPT
-from src.state.financial_estimator import FinancialEstimatorAgentState, FinancialEstimatorOutputSchema
+from src.state.financial_estimator import FinancialEstimatorOutputSchema
 
 tools = [
 ]
@@ -30,9 +30,8 @@ class FinancialEstimatorAgent:
             tools=tools,
             system_prompt=self.__system_prompt,
             name="financial-estimator-agent",
-            state_schema=FinancialEstimatorAgentState,
             response_format=FinancialEstimatorOutputSchema,
-            checkpointer=InMemorySaver(serde=serde)
+            #checkpointer=InMemorySaver(serde=serde)
         )
 
     def run(self, requirements: dict, technical_proposal: dict, catalog: list[dict]) -> FinancialEstimatorOutputSchema:

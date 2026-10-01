@@ -7,7 +7,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from config import serde
 from settings import BaseModelSettings
 from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
-from src.state.requirements import RequirementsAgentState, RequirementsOutputSchema
+from src.state.requirements import RequirementsOutputSchema
 
 
 tools = []
@@ -47,9 +47,8 @@ class RequirementsScoutAgent:
                 ),
             ],
             name="techdoc-reqscout-agent",
-            state_schema=RequirementsAgentState,
             response_format=RequirementsOutputSchema,
-            checkpointer=InMemorySaver(serde=serde)
+            #checkpointer=InMemorySaver(serde=serde)
         )
 
     def run(self, raw_requirements: str) -> RequirementsOutputSchema:

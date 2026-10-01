@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 from typing import Any
 
 from langchain.chat_models import init_chat_model
@@ -8,9 +9,8 @@ from langgraph.types import interrupt, Command
 
 from config import serde
 from settings import BaseModelSettings, ApplicationSettings
-from shared import UserApprovalAction
-from src.routing import route_after_requirements, route_after_technical, route_after_financial, route_after_approval
-from src.shared import ProposalRevision, ProposalStatus
+from src.routing import N, route_after_requirements, route_after_technical, route_after_financial, route_after_approval
+from src.shared import ProposalRevision, ProposalStatus, UserApprovalAction, UserResponse, UserAction, Stage, PendingInput
 from src.state.financial_estimator import FinancialEstimatorOutputSchema, FinancialEstimatorAgentState
 from src.state.requirements import RequirementsOutputSchema, RequirementsAgentState
 from src.agents import TechArchitectAgent, RequirementsScoutAgent, FinancialEstimatorAgent
@@ -21,39 +21,56 @@ from src.tools.mcp import MCPToolsAdapter, MCPSettings
 from src.tools.requirements import SaveMarkdownTool
 
 
+@dataclass(frozen=True)
+class WorkflowSnapshot:
+    """What a caller (API, UI, CLI) needs to know after every step."""
+
+    proposal_id: str
+    values: dict[str, Any]
+    interrupt: dict[str, Any] | None  # payload the human must answer, if paused
+
+    @property
+    def status(self) -> ProposalStatus | None:
+        return self.values.get("status")
+
+    @property
+    def waiting_for_user(self) -> bool:
+        return self.interrupt is not None
+
+
 class TechDocBuilderGraph:
     """A langgraph powered workflow that design and write technical-functional proposals and financial documents."""
 
     def __init__(self):
-        self.__app_settings = ApplicationSettings()
-        self.__model_settings = BaseModelSettings()
-        self.__model = init_chat_model(
-            model=self.__model_settings.model_name,
-            model_provider=self.__model_settings.provider,
-            temperature=self.__model_settings.temperature,
+        self._app_settings = ApplicationSettings()
+        self._model_settings = BaseModelSettings()
+        self._model = init_chat_model(
+            model=self._model_settings.model_name,
+            model_provider=self._model_settings.provider,
+            temperature=self._model_settings.temperature,
         )
-        self.__callbacks = [
+        self._callbacks = [
             langfuse_handler
         ]
-        self.__builder = StateGraph(
+        self._builder = StateGraph(
             state_schema=WorkflowState,
         )
-        self.__tool = SaveMarkdownTool()
-        self.__mcp_settings = MCPSettings()
-        self.__mcp_adapter = MCPToolsAdapter.create(self.__mcp_settings)
+        self._tool = SaveMarkdownTool()
+        self._mcp_settings = MCPSettings()
+        self._mcp_adapter = MCPToolsAdapter.create(self._mcp_settings)
 
         # Initialize agents
-        self.__req_scout_agent = RequirementsScoutAgent()
-        self.__tech_architect_agent = TechArchitectAgent(
-            mcp_adapter=self.__mcp_adapter
+        self._req_scout_agent = RequirementsScoutAgent()
+        self._tech_architect_agent = TechArchitectAgent(
+            mcp_adapter=self._mcp_adapter
         )
-        self.__financial_estimator_agent = FinancialEstimatorAgent()
+        self._financial_estimator_agent = FinancialEstimatorAgent()
 
         # Initialize workflow
-        self.__graph = self.__build()
+        self._graph = self._build()
 
     @staticmethod
-    def initialize_proposal(state: WorkflowState):
+    def _initialize_proposal(state: WorkflowState):
         revision_request = state.get("revision_request")
         if state.get("proposal_id") and revision_request:
             revision = state.get("revision", 0) + 1
@@ -84,7 +101,7 @@ class TechDocBuilderGraph:
                 "technical_architecture": tech,
                 "financial_estimation": fin,
                 "status": ProposalStatus.ANALYZING_REQUIREMENTS.value,
-                "current_stage": "requirements",
+                "current_stage": Stage.REQUIREMENTS,
                 "revisions": state.get("revision_history", []) + [ProposalRevision(
                     revision=revision,
                     changed_by="user",
@@ -96,19 +113,19 @@ class TechDocBuilderGraph:
             "proposal_id": state.get("proposal_id", "proposal-unknown"),
             "revision": state.get("revision", 1),
             "status": ProposalStatus.ANALYZING_REQUIREMENTS.value,
-            "current_stage": "requirements",
+            "current_stage": Stage.REQUIREMENTS,
             "errors": state.get("errors", []),
             "revisions": state.get("revision_history", []),
         }
 
-    def __requirements_agent_node(self, state: WorkflowState):
+    def _requirements_agent_node(self, state: WorkflowState):
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
         req_state = state.get("requirements") or {}
         raw = req_state.get("raw_requirements") or state.get("user_request", "")
         version = req_state.get("version", state.get("revision", 1))
 
-        res: RequirementsOutputSchema = self.__req_scout_agent.run(raw)
+        res: RequirementsOutputSchema = self._req_scout_agent.run(raw)
 
         return {
             "requirements": {
@@ -123,30 +140,33 @@ class TechDocBuilderGraph:
         }
 
     @staticmethod
-    def awaiting_requirements(state: WorkflowState):
+    def _awaiting_requirements(state: WorkflowState):
         req: RequirementsAgentState = state["requirements"]
-        response = interrupt({
+        raw_response = interrupt({
             "type": "requirements_clarification",
+            "proposal_id": state.get("proposal_id"),
             "message": "Los requisitos aún están incompletos. Por favor, comparte la información que falta para que podamos continuar.",
             "questions": req.get("client_questions", [ req.get("readiness_reason", "") ]),
             "missing_information": [
                 x if isinstance(x, dict) else x.model_dump() for x in
                                     req.get("missing_information", [])
             ],
+            #"allowed_actions": [UserAction.PROVIDE_INFORMATION, UserAction.CHANGE_REQUIREMENTS],
         })
 
-        if not isinstance(response, dict) or not response.get("raw_requirements"):
-            raise ValueError("Resume payload must contain raw_requirements")
+        response: UserResponse = UserResponse.model_validate(raw_response)
+        if not response.information:
+            raise ValueError("Resume payload must contain information")
         merged = dict(req)
-        merged["raw_requirements"] = response["raw_requirements"]
+        merged["raw_requirements"] = response.information
 
         return {
             "requirements": merged,
-            "user_request": response["raw_requirements"],
+            "user_request": response.information,
             "status": ProposalStatus.ANALYZING_REQUIREMENTS.value
         }
 
-    def __tech_architect_agent_node(self, state: WorkflowState):
+    def _tech_architect_agent_node(self, state: WorkflowState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
         reqs = state["requirements"]
@@ -158,7 +178,7 @@ class TechDocBuilderGraph:
                 "errors": state.get("errors", []) + ["Datos incompletos para continuarr"]
             }
 
-        res: TechArchitectOutputSchema = self.__tech_architect_agent.run(reqs)
+        res: TechArchitectOutputSchema = self._tech_architect_agent.run(reqs)
 
         tech_state: TechArchitectAgentState = {
             **res.model_dump(),
@@ -174,7 +194,7 @@ class TechDocBuilderGraph:
             "current_stage": "technical_architecture"
         }
 
-    def __financial_estimator_agent_node(self, state: WorkflowState):
+    def _financial_estimator_agent_node(self, state: WorkflowState):
         """Financial Estimator Node calculate the effort, the cost and commercial conditions."""
 
         reqs = state["requirements"]
@@ -184,7 +204,7 @@ class TechDocBuilderGraph:
         if not reqs or not tech or tech.get("stale") or tech.get("requirements_version") != reqs.get("version"):
             raise ValueError("No se puede estimar a partir de una propuesta técnica desactualizada.")
 
-        res: FinancialEstimatorOutputSchema = self.__financial_estimator_agent.run(
+        res: FinancialEstimatorOutputSchema = self._financial_estimator_agent.run(
             requirements=reqs,
             technical_proposal=tech,
             catalog=[],
@@ -227,18 +247,24 @@ class TechDocBuilderGraph:
         }
 
     @staticmethod
-    def request_financial_approval(state: WorkflowState):
+    def _request_financial_approval(state: WorkflowState):
         financial = state["financial_estimation"]
-        response = interrupt({
+        raw_response = interrupt({
             "type": "financial_approval",
+            "proposal_id": state.get("proposal_id"),
             "proposal": financial,
             "message": "Revise la propuesta financiera y apruébela o solicite cambios.",
-            "allowed_actions": ["approve", "request_changes"],
+            "allowed_actions": [
+                UserAction.APPROVE,
+                UserAction.REQUEST_CHANGES,
+            ],
         })
-        if not isinstance(response, dict):
-            raise ValueError("Approval response must be an object")
-        action = response.get("action")
-        if action == "approve":
+        response = UserResponse.model_validate(raw_response)
+        action: UserAction = response.action
+        if action == UserAction.PROVIDE_INFORMATION:
+            raise ValueError("'provide_information' is not valid at financial approval")
+
+        if action == UserAction.APPROVE:
             updated = dict(financial)
             updated["approval_status"] = "approved"
             updated["status"] = ProposalStatus.APPROVED.value
@@ -246,10 +272,10 @@ class TechDocBuilderGraph:
                 "financial_estimation": updated,
                 "status": ProposalStatus.APPROVED.value
             }
-        if action == "request_changes":
+        if action == UserAction.REQUEST_CHANGES:
             updated = dict(financial)
             updated["approval_status"] = "changes_requested"
-            updated["user_feedback"] = response.get("feedback", "")
+            updated["user_feedback"] = response.feedback
             return {
                 "financial_estimation": updated,
                 "status": ProposalStatus.REVISION_REQUIRED.value
@@ -257,14 +283,14 @@ class TechDocBuilderGraph:
         raise ValueError("action must be approve or request_changes")
 
     @staticmethod
-    def failed_node(state: WorkflowState):
+    def _failed_node(state: WorkflowState):
         return {
             "current_stage": "failed",
             "status": ProposalStatus.ERROR.value
         }
 
     @staticmethod
-    def complete_node(state: WorkflowState):
+    def _complete_node(state: WorkflowState):
         financial = state.get("financial_estimation") or {}
         if financial.get("approval_status") != "approved":
             raise ValueError("Cannot complete without financial approval")
@@ -274,53 +300,53 @@ class TechDocBuilderGraph:
         }
 
     @staticmethod
-    def is_technical_current(state: WorkflowState) -> bool:
+    def _is_technical_current(state: WorkflowState) -> bool:
         req, tech = state.get("requirements"), state.get("technical_architecture")
         return bool(req and tech and not tech.get("stale") and tech.get("requirements_version") == req.get("version"))
 
     @staticmethod
-    def is_financial_current(state: WorkflowState) -> bool:
+    def _is_financial_current(state: WorkflowState) -> bool:
         tech, fin = state.get("technical_architecture"), state.get("financial_estimation")
-        return bool(TechDocBuilderGraph.is_technical_current(state) and fin and not fin.get("stale") and fin.get(
+        return bool(TechDocBuilderGraph._is_technical_current(state) and fin and not fin.get("stale") and fin.get(
             "technical_proposal_version") == tech.get("version"))
 
-    def __build(self):
-        self.__builder.add_node("initialize_proposal", self.initialize_proposal)
-        self.__builder.add_node("requirements_agent", self.__requirements_agent_node)
-        self.__builder.add_node("awaiting_requirements", self.awaiting_requirements)
-        self.__builder.add_node("technical_architect", self.__tech_architect_agent_node)
-        self.__builder.add_node("financial_estimator", self.__financial_estimator_agent_node)
-        self.__builder.add_node("request_financial_approval", self.request_financial_approval)
-        self.__builder.add_node("complete", self.complete_node)
-        self.__builder.add_node("failed", self.failed_node)
+    def _build(self):
+        self._builder.add_node(N.INITIALIZE, self._initialize_proposal)
+        self._builder.add_node(N.REQUIREMENTS, self._requirements_agent_node)
+        self._builder.add_node(N.AWAITING_REQUIREMENTS, self._awaiting_requirements)
+        self._builder.add_node(N.ARCHITECT, self._tech_architect_agent_node)
+        self._builder.add_node(N.ESTIMATOR, self._financial_estimator_agent_node)
+        self._builder.add_node(N.APPROVAL, self._request_financial_approval)
+        self._builder.add_node(N.COMPLETE, self._complete_node)
+        self._builder.add_node(N.FAILED, self._failed_node)
 
-        self.__builder.add_edge(START, "initialize_proposal")
-        self.__builder.add_edge("initialize_proposal", "requirements_agent")
-        self.__builder.add_conditional_edges("requirements_agent", route_after_requirements)
-        self.__builder.add_edge("awaiting_requirements", "requirements_agent")
-        self.__builder.add_conditional_edges("technical_architect", route_after_technical)
-        self.__builder.add_conditional_edges("financial_estimator", route_after_financial)
-        self.__builder.add_conditional_edges("request_financial_approval", route_after_approval, {
-            "complete": "complete",
-            "financial_estimator": "financial_estimator",
+        self._builder.add_edge(START, N.INITIALIZE)
+        self._builder.add_edge(N.INITIALIZE, N.REQUIREMENTS)
+        self._builder.add_conditional_edges(N.REQUIREMENTS, route_after_requirements)
+        self._builder.add_edge(N.AWAITING_REQUIREMENTS, N.REQUIREMENTS)
+        self._builder.add_conditional_edges(N.ARCHITECT, route_after_technical)
+        self._builder.add_conditional_edges(N.ESTIMATOR, route_after_financial)
+        self._builder.add_conditional_edges(N.APPROVAL, route_after_approval, {
+            "complete": N.COMPLETE,
+            "financial_estimator": N.ESTIMATOR,
         })
-        self.__builder.add_edge("complete", END)
-        self.__builder.add_edge("failed", END)
+        self._builder.add_edge(N.COMPLETE, END)
+        self._builder.add_edge(N.FAILED, END)
 
-        return self.__builder.compile(checkpointer=InMemorySaver(serde=serde))
+        return self._builder.compile(checkpointer=InMemorySaver(serde=serde))
 
-    def __get_config(self, user_id, session_id) -> dict[str, Any]:
+    def _get_config(self, user_id, session_id) -> dict[str, Any]:
         return {
-            "callbacks": self.__callbacks,
+            "callbacks": self._callbacks,
             "metadata": {
                 "langfuse_user_id": user_id,
                 "langfuse_session_id": session_id,
                 "langfuse_tags": [
                     f"environment:{os.getenv('ENVIRONMENT',"dev")}",
                     "framework:langgraph",
-                    f"owner:{self.__app_settings.owner}",
-                    f"application:{self.__app_settings.name}",
-                    f"component:{self.__app_settings.component}"
+                    f"owner:{self._app_settings.owner}",
+                    f"application:{self._app_settings.name}",
+                    f"component:{self._app_settings.component}"
                 ]
             },
             "configurable": {
@@ -328,13 +354,53 @@ class TechDocBuilderGraph:
             }
         }
 
+    def snapshot(self, thread_id: str) -> WorkflowSnapshot:
+        state = self._graph.get_state(self._get_config(thread_id, thread_id))
+        pending = [i.value for task in state.tasks for i in task.interrupts]
+        return WorkflowSnapshot(thread_id, dict(state.values), pending[0] if pending else None)
+
     def invoke(self, initial_input: dict | Command[Any], session_id: str) -> WorkflowState:
-        return self.__graph.invoke(
+        return self._graph.invoke(
             input=initial_input,
-            config=self.__get_config(session_id, session_id),
+            config=self._get_config(session_id, session_id),
         )
 
-    def start(self, input_obj: dict, session_id: str):
+    def resume(self, thread_id: str, response: UserResponse | dict[str, Any]) -> WorkflowSnapshot:
+        """Answer the pending interrupt (requirements questions or financial approval)."""
+        payload = response.model_dump(mode="json", exclude_none=True) if isinstance(response,
+                                                                                    UserResponse) else response
+        self._graph.invoke(Command(resume=payload), self._get_config(thread_id, thread_id))
+        return self.snapshot(thread_id)
+
+    def start(self, thread_id: str, user_request: str) -> WorkflowSnapshot:
+        self._graph.invoke(
+            input={
+                "proposal_id": thread_id,
+                "user_request": user_request,
+            },
+            config=self._get_config(thread_id, thread_id))
+        return self.snapshot(thread_id)
+
+    def request_revision(
+            self, thread_id: str, changes: str, *, changed_by: str = "user", reason: str | None = None
+    ) -> WorkflowSnapshot:
+        """Change requirements at any time: mid-flight (paused) or after completion."""
+        current = self.snapshot(thread_id)
+        if current.waiting_for_user:
+            return self.resume(
+                thread_id,
+                UserResponse(
+                    action=UserAction.CHANGE_REQUIREMENTS,
+                    changes=changes,
+                    changed_by=changed_by,
+                    reason=reason
+                ),
+            )
+        pending = PendingInput(kind="change", text=changes, changed_by=changed_by, reason=reason)
+        self._graph.invoke({"pending_input": pending}, self._get_config(thread_id, thread_id))
+        return self.snapshot(thread_id)
+
+    def legacy_start(self, input_obj: dict, session_id: str):
         print("Welcome to TechDoc Builder Workflow, your helpful assistant!")
         print("Start typing ('c' for exit) >> ")
         config = {
@@ -365,7 +431,7 @@ class TechDocBuilderGraph:
             print(f"\n[Stage 1] Current Status: {state['status']}")
 
             # Check interrupt for missing info if requirements were incomplete
-            snapshot = self.__graph.get_state(config)
+            snapshot = self._graph.get_state(config)
             if snapshot.next and "awaiting_requirements" in snapshot.next:
                 print("\n--> Interrupt Triggered: Missing Requirements Information")
                 print("Questions:", snapshot.tasks[0].interrupts[0].value["questions"])
@@ -379,7 +445,7 @@ class TechDocBuilderGraph:
                 )
 
             # Check next snapshot (Financial Approval Interrupt)
-            snapshot = self.__graph.get_state(config)
+            snapshot = self._graph.get_state(config)
             if snapshot.next and "request_financial_approval" in snapshot.next:
                 fin = snapshot.values["financial_estimation"]
                 print(f"\n--> Interrupt Triggered: Financial Approval Requested")
@@ -397,7 +463,7 @@ class TechDocBuilderGraph:
                 )
 
             # Inspect refreshed financial state after auto-propagation of changes
-            snapshot = self.__graph.get_state(config)
+            snapshot = self._graph.get_state(config)
             if snapshot.next and "request_financial_approval" in snapshot.next:
                 fin_v2 = snapshot.values["financial_estimation"]
                 req_v2 = snapshot.values["requirements"]
@@ -412,7 +478,7 @@ class TechDocBuilderGraph:
 
                 # Final Approval
                 print("\n--- User Approves Financial Proposal ---")
-                final_state = self.__graph.invoke(
+                final_state = self._graph.invoke(
                     Command(resume={"action": UserApprovalAction.APPROVE.value}),
                     config=config
                 )
@@ -422,5 +488,5 @@ class TechDocBuilderGraph:
                 print(
                     f"Requirements v{final_state['requirements']['version']} -> Tech v{final_state['technical_architecture']['version']} -> Financial v{final_state['financial_estimation']['version']}")
 
-    def draw_graph(self):
-        self.__graph.get_graph().draw_mermaid_png(output_file_path="techdoc_workflow.png")
+    def draw_workflow(self):
+        self._graph.get_graph().draw_mermaid_png(output_file_path="techdoc_workflow.png")

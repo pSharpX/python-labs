@@ -2,6 +2,19 @@ from __future__ import annotations
 from typing import Literal
 from src.state import WorkflowState
 
+class N:
+    """Node names."""
+
+    INITIALIZE = "initialize_proposal"
+    REQUIREMENTS = "requirements_agent"
+    AWAITING_REQUIREMENTS = "awaiting_requirements"
+    ARCHITECT = "technical_architect"
+    ESTIMATOR = "financial_estimator"
+    APPROVAL = "request_financial_approval"
+    COMPLETE = "complete"
+    USER_CHANGES = "user_changes_requirements"
+    INCREMENT = "increment_revision"
+    FAILED = "failed"
 
 def route_after_requirements(state: WorkflowState) -> Literal["technical_architect", "awaiting_requirements", "failed"]:
     if state.get("status") == "error":
