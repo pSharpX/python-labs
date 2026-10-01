@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from langchain.chat_models import init_chat_model
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt, Command
@@ -118,14 +119,14 @@ class TechDocBuilderGraph:
             "revisions": state.get("revision_history", []),
         }
 
-    def _requirements_agent_node(self, state: WorkflowState):
+    def _requirements_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
         req_state = state.get("requirements") or {}
         raw = req_state.get("raw_requirements") or state.get("user_request", "")
         version = req_state.get("version", state.get("revision", 1))
 
-        res: RequirementsOutputSchema = self._req_scout_agent.run(raw)
+        res: RequirementsOutputSchema = self._req_scout_agent.run(raw, config["configurable"])
 
         return {
             "requirements": {

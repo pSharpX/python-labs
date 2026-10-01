@@ -48,14 +48,18 @@ class RequirementsScoutAgent:
             ],
             name="techdoc-reqscout-agent",
             response_format=RequirementsOutputSchema,
-            #checkpointer=InMemorySaver(serde=serde)
+            checkpointer=InMemorySaver(serde=serde)
         )
 
-    def run(self, raw_requirements: str) -> RequirementsOutputSchema:
+    def run(self, raw_requirements: str, config) -> RequirementsOutputSchema:
         result = self.__agent.invoke({
             "messages": [
                 HumanMessage(content=raw_requirements)
             ]
+        }, config={
+            "configurable": {
+                "thread_id": config["thread_id"]
+            }
         })
         return result["structured_response"]
 

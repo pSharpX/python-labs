@@ -31,7 +31,7 @@ class FinancialEstimatorAgent:
             system_prompt=self.__system_prompt,
             name="financial-estimator-agent",
             response_format=FinancialEstimatorOutputSchema,
-            #checkpointer=InMemorySaver(serde=serde)
+            checkpointer=InMemorySaver(serde=serde)
         )
 
     def run(self, requirements: dict, technical_proposal: dict, catalog: list[dict]) -> FinancialEstimatorOutputSchema:

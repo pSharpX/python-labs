@@ -54,7 +54,7 @@ class TechArchitectAgent:
             system_prompt=self.__system_prompt,
             name="techdoc-architect-agent",
             response_format=TechArchitectOutputSchema,
-            #checkpointer=InMemorySaver(serde=serde)
+            checkpointer=InMemorySaver(serde=serde)
         )
 
     def run(self, requirements: dict) -> TechArchitectOutputSchema:
