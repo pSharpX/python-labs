@@ -6,22 +6,28 @@ from src.shared import UserResponse, UserAction
 
 def _ask(snap: WorkflowSnapshot) -> UserResponse:
     payload = snap.interrupt or {}
-    if payload["type"] == "requirements_clarification":
-        print("\nThe requirements analyst needs more information:")
-        for q in payload["questions"]:
-            print(f"  ? {q}")
-        return UserResponse(action=UserAction.PROVIDE_INFORMATION, information=input("\nYour answer: "))
-
     print(payload)
-    print("\n" + payload["financial_proposal"])
-    while True:
-        choice = input("\n[a]pprove / request [c]hanges to the estimate / change [r]equirements: ").strip().lower()
-        if choice == "a":
-            return UserResponse(action=UserAction.APPROVE)
-        if choice == "c":
-            return UserResponse(action=UserAction.REQUEST_CHANGES, feedback=input("Feedback: "))
-        if choice == "r":
-            return UserResponse(action=UserAction.CHANGE_REQUIREMENTS, changes=input("Requirement change: "))
+
+    interrupt_type = payload["type"]
+    if interrupt_type == "requirements_clarification":
+        print("\nSe necesita mayor información para continuar con el analisis:")
+        questions = payload["questions"]
+        for idx, q in enumerate(questions):
+            print(f"{idx+1}. {q["question"]}")
+        answers = input("\nRespuesta: ")
+        return UserResponse(action=UserAction.PROVIDE_INFORMATION, information=answers)
+
+    if interrupt_type == "financial_approval":
+        print("\n" + payload["financial_proposal"])
+        while True:
+            choice = input("\n[a]pprove / request [c]hanges to the estimate / change [r]equirements: ").strip().lower()
+            if choice == "a":
+                return UserResponse(action=UserAction.APPROVE)
+            if choice == "c":
+                return UserResponse(action=UserAction.REQUEST_CHANGES, feedback=input("Feedback: "))
+            if choice == "r":
+                return UserResponse(action=UserAction.CHANGE_REQUIREMENTS, changes=input("Requirement change: "))
+    raise ValueError("Invalid interrupt type")
 
 def run_agent():
     workflow = TechDocBuilderGraph()
@@ -35,9 +41,10 @@ def run_agent():
     snap = workflow.start(proposal_id, request)
 
     while snap.waiting_for_user:
-        snap = workflow.resume(proposal_id, _ask(snap))
+        response: UserResponse = _ask(snap)
+        snap = workflow.resume(proposal_id, response)
 
-    print(f"\nFinal status: {snap.status.value if snap.status else None}")
+    print(f"\nFinal status: {snap.status if snap.status else None}")
     if snap.values.get("errors"):
         print("Errors:", *snap.values["errors"], sep="\n  ")
 

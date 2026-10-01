@@ -249,10 +249,13 @@ class TechDocBuilderGraph:
 
     @staticmethod
     def _request_financial_approval(state: WorkflowState):
+        """Human-in-the-loop: pause for approval of the CURRENT financial estimate."""
+
         financial = state["financial_estimation"]
         raw_response = interrupt({
             "type": "financial_approval",
             "proposal_id": state.get("proposal_id"),
+            "financial_proposal": financial["financial_proposal"],
             "proposal": financial,
             "message": "Revise la propuesta financiera y apruébela o solicite cambios.",
             "allowed_actions": [

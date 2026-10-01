@@ -483,63 +483,183 @@ class Requirements(BaseModel):
         )
 
 class DocumentationSource(BaseModel):
-    title: str
-    url: str
-    source: str
-    relevance: str
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    title: str = Field(
+        description="Título o nombre del documento, guía o referencia bibliográfica."
+    )
+    url: str = Field(
+        description="Enlace URL directo a la fuente de documentación o 'N/A' si no aplica."
+    )
+    source: str = Field(
+        description="Origen o autoría de la documentación (ej. 'Documentación Oficial de AWS', 'Repositorio Interno', 'IEEE')."
+    )
+    relevance: str = Field(
+        description="Justificación breve de por qué esta fuente es relevante para la solución arquitectónica."
+    )
 
 class ArchitectureComponent(BaseModel):
-    name: str
-    responsibility: str
-    technology: str | None = None
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    name: str = Field(
+        description="Nombre del componente o módulo dentro del sistema (ej. 'API Gateway', 'Servicio de Autenticación')."
+    )
+    responsibility: str = Field(
+        description="Descripción clara de la responsabilidad única o función principal de este componente."
+    )
+    technology: str | None = Field(
+        default=None,
+        description="Tecnología, lenguaje o framework sugerido para implementar el componente (ej. 'Node.js/Express', 'Python/FastAPI').",
+    )
 
 class TechnologyDecision(BaseModel):
-    decision: str
-    rationale: str
-    alternatives: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    decision: str = Field(
+        description="Declaración concisa de la tecnología o herramienta seleccionada (ej. 'Uso de PostgreSQL como BD principal')."
+    )
+    rationale: str = Field(
+        description="Justificación técnica e impacto de negocio que respaldan la elección de esta tecnología."
+    )
+    alternatives: list[str] = Field(
+        default_factory=list,
+        description="Otras opciones tecnológicas evaluadas o descartadas antes de tomar la decisión final (ej. ['MongoDB', 'MySQL']).",
+    )
 
 class TechnicalIntegration(BaseModel):
-    name: str
-    mechanism: str
-    purpose: str
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    name: str = Field(
+        description="Nombre de la integración o del sistema objetivo con el que se conecta la solución (ej. 'Pasarela de Pagos Stripe')."
+    )
+    mechanism: str = Field(
+        description="Mecanismo o protocolo técnico de comunicación (ej. 'REST API over HTTPS', 'gRPC', 'Webhooks', 'Kafka Event Stream')."
+    )
+    purpose: str = Field(
+        description="Propósito técnico y funcional de la integración dentro del flujo general."
+    )
 
 class SecurityDesign(BaseModel):
-    controls: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    controls: list[str] = Field(
+        default_factory=list,
+        description="Lista de controles, protocolos y medidas de seguridad a implementar (ej. ['OAuth2 + JWT para autenticación', 'Cifrado en reposito AES-256', 'WAF para protección web']).",
+    )
 
 class ScalabilityDesign(BaseModel):
-    strategy: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    strategy: list[str] = Field(
+        default_factory=list,
+        description="Lista de estrategias para escalar el sistema bajo alta demanda (ej. ['Auto-scaling horizontal en Kubernetes', 'Caché de lecturas con Redis', 'Particionamiento de BD']).",
+    )
 
 class AvailabilityDesign(BaseModel):
-    strategy: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    strategy: list[str] = Field(
+        default_factory=list,
+        description="Medidas para garantizar el tiempo de actividad y tolerancia a fallos (ej. ['Despliegue Multi-AZ', 'Balanceador de carga con Health Checks', 'Backups automatizados cada 24h']).",
+    )
 
 class ObservabilityDesign(BaseModel):
-    strategy: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    strategy: list[str] = Field(
+        default_factory=list,
+        description="Herramientas y mecanismos para monitoreo, métricas, logs y trazas (ej. ['Centralización de logs con Grafana Loki', 'OpenTelemetry para trazas distribuidas', 'Alertas PagerDuty']).",
+    )
 
 class DeploymentDesign(BaseModel):
-    strategy: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    strategy: list[str] = Field(
+        default_factory=list,
+        description="Estrategias de CI/CD, infraestructura y despliegue (ej. ['Pipeline en GitHub Actions', 'Infraestructura como Código con Terraform', 'Estrategia Blue/Green deployment']).",
+    )
 
 class DataArchitecture(BaseModel):
-    strategy: str
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
 
+    strategy: str = Field(
+        description="Estrategia general para el diseño, almacenamiento, modelado y ciclo de vida de los datos (ej. 'Arquitectura Polyglot Persistence con PostgreSQL para transacciones y MongoDB para documentos')."
+    )
 
 class ServiceItem(BaseModel):
-    service_id: str
-    name: str
-    hours: Decimal
-    hourly_rate: Decimal
-    currency: str
+    """
+    Representa un ítem de servicio o entregable dentro de la propuesta económica,
+    incluyendo sus horas estimadas, tarifa y moneda.
+    """
 
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
+
+    service_id: str = Field(
+        description="Identificador único del servicio o componente (ej. 'SERV-001', 'DEV-FRONT')."
+    )
+    name: str = Field(
+        description="Nombre descriptivo del servicio, módulo o entregable a realizar (ej. 'Desarrollo de API REST de Pagos')."
+    )
+    hours: Decimal = Field(
+        description="Cantidad total de horas estimadas requeridas para completar este servicio específico."
+    )
+    hourly_rate: Decimal = Field(
+        description="Tarifa por hora aplicable a este ítem de servicio en la moneda especificada."
+    )
+    currency: str = Field(
+        default="USD",
+        description="Código de moneda ISO 4217 correspondiente a la tarifa (ej. 'USD', 'PEN', 'EUR').",
+    )
 
 class EffortItem(BaseModel):
-    service_id: str
-    description: str
-    hours: Decimal
+    """
+    Representa el desglose de esfuerzo o tarea específica requerida dentro de un servicio o fase del proyecto.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
+
+    service_id: str = Field(
+        description="Identificador del servicio o módulo al que pertenece este desglose de esfuerzo (ej. 'SERV-001')."
+    )
+    description: str = Field(
+        description="Detalle o descripción específica de la tarea o actividad técnica a realizar (ej. 'Diseño e implementación de modelo de datos')."
+    )
+    hours: Decimal = Field(
+        description="Cantidad de horas asociadas a esta tarea o actividad en particular."
+    )

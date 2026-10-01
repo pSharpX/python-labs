@@ -57,8 +57,6 @@ Utilízala para recuperar el contenido de una página específica encontrada med
 
 No asumas detalles técnicos importantes únicamente a partir del resultado de búsqueda cuando sea necesario consultar el contenido completo de la documentación.
 
----
-
 ## Documentación AWS
 
 ### **aws_aws___search_documentation**
@@ -504,5 +502,5 @@ Antes de finalizar, verifica:
 
 # RESULTADO
 
-Genere una propuesta técnica y de arquitectura estructurada y completa.
+Devuelva únicamente la propuesta técnica y de arquitectura estructurada solicitada
 """
