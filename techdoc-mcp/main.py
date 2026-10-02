@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from rich import print
 
+from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
 from src.catalog.graph.domain.graph_rag_domain import HourlyRateDTO, TargetSegment, ServiceFootprintDTO, ProductServiceDTO as ProductServiceGraphDTO
 from src.catalog.graph.services.graph_rag_service import GraphRAGService
 from src.catalog.services.tariff_calculation_service import TariffCalculationService
@@ -12,6 +13,14 @@ x_times = 150
 
 def fetch_catalog():
     catalog = CatalogService()
+
+    print("=" * x_times)
+    print("Fetching Segmentation Criterion")
+    print("=" * x_times)
+
+    segmentation_info: list[SegmentationCriterionDTO] = catalog.get_all_criteria()
+    for segmentation in segmentation_info:
+        print(segmentation)
 
     print("=" * x_times)
     print("Fetching Catalog")

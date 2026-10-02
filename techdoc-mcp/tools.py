@@ -3,6 +3,7 @@ from typing import Optional, Literal
 
 from fastmcp.tools import tool
 
+from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
 from src.catalog.domain.cost_calculation import CostCalculationDTO
 from src.catalog.domain.product_service import ProductServiceDTO
 from src.catalog.graph.domain.graph_rag_domain import HourlyRateDTO, ServiceFootprintDTO, \
@@ -22,6 +23,23 @@ class TechDocDBTools:
         self.__catalog_service = CatalogService()
         self.__tariff_service = TariffCalculationService()
         self.__rag_service = GraphRAGService()
+
+    @tool(
+        name="fetch_segmentation_criteria",
+        description=(
+                "Obtiene la lista de todos los criterios de segmentación "
+                "comercial y sus descripciones por segmento (SMB/Corporativo)."
+        ),
+        tags={"segmentation", "search"},
+        meta={"version": "1.0", "author": "techdoc-team"}
+    )
+    def fetch_segmentation_criteria(self) -> list[SegmentationCriterionDTO]:
+        """Obtiene la lista completa de criterios de segmentación de la empresa.
+
+        Returns:
+            list[SegmentationCriterionDTO]: Lista de DTOs con los criterios y sus descripciones.
+        """
+        return self.__catalog_service.get_all_criteria()
 
     @tool(
         name="fetch_catalog_by_segment",
