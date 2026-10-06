@@ -3,6 +3,7 @@ from typing import Optional, Literal
 
 from fastmcp.tools import tool
 
+from catalog.domain.business_line import BusinessLineDTO
 from catalog.domain.business_line_role import BusinessLineRoleDTO
 from catalog.services.business_line_role_service import BusinessLineRoleService
 from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
@@ -43,6 +44,25 @@ class TechDocDBTools:
             list[SegmentationCriterionDTO]: Lista de DTOs con los criterios y sus descripciones.
         """
         return self.__catalog_service.get_all_criteria()
+
+    @tool(
+        name="obtener_lineas_de_negocio",
+        description=(
+                "Obtiene la lista completa de líneas de negocio disponibles en la organización "
+                "junto con sus familias principales de productos/servicios. Utillízala como primer "
+                "paso para identificar a qué área o línea pertenece el requerimiento técnico analizado."
+        ),
+        tags={"catalog", "business_line", "identification"},
+        meta={"version": "1.0", "author": "techdoc-team"}
+    )
+    def fetch_business_lines(self) -> list[BusinessLineDTO]:
+        """Obtiene la lista global de líneas de negocio para clasificación de requerimientos.
+
+        Returns:
+            list[BusinessLineDTO]: Lista de DTOs con el código, nombre y familias principales de cada línea.
+        """
+        logger.info(">> Executing tool fetch_business_lines")
+        return self.__catalog_service.get_all_business_lines()
 
     @tool(
         name="obtener_catalogo_por_segmento",

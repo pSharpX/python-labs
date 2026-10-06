@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,5 +13,6 @@ class BusinessLineModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     code: Mapped[int] = mapped_column(unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    main_families: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
 
     families: Mapped[List["FamilyModel"]] = relationship(back_populates="business_line", cascade="all, delete-orphan")

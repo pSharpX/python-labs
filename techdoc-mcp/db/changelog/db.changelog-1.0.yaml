@@ -1334,3 +1334,107 @@ databaseChangeLog:
               - column: { name: support_roles, value: "HH-CONS-SR; HH-CHG; HH-ESP" }
               - column: { name: target_segment, value: "Ambos" }
               - column: { name: usage_description, value: "Capacitación técnica, funcional, workshops y adopción." }
+
+  - changeSet:
+      id: add-main_families-column-to-business_lines
+      author: christian.rivera
+      comment: add main_families column to business_lines table
+      changes:
+        - addColumn:
+            tableName: business_lines
+            columns:
+              - column:
+                  name: main_families
+                  type: VARCHAR(1000)
+
+  - changeSet:
+      id: update-and-insert-business_lines-data
+      author: christian.rivera
+      comment: update main_families for existing business lines and insert new entries
+      changes:
+        # Update existing records (IDs 1-4)
+        - update:
+            tableName: business_lines
+            where: id = 1
+            columns:
+              - column: { name: main_families, value: "Entra ID, Exchange Online, Intune, Microsoft 365, OneDrive, SharePoint Online, Teams" }
+        - update:
+            tableName: business_lines
+            where: id = 2
+            columns:
+              - column: { name: main_families, value: "Azure, Continuidad, Datacenter, Infraestructura Microsoft, Networking, Virtualización" }
+        - update:
+            tableName: business_lines
+            where: id = 3
+            columns:
+              - column: { name: main_families, value: "Azure Security, Defender, Purview, Zero Trust" }
+        - update:
+            tableName: business_lines
+            where: id = 4
+            columns:
+              - column: { name: main_families, value: "Analytics, Copilot, Copilot Studio, Datos / SQL, IA, Microsoft Fabric, Power BI" }
+
+        # Insert new records (IDs 5-13)
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 5 }
+              - column: { name: code, valueNumeric: 5 }
+              - column: { name: name, value: "Automatización y Aplicaciones de Negocio" }
+              - column: { name: main_families, value: "Automatización, Integración, Power Apps, Power Automate, Power Platform" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 6 }
+              - column: { name: code, valueNumeric: 6 }
+              - column: { name: name, value: "Dynamics 365 CRM y ERP" }
+              - column: { name: main_families, value: "Dynamics 365" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 7 }
+              - column: { name: code, valueNumeric: 7 }
+              - column: { name: name, value: "Desarrollo Web y Móvil" }
+              - column: { name: main_families, value: ".NET, Mantenimiento, Mobile, Web" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 8 }
+              - column: { name: code, valueNumeric: 8 }
+              - column: { name: name, value: "DevOps" }
+              - column: { name: main_families, value: "Azure DevOps, CI/CD, DevSecOps" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 9 }
+              - column: { name: code, valueNumeric: 9 }
+              - column: { name: name, value: "Staff Augmentation y Hunting" }
+              - column: { name: main_families, value: "Hunting, Outsourcing, Staff Augmentation" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 10 }
+              - column: { name: code, valueNumeric: 10 }
+              - column: { name: name, value: "Servicios Administrados y Mesa de Ayuda" }
+              - column: { name: main_families, value: "Aplicaciones, Azure, Infraestructura, Mesa de ayuda, Microsoft 365, Soporte" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 11 }
+              - column: { name: code, valueNumeric: 11 }
+              - column: { name: name, value: "Estrategia e Innovación Digital" }
+              - column: { name: main_families, value: "Estrategia, Gobierno TI, Innovación, Roadmap" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 12 }
+              - column: { name: code, valueNumeric: 12 }
+              - column: { name: name, value: "Licenciamiento y Suscripciones" }
+              - column: { name: main_families, value: "Microsoft, Software" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 13 }
+              - column: { name: code, valueNumeric: 13 }
+              - column: { name: name, value: "Capacitación y Workshops" }
+              - column: { name: main_families, value: "Microsoft 365, Power Platform, Seguridad, Tecnología" }
