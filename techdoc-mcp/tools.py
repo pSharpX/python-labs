@@ -3,6 +3,8 @@ from typing import Optional, Literal
 
 from fastmcp.tools import tool
 
+from catalog.domain.business_line_role import BusinessLineRoleDTO
+from catalog.services.business_line_role_service import BusinessLineRoleService
 from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
 from src.catalog.domain.cost_calculation import CostCalculationDTO
 from src.catalog.domain.product_service import ProductServiceDTO
@@ -23,9 +25,10 @@ class TechDocDBTools:
         self.__catalog_service = CatalogService()
         self.__tariff_service = TariffCalculationService()
         self.__rag_service = GraphRAGService()
+        self.__role_service = BusinessLineRoleService()
 
     @tool(
-        name="fetch_segmentation_criteria",
+        name="obtener_criterio_segmentacion",
         description=(
                 "Obtiene la lista de todos los criterios de segmentación "
                 "comercial y sus descripciones por segmento (SMB/Corporativo)."
@@ -42,7 +45,7 @@ class TechDocDBTools:
         return self.__catalog_service.get_all_criteria()
 
     @tool(
-        name="fetch_catalog_by_segment",
+        name="obtener_catalogo_por_segmento",
         description=(
             "Busca y retorna la lista de productos y servicios del catálogo "
             "filtrados según el segmento de cliente (ej. SMB o CORPORATE)."
@@ -66,7 +69,7 @@ class TechDocDBTools:
         return products
 
     @tool(
-        name="fetch_catalog_by_product",
+        name="obtener_catalogo_por_producto",
         description=(
             "Obtiene los detalles específicos de un producto o servicio "
             "del catálogo utilizando su código único (ej. M365-ASS-01)."
@@ -90,7 +93,34 @@ class TechDocDBTools:
         return product
 
     @tool(
-        name="calculate_tariff",
+        name="obtener_roles_por_line_negocio",
+        description=(
+                "Consulta los roles principales y de soporte requeridos para una línea "
+                "de negocio específica (y opcionalmente por segmento de cliente). Utillízalo "
+                "para dimensionar proyectos y preparar estimaciones económicas o propuestas financieras."
+        ),
+        tags={"catalog", "estimation", "roles"},
+        meta={"version": "1.0", "author": "techdoc-team"}
+    )
+    def fetch_required_roles_by_business_line(
+            self, business_line: str, segment: Optional[str] = None
+    ) -> list[BusinessLineRoleDTO]:
+        """Obtiene la relación de roles principales y secundarios necesarios para dimensionar una línea de negocio.
+
+        Args:
+            business_line (str): Nombre o identificador de la línea de negocio a consultar.
+            segment (Optional[str]): Segmento objetivo opcional para filtrar los roles (ej. 'SMB', 'CORPORATE').
+
+        Returns:
+            list[BusinessLineRoleDTO]: Lista de DTOs con la información de roles principales, de soporte y su descripción de uso.
+        """
+        logger.info(f">> Executing tool fetch_required_roles_by_business_line ({business_line}, {segment})")
+        return self.__role_service.get_roles_by_business_line(
+            business_line=business_line, segment=segment
+        )
+
+    @tool(
+        name="calcular_tarifa",
         description=(
             "Calcula la tarifa o cotización estimada de un servicio "
             "según el rol del especialista, el segmento, las horas estimadas "
@@ -128,16 +158,16 @@ class TechDocGraphRAGTools:
         self.__rag_service = GraphRAGService()
 
     @tool(
-        name="get_full_taxonomy_context",
+        name="obtener_contexto_taxonomia_completa",
         description=(
             "Recupera la jerarquía taxonómica completa (Línea de Negocio -> Familia -> Producto/Servicio) "
-            "en el grafo para una línea de negocio específica. Útil para obtener el contexto del catálogo."
+            "desde el grafo para una línea de negocio. Útil para entender la oferta comercial y estructura del catálogo."
         ),
         tags={"catalog", "taxonomy", "graphrag"},
         meta={"version": "1.0", "author": "techdoc-team"}
     )
     def get_full_taxonomy_context(self, business_line: str) -> list[ProductServiceGraphDTO]:
-        """Obtiene el subárbol completo de la taxonomía del catálogo según la línea de negocio indicada."""
+        """Consulta y retorna la estructura taxonómica de una línea de negocio en el catálogo."""
 
         logger.info("Fetching Graph Context")
         logger.info(">> 1. Taxonomy Context (Typed Output)")
@@ -146,10 +176,10 @@ class TechDocGraphRAGTools:
         return products
 
     @tool(
-        name="find_roles_by_category_and_budget",
+        name="buscar_roles_por_categoria_y_presupuesto",
         description=(
-            "Busca y filtra roles con sus tarifas por hora en el grafo, basándose en la categoría funcional, "
-            "un costo/tarifa máxima permitida y el segmento del cliente (SMB o Corporate)."
+            "Filtra roles profesionales y sus tarifas por hora según una categoría funcional (ej. Datos, Cloud), "
+            "un tope máximo de tarifa por hora y el segmento comercial del cliente ('smb' o 'corporate')."
         ),
         tags={"catalog", "tariff", "roles", "budget"},
         meta={"version": "1.0", "author": "techdoc-team"}
@@ -188,10 +218,10 @@ class TechDocGraphRAGTools:
         return None
 
     @tool(
-        name="search_similar_roles",
+        name="buscar_roles_similares",
         description=(
-            "Realiza una búsqueda por palabras clave en el grafo para encontrar roles y tarifas similares "
-            "coincidentes en título, descripción o categoría."
+            "Realiza una búsqueda textual o por palabras clave en el catálogo de tarifas para encontrar "
+            "roles profesionales coincidentes en nombre, nivel, categoría o descripción."
         ),
         tags={"catalog", "roles", "search"},
         meta={"version": "1.0", "author": "techdoc-team"}
