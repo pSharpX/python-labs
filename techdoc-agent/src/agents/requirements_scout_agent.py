@@ -63,11 +63,15 @@ class RequirementsScoutAgent:
         })
         return result["structured_response"]
 
-    async def arun(self, raw_requirements: str) -> RequirementsOutputSchema:
+    async def arun(self, raw_requirements: str, config) -> RequirementsOutputSchema:
         result = await self.__agent.ainvoke({
             "messages": [
                 HumanMessage(content=raw_requirements)
             ]
+        }, config={
+            "configurable": {
+                "thread_id": config["thread_id"]
+            }
         })
         return result["structured_response"]
 

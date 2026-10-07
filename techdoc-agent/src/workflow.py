@@ -18,7 +18,7 @@ from src.agents import TechArchitectAgent, RequirementsScoutAgent, FinancialEsti
 from .configs import langfuse_handler
 from src.state import WorkflowState
 from .state.architect import TechArchitectOutputSchema, TechArchitectAgentState
-from src.tools.mcp import MCPToolsAdapter, MCPSettings
+from src.tools.mcp import MCPToolsAdapter
 from src.tools.requirements import SaveMarkdownTool
 
 
@@ -42,7 +42,7 @@ class WorkflowSnapshot:
 class TechDocBuilderGraph:
     """A langgraph powered workflow that design and write technical-functional proposals and financial documents."""
 
-    def __init__(self):
+    def __init__(self, mcp_adapter: MCPToolsAdapter):
         self._app_settings = ApplicationSettings()
         self._model_settings = BaseModelSettings()
         self._model = init_chat_model(
@@ -57,8 +57,7 @@ class TechDocBuilderGraph:
             state_schema=WorkflowState,
         )
         self._tool = SaveMarkdownTool()
-        self._mcp_settings = MCPSettings()
-        self._mcp_adapter = MCPToolsAdapter.create(self._mcp_settings)
+        self._mcp_adapter = mcp_adapter
 
         # Initialize agents
         self._req_scout_agent = RequirementsScoutAgent()
@@ -71,7 +70,7 @@ class TechDocBuilderGraph:
         self._graph = self._build()
 
     @staticmethod
-    def _initialize_proposal(state: WorkflowState):
+    async def _initialize_proposal(state: WorkflowState):
         revision_request = state.get("revision_request")
         if state.get("proposal_id") and revision_request:
             revision = state.get("revision", 0) + 1
@@ -119,14 +118,14 @@ class TechDocBuilderGraph:
             "revisions": state.get("revision_history", []),
         }
 
-    def _requirements_agent_node(self, state: WorkflowState, config: RunnableConfig):
+    async def _requirements_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
         req_state = state.get("requirements") or {}
         raw = req_state.get("raw_requirements") or state.get("user_request", "")
         version = req_state.get("version", state.get("revision", 1))
 
-        res: RequirementsOutputSchema = self._req_scout_agent.run(raw, config["configurable"])
+        res: RequirementsOutputSchema = await self._req_scout_agent.arun(raw, config["configurable"])
 
         return {
             "requirements": {
@@ -141,7 +140,7 @@ class TechDocBuilderGraph:
         }
 
     @staticmethod
-    def _awaiting_requirements(state: WorkflowState):
+    async def _awaiting_requirements(state: WorkflowState):
         req: RequirementsAgentState = state["requirements"]
         raw_response = interrupt({
             "type": "requirements_clarification",
@@ -167,7 +166,7 @@ class TechDocBuilderGraph:
             "status": ProposalStatus.ANALYZING_REQUIREMENTS.value
         }
 
-    def _tech_architect_agent_node(self, state: WorkflowState):
+    async def _tech_architect_agent_node(self, state: WorkflowState):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
         reqs = state["requirements"]
@@ -179,7 +178,7 @@ class TechDocBuilderGraph:
                 "errors": state.get("errors", []) + ["Datos incompletos para continuarr"]
             }
 
-        res: TechArchitectOutputSchema = self._tech_architect_agent.run(reqs)
+        res: TechArchitectOutputSchema = await self._tech_architect_agent.arun(reqs)
 
         tech_state: TechArchitectAgentState = {
             **res.model_dump(),
@@ -195,7 +194,7 @@ class TechDocBuilderGraph:
             "current_stage": "technical_architecture"
         }
 
-    def _financial_estimator_agent_node(self, state: WorkflowState):
+    async def _financial_estimator_agent_node(self, state: WorkflowState):
         """Financial Estimator Node calculate the effort, the cost and commercial conditions."""
 
         reqs = state["requirements"]
@@ -205,7 +204,7 @@ class TechDocBuilderGraph:
         if not reqs or not tech or tech.get("stale") or tech.get("requirements_version") != reqs.get("version"):
             raise ValueError("No se puede estimar a partir de una propuesta técnica desactualizada.")
 
-        res: FinancialEstimatorOutputSchema = self._financial_estimator_agent.run(
+        res: FinancialEstimatorOutputSchema = await self._financial_estimator_agent.arun(
             requirements=reqs,
             technical_proposal=tech,
             catalog=[],
@@ -248,7 +247,7 @@ class TechDocBuilderGraph:
         }
 
     @staticmethod
-    def _request_financial_approval(state: WorkflowState):
+    async def _request_financial_approval(state: WorkflowState):
         """Human-in-the-loop: pause for approval of the CURRENT financial estimate."""
 
         financial = state["financial_estimation"]
@@ -287,14 +286,14 @@ class TechDocBuilderGraph:
         raise ValueError("action must be approve or request_changes")
 
     @staticmethod
-    def _failed_node(state: WorkflowState):
+    async def _failed_node(state: WorkflowState):
         return {
             "current_stage": "failed",
             "status": ProposalStatus.ERROR.value
         }
 
     @staticmethod
-    def _complete_node(state: WorkflowState):
+    async def _complete_node(state: WorkflowState):
         financial = state.get("financial_estimation") or {}
         if financial.get("approval_status") != "approved":
             raise ValueError("Cannot complete without financial approval")
@@ -358,8 +357,8 @@ class TechDocBuilderGraph:
             }
         }
 
-    def snapshot(self, thread_id: str) -> WorkflowSnapshot:
-        state = self._graph.get_state(self._get_config(thread_id, thread_id))
+    async def snapshot(self, thread_id: str) -> WorkflowSnapshot:
+        state = await self._graph.aget_state(self._get_config(thread_id, thread_id))
         pending = [i.value for task in state.tasks for i in task.interrupts]
         return WorkflowSnapshot(thread_id, dict(state.values), pending[0] if pending else None)
 
@@ -369,29 +368,29 @@ class TechDocBuilderGraph:
             config=self._get_config(session_id, session_id),
         )
 
-    def resume(self, thread_id: str, response: UserResponse | dict[str, Any]) -> WorkflowSnapshot:
+    async def resume(self, thread_id: str, response: UserResponse | dict[str, Any]) -> WorkflowSnapshot:
         """Answer the pending interrupt (requirements questions or financial approval)."""
         payload = response.model_dump(mode="json", exclude_none=True) if isinstance(response,
                                                                                     UserResponse) else response
-        self._graph.invoke(Command(resume=payload), self._get_config(thread_id, thread_id))
-        return self.snapshot(thread_id)
+        await self._graph.ainvoke(Command(resume=payload), self._get_config(thread_id, thread_id))
+        return await self.snapshot(thread_id)
 
-    def start(self, thread_id: str, user_request: str) -> WorkflowSnapshot:
-        self._graph.invoke(
+    async def start(self, thread_id: str, user_request: str) -> WorkflowSnapshot:
+        await self._graph.ainvoke(
             input={
                 "proposal_id": thread_id,
                 "user_request": user_request,
             },
             config=self._get_config(thread_id, thread_id))
-        return self.snapshot(thread_id)
+        return await self.snapshot(thread_id)
 
-    def request_revision(
+    async def request_revision(
             self, thread_id: str, changes: str, *, changed_by: str = "user", reason: str | None = None
     ) -> WorkflowSnapshot:
         """Change requirements at any time: mid-flight (paused) or after completion."""
-        current = self.snapshot(thread_id)
+        current = await self.snapshot(thread_id)
         if current.waiting_for_user:
-            return self.resume(
+            return await self.resume(
                 thread_id,
                 UserResponse(
                     action=UserAction.CHANGE_REQUIREMENTS,
@@ -401,8 +400,8 @@ class TechDocBuilderGraph:
                 ),
             )
         pending = PendingInput(kind="change", text=changes, changed_by=changed_by, reason=reason)
-        self._graph.invoke({"pending_input": pending}, self._get_config(thread_id, thread_id))
-        return self.snapshot(thread_id)
+        await self._graph.ainvoke({"pending_input": pending}, self._get_config(thread_id, thread_id))
+        return await self.snapshot(thread_id)
 
     def legacy_start(self, input_obj: dict, session_id: str):
         print("Welcome to TechDoc Builder Workflow, your helpful assistant!")

@@ -1,7 +1,9 @@
+import asyncio
 import uuid
 
 from src import TechDocBuilderGraph, WorkflowSnapshot
 from src.shared import UserResponse, UserAction
+from src.tools.mcp import MCPToolsAdapter, MCPSettings
 
 
 def _ask(snap: WorkflowSnapshot) -> UserResponse:
@@ -29,8 +31,10 @@ def _ask(snap: WorkflowSnapshot) -> UserResponse:
                 return UserResponse(action=UserAction.CHANGE_REQUIREMENTS, changes=input("Requirement change: "))
     raise ValueError("Invalid interrupt type")
 
-def run_agent():
-    workflow = TechDocBuilderGraph()
+async def run_agent():
+    mcp_settings = MCPSettings()
+    mcp_adapter = await MCPToolsAdapter.acreate(mcp_settings)
+    workflow = TechDocBuilderGraph(mcp_adapter)
     workflow.draw_workflow()
 
     print("Welcome to TechDoc Builder Workflow, your helpful assistant!")
@@ -38,11 +42,11 @@ def run_agent():
 
     request: str = input()
     proposal_id = str(uuid.uuid4())
-    snap = workflow.start(proposal_id, request)
+    snap = await workflow.start(proposal_id, request)
 
     while snap.waiting_for_user:
         response: UserResponse = _ask(snap)
-        snap = workflow.resume(proposal_id, response)
+        snap = await workflow.resume(proposal_id, response)
 
     print(f"\nFinal status: {snap.status if snap.status else None}")
     if snap.values.get("errors"):
@@ -50,5 +54,5 @@ def run_agent():
 
 
 if __name__ == '__main__':
-    run_agent()
-    # asyncio.run(start_agent())
+    # run_agent()
+    asyncio.run(run_agent())
