@@ -1,10 +1,10 @@
 import logging
 from typing import List, Optional
 
-from catalog.database import SessionFactory
-from catalog.domain.business_line_role import BusinessLineRoleDTO
-from catalog.infrastructure.business_line_role_mapper import BusinessLineRoleMapper
-from catalog.repositories.business_line_role_repository import BusinessLineRoleRepository
+from src.catalog.database import SessionFactory
+from src.catalog.domain.business_line_role import BusinessLineRoleDTO
+from src.catalog.infrastructure.business_line_role_mapper import BusinessLineRoleMapper
+from src.catalog.repositories.business_line_role_repository import BusinessLineRoleRepository
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 from typing import List, Optional, Literal
 
-from catalog.domain.business_line import BusinessLineDTO
-from catalog.infrastructure.business_line_mapper import BusinessLineMapper
-from catalog.repositories.business_line_repository import BusinessLineRepository
+from src.catalog.domain.business_line import BusinessLineDTO
+from src.catalog.infrastructure.business_line_mapper import BusinessLineMapper
+from src.catalog.repositories.business_line_repository import BusinessLineRepository
 from src.catalog.database import SessionFactory
 from src.catalog.domain.product_service import ProductServiceDTO
 from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO

@@ -3,9 +3,9 @@ from typing import Optional, Literal
 
 from fastmcp.tools import tool
 
-from catalog.domain.business_line import BusinessLineDTO
-from catalog.domain.business_line_role import BusinessLineRoleDTO
-from catalog.services.business_line_role_service import BusinessLineRoleService
+from src.catalog.domain.business_line import BusinessLineDTO
+from src.catalog.domain.business_line_role import BusinessLineRoleDTO
+from src.catalog.services.business_line_role_service import BusinessLineRoleService
 from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
 from src.catalog.domain.cost_calculation import CostCalculationDTO
 from src.catalog.domain.product_service import ProductServiceDTO

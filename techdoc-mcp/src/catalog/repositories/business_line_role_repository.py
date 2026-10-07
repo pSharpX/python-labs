@@ -2,7 +2,7 @@ from typing import Sequence, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from catalog.models.business_line_role import BusinessLineRoleModel
+from src.catalog.models.business_line_role import BusinessLineRoleModel
 
 
 class BusinessLineRoleRepository:

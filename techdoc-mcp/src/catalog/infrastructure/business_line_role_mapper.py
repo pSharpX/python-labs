@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from catalog.domain.business_line_role import BusinessLineRoleDTO
-from catalog.models.business_line_role import BusinessLineRoleModel
+from src.catalog.domain.business_line_role import BusinessLineRoleDTO
+from src.catalog.models.business_line_role import BusinessLineRoleModel
 
 
 class BusinessLineRoleMapper:

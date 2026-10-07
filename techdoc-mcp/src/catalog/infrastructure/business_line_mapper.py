@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from catalog.domain.business_line import BusinessLineDTO
-from catalog.models.business_line import BusinessLineModel
+from src.catalog.domain.business_line import BusinessLineDTO
+from src.catalog.models.business_line import BusinessLineModel
 
 
 class BusinessLineMapper:
