@@ -64,9 +64,9 @@ class TechArchitectOutputSchema(BaseModel):
         default=None,
         description="Modelo y flujo de datos, estrategias de almacenamiento, persistencia, caché y migración de datos.",
     )
-    implementation_approach: list[str] = Field(
-        default_factory=list,
-        description="Estrategia y fases o roadmap técnico recomendado para la implementación gradual del proyecto.",
+    implementation_approach: str | None = Field(
+        default=None,
+        description="Descripción ejecutiva de la estrategia de implementación y secuencia recomendada."
     )
     assumptions: list[str] = Field(
         default_factory=list,
@@ -106,20 +106,3 @@ class TechArchitectOutputSchema(BaseModel):
     timeline_estimation: TimelineEstimation = Field(
         description="Estimación global de duración (semanas) y esfuerzo total (horas) para la ejecución del proyecto."
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def handle_nested_wrapper(cls, data: Any) -> Any:
-        """
-        Garantiza compatibilidad si el LLM envuelve por error toda la respuesta
-        dentro de una clave 'technical_proposal'.
-        """
-        if isinstance(data, dict):
-            # Si el LLM devolvió {'technical_proposal': {'solution_overview': ...}}
-            if (
-                    "technical_proposal" in data
-                    and isinstance(data["technical_proposal"], dict)
-                    and "solution_overview" in data["technical_proposal"]
-            ):
-                return data["technical_proposal"]
-        return data
