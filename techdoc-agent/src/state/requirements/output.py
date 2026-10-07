@@ -6,7 +6,7 @@ from src.shared import (Actor, Process, Integration, ProposalScope, MissingInfor
 
 class RequirementsOutputSchema(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         json_schema_extra={
             "description": "Esquema estructurado para el análisis y extracción de requerimientos de clientes."
         },

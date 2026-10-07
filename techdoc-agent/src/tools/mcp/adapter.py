@@ -43,7 +43,7 @@ class MCPToolsAdapter:
                     "url": settings.techdoc_url,
                 },
             },
-            tool_name_prefix=True,
+            tool_name_prefix=False,
         )
         discovered_tools = await mcp_client.get_tools()
         return cls(mcp_client, discovered_tools)
@@ -65,7 +65,7 @@ class MCPToolsAdapter:
                     "url": settings.techdoc_url,
                 },
             },
-            tool_name_prefix=True,
+            tool_name_prefix=False,
         )
         discovered_tools = asyncio.run(mcp_client.get_tools())
         # for tool in discovered_tools:

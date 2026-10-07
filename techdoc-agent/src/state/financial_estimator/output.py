@@ -13,7 +13,7 @@ class FinancialEstimatorOutputSchema(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 

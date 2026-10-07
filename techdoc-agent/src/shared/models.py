@@ -66,7 +66,7 @@ class PendingInput(BaseModel):
     reason: str | None = None
 
 class Requirement(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str = Field(
         description="Identificador único del requerimiento (ej. 'RF-001')."
@@ -107,7 +107,7 @@ class Requirement(BaseModel):
     )
 
 class NonFunctionalRequirement(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str = Field(
         description="Identificador único del requerimiento no funcional (ej. 'RNF-001')."
@@ -138,7 +138,7 @@ class NonFunctionalRequirement(BaseModel):
     )
 
 class Actor(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     name: str = Field(
         description="Nombre del actor, rol de usuario o sistema externo (ej. 'Administrador', 'Sistema ERP')."
@@ -155,7 +155,7 @@ class Actor(BaseModel):
     )
 
 class Process(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     name: str = Field(
         description="Nombre del proceso de negocio (ej. 'Procesamiento de órdenes de compra')."
@@ -182,7 +182,7 @@ class Process(BaseModel):
     )
 
 class Integration(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     system: str = Field(
         description="Nombre del sistema objetivo o API con el cual se realizará la integración."
@@ -208,7 +208,7 @@ class Integration(BaseModel):
     )
 
 class Risk(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     description: str = Field(
         description="Descripción detallada del riesgo o evento incierto identificable."
@@ -224,7 +224,7 @@ class Risk(BaseModel):
     )
 
 class Assumption(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     description: str = Field(
         description="Premisa o supuesto considerado como verdadero para avanzar con la propuesta."
@@ -239,7 +239,7 @@ class Assumption(BaseModel):
     )
 
 class MissingInformation(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     description: str = Field(
         description="Detalle de la información no proporcionada o vacíos conceptuales detectados."
@@ -253,7 +253,7 @@ class MissingInformation(BaseModel):
     )
 
 class ClientQuestion(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     question: str = Field(
         description="Pregunta concreta, clara y formal formulada directamente para el cliente."
@@ -267,7 +267,7 @@ class ClientQuestion(BaseModel):
     )
 
 class ProposalScope(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     included: list[str] = Field(
         default_factory=list,
@@ -490,7 +490,7 @@ class Architecture(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -510,7 +510,7 @@ class ServiceClassification(BaseModel):
     Clasificación del servicio solicitado y su alineación con el catálogo y dominio del negocio.
     """
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
     categories: list[ServiceCategory] = Field(
         description="Categorías del servicio identificadas (ej. ['Assessment', 'Design', 'Implementation'])."
@@ -533,7 +533,7 @@ class ProjectPhase(BaseModel):
     Fase estructurada del proyecto con sus actividades y entregables clave.
     """
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
     phase_number: int = Field(
         description="Número secuencial de la fase (ej. 1, 2, 3)."
@@ -562,7 +562,7 @@ class ResourceProfile(BaseModel):
     Perfil técnico o funcional requerido para el proyecto, consultado desde el catálogo.
     """
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
     role_title: str = Field(
         description="Título o rol del perfil requerido (ej. 'Arquitecto Cloud Senior', 'DevOps Engineer', 'Consultor Funcional')."
@@ -584,21 +584,22 @@ class TimelineEstimation(BaseModel):
     Estimación global de duración, esfuerzo y cronograma general del proyecto.
     """
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
     total_duration_weeks: Decimal = Field(
         description="Duración total estimada del proyecto expresada en semanas."
     )
-    total_effort_hours: Decimal = Field(
-        description="Esfuerzo total estimado expresado en horas de trabajo."
-    )
+    # total_effort_hours: Decimal | None = Field(
+    #     default=None,
+    #     description="Esfuerzo total estimado expresado en horas de trabajo."
+    # )
     summary: str = Field(
         description="Resumen o descripción del cronograma de alto nivel y sus hitos principales."
     )
 
 class DocumentationSource(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -617,7 +618,7 @@ class DocumentationSource(BaseModel):
 
 class ArchitectureComponent(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -634,7 +635,7 @@ class ArchitectureComponent(BaseModel):
 
 class TechnologyDecision(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -651,7 +652,7 @@ class TechnologyDecision(BaseModel):
 
 class TechnicalIntegration(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -667,7 +668,7 @@ class TechnicalIntegration(BaseModel):
 
 class SecurityDesign(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -678,7 +679,7 @@ class SecurityDesign(BaseModel):
 
 class ScalabilityDesign(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -689,7 +690,7 @@ class ScalabilityDesign(BaseModel):
 
 class AvailabilityDesign(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -700,7 +701,7 @@ class AvailabilityDesign(BaseModel):
 
 class ObservabilityDesign(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -711,7 +712,7 @@ class ObservabilityDesign(BaseModel):
 
 class DeploymentDesign(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -722,7 +723,7 @@ class DeploymentDesign(BaseModel):
 
 class DataArchitecture(BaseModel):
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -737,7 +738,7 @@ class ServiceItem(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 
@@ -764,7 +765,7 @@ class EffortItem(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
     )
 

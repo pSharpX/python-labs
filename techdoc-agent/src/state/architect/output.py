@@ -14,7 +14,7 @@ class TechArchitectOutputSchema(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         str_strip_whitespace=True,
         json_schema_extra={
             "description": "Esquema estructurado para la propuesta técnica-funcional y de arquitectura."
@@ -84,9 +84,6 @@ class TechArchitectOutputSchema(BaseModel):
     documentation_sources: list[DocumentationSource] = Field(
         default_factory=list,
         description="Referencias o fuentes de documentación utilizadas o requeridas para este diseño.",
-    )
-    technical_proposal: str = Field(
-        description="Propuesta o narrativa técnica global consolidada en formato de texto extenso (ej. Markdown) que resume toda la arquitectura."
     )
     # 1. Service Classification & Identification
     service_classification: ServiceClassification = Field(

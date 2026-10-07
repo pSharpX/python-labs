@@ -47,10 +47,10 @@ class TechArchitectAgent:
         mcp_tools = self.__mcp_adapter.get_tools(
             allowed_tools=self.__mcp_settings.allowed_tools
         )
-
+        tools.extend(mcp_tools)
         self.__agent = create_agent(
             model=self.__model,
-            tools=tools.extend(mcp_tools),
+            tools=tools,
             system_prompt=self.__system_prompt,
             name="techdoc-architect-agent",
             response_format=TechArchitectOutputSchema,
