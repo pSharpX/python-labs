@@ -9,3 +9,15 @@ STATUS_PRIORITY = {
     "awaiting_client_information": 2,
     "ready_for_architecture": 3,
 }
+
+ServiceCategory = Literal[
+    "Assessment",
+    "Consulting",
+    "Design",
+    "Implementation",
+    "Migration",
+    "Integration",
+    "Training",
+    "Knowledge Transfer",
+    "Support",
+]

@@ -38,10 +38,10 @@ class MCPToolsAdapter:
                     "transport": "http",
                     "url": settings.aws_url,
                 },
-                # "techdoc-mcp": {
-                #     "transport": "http",
-                #     "url": settings.techdoc_url,
-                # },
+                "techdoc-mcp": {
+                    "transport": "http",
+                    "url": settings.techdoc_url,
+                },
             },
             tool_name_prefix=True,
         )
@@ -60,10 +60,10 @@ class MCPToolsAdapter:
                     "transport": "http",
                     "url": settings.aws_url,
                 },
-                # "techdoc-mcp": {
-                #     "transport": "http",
-                #     "url": settings.techdoc_url,
-                # },
+                "techdoc-mcp": {
+                    "transport": "http",
+                    "url": settings.techdoc_url,
+                },
             },
             tool_name_prefix=True,
         )
@@ -74,4 +74,6 @@ class MCPToolsAdapter:
 
     def get_tools(self, allowed_tools: list[str]) -> List[BaseTool]:
         selected_tools = [tool for tool in self.__discovered_tools if tool.name in allowed_tools]
+        # for tool in selected_tools:
+        #     print(f"MCP tool selected: {tool.name}")
         return selected_tools

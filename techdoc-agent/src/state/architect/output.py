@@ -2,11 +2,17 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from src.shared import ArchitectureComponent, TechnologyDecision, TechnicalIntegration, ScalabilityDesign, SecurityDesign, \
-    AvailabilityDesign, ObservabilityDesign, DeploymentDesign, DataArchitecture, DocumentationSource
+from src.shared import (Architecture, ArchitectureComponent, TechnologyDecision, TechnicalIntegration, ScalabilityDesign,
+                        SecurityDesign, AvailabilityDesign, ObservabilityDesign, DeploymentDesign, DataArchitecture,
+                        DocumentationSource, ServiceClassification, ProjectPhase, ResourceProfile, TimelineEstimation)
 
 
 class TechArchitectOutputSchema(BaseModel):
+    """
+    Esquema estructurado consolidado para la propuesta técnica-funcional y el diseño
+    de arquitectura de software.
+    """
+
     model_config = ConfigDict(
         extra="forbid",
         str_strip_whitespace=True,
@@ -15,6 +21,10 @@ class TechArchitectOutputSchema(BaseModel):
         },
     )
 
+    architecture: Architecture | None = Field(
+        default=None,
+        description="Definición y detalles del diseño arquitectónico de la solución (estilo, síntesis y diagrama Mermaid).",
+    )
     solution_overview: str = Field(
         description="Resumen ejecutivo claro y conciso de la arquitectura propuesta, destacando cómo satisface las necesidades del negocio."
     )
@@ -62,6 +72,11 @@ class TechArchitectOutputSchema(BaseModel):
         default_factory=list,
         description="Supuestos y premisas técnicas consideradas verdaderas para fundamentar este diseño arquitectónico.",
     )
+    # 8. Prerequisites
+    prerequisites: list[str] = Field(
+        default_factory=list,
+        description="Condiciones, insumos o accesos previos que deben cumplirse antes de iniciar el trabajo.",
+    )
     technical_risks: list[str] = Field(
         default_factory=list,
         description="Riesgos técnicos identificados que podrían impactar el desarrollo o la operación, junto a sus mitigaciones.",
@@ -72,6 +87,27 @@ class TechArchitectOutputSchema(BaseModel):
     )
     technical_proposal: str = Field(
         description="Propuesta o narrativa técnica global consolidada en formato de texto extenso (ej. Markdown) que resume toda la arquitectura."
+    )
+    # 1. Service Classification & Identification
+    service_classification: ServiceClassification = Field(
+        description="Clasificación del servicio, mapeo a opciones del catálogo y alineación de dominio (Línea de Negocio, Segmentación, Producto)."
+    )
+
+    # 2, 3 & 4. Solution Phasing, Activity Mapping & Deliverables
+    project_phases: list[ProjectPhase] = Field(
+        default_factory=list,
+        description="Fases estructuradas del proyecto, incluyendo actividades asociadas y entregables concretos por fase.",
+    )
+
+    # 5. Resource & Profile Identification
+    required_profiles: list[ResourceProfile] = Field(
+        default_factory=list,
+        description="Perfiles técnicos y funcionales requeridos obtenidos según la regla de dependencia del catálogo.",
+    )
+
+    # 6. Project Timeline Estimation
+    timeline_estimation: TimelineEstimation = Field(
+        description="Estimación global de duración (semanas) y esfuerzo total (horas) para la ejecución del proyecto."
     )
 
     @model_validator(mode="before")

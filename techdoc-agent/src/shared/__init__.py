@@ -1,11 +1,12 @@
 from .reducers import replace_string, merge_strings, upsert_by_key, upsert_model_by_id, upsert_model_by_description, merge_status
-from .constants import AnalysisStatus, Criticality, Priority, STATUS_PRIORITY
+from .constants import AnalysisStatus, Criticality, Priority, STATUS_PRIORITY, ServiceCategory
 
 from .enums import UserAction, Stage
 
 from .models import (Requirements, ClientQuestion, MissingInformation, Assumption, Integration,
                            NonFunctionalRequirement, Requirement, Process, ProposalScope, Actor, Risk,
-                           ProposalStatus, UserApprovalAction, ProposalRevision, DocumentationSource, ArchitectureComponent,
+                           ProposalStatus, UserApprovalAction, ProposalRevision, DocumentationSource, Architecture,
+                            ServiceClassification, ProjectPhase, ResourceProfile, TimelineEstimation, ArchitectureComponent,
                            TechnologyDecision, TechnicalIntegration, SecurityDesign, ScalabilityDesign, AvailabilityDesign,
                            ObservabilityDesign, DeploymentDesign, DataArchitecture, ServiceItem, EffortItem, UserResponse, PendingInput)
 
@@ -36,6 +37,7 @@ __all__ = [
     "UserApprovalAction",
     "ProposalRevision",
     "DocumentationSource",
+    "Architecture",
     "ArchitectureComponent",
     "TechnologyDecision",
     "TechnicalIntegration",
@@ -50,5 +52,10 @@ __all__ = [
     "UserAction",
     "UserResponse",
     "Stage",
-    "PendingInput"
+    "PendingInput",
+    "ServiceCategory",
+    "ServiceClassification",
+    "ProjectPhase",
+    "ResourceProfile",
+    "TimelineEstimation",
 ]

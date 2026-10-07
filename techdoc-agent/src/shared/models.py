@@ -6,7 +6,8 @@ from typing import Literal, List, Optional, Self
 from pydantic import Field, BaseModel, model_validator, ConfigDict
 
 from .enums import UserAction
-from .constants import Priority
+from .constants import Priority, ServiceCategory
+
 
 class ProposalStatus(str, Enum):
     INITIALIZING = "initializing"
@@ -481,6 +482,119 @@ class Requirements(BaseModel):
                 "client_questions", []
             ),
         )
+
+class Architecture(BaseModel):
+    """
+    Representa el estilo arquitectónico general, la síntesis del diseño de software
+    y su representación gráfica en código Mermaid.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
+
+    style: str = Field(
+        description="Estilo o patrón arquitectónico principal seleccionado (ej. 'Monolito Modular', 'Microservicios Event-Driven', 'Serverless', 'Hexagonal')."
+    )
+    summary: str = Field(
+        description="Resumen o síntesis ejecutiva del diseño arquitectónico, explicando sus principios clave y cómo soporta los requerimientos."
+    )
+    mermaid_diagram: str | None = Field(
+        default=None,
+        description="Código o sintaxis del diagrama arquitectónico en formato Mermaid.js (ej. 'graph TD; A[Cliente] --> B[API Gateway];').",
+    )
+
+class ServiceClassification(BaseModel):
+    """
+    Clasificación del servicio solicitado y su alineación con el catálogo y dominio del negocio.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    categories: list[ServiceCategory] = Field(
+        description="Categorías del servicio identificadas (ej. ['Assessment', 'Design', 'Implementation'])."
+    )
+    catalog_service_option: str = Field(
+        description="Opción o código oficial del Catálogo de Servicios que mejor se alinea con la solicitud."
+    )
+    business_line: str = Field(
+        description="Línea de negocio correspondiente (ej. 'Cloud & Infrastructure', 'Data & AI', 'Cybersecurity')."
+    )
+    market_segmentation: str = Field(
+        description="Segmentación de mercado asociada (ej. 'Enterprise', 'Mid-Market', 'Public Sector')."
+    )
+    product_or_service: str = Field(
+        description="Producto o servicio específico asociado a la propuesta (ej. 'AWS Cloud Migration', 'SAP S/4HANA Consulting')."
+    )
+
+class ProjectPhase(BaseModel):
+    """
+    Fase estructurada del proyecto con sus actividades y entregables clave.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    phase_number: int = Field(
+        description="Número secuencial de la fase (ej. 1, 2, 3)."
+    )
+    name: str = Field(
+        description="Nombre de la fase (ej. 'Fase 1: Descubrimiento y Evaluación', 'Fase 2: Diseño de Arquitectura')."
+    )
+    objective: str = Field(
+        description="Objetivo principal a alcanzar durante esta fase del proyecto."
+    )
+    activities: list[str] = Field(
+        default_factory=list,
+        description="Lista de actividades y tareas necesarias para ejecutar esta fase.",
+    )
+    deliverables: list[str] = Field(
+        default_factory=list,
+        description="Entregables concretos y medibles a producir al finalizar esta fase.",
+    )
+    estimated_duration_weeks: Decimal | None = Field(
+        default=None,
+        description="Duración estimada de esta fase en semanas.",
+    )
+
+class ResourceProfile(BaseModel):
+    """
+    Perfil técnico o funcional requerido para el proyecto, consultado desde el catálogo.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    role_title: str = Field(
+        description="Título o rol del perfil requerido (ej. 'Arquitecto Cloud Senior', 'DevOps Engineer', 'Consultor Funcional')."
+    )
+    seniority: str = Field(
+        description="Nivel de experiencia requerido (ej. 'Junior', 'Semi-Senior', 'Senior', 'Lead')."
+    )
+    responsibilities: list[str] = Field(
+        default_factory=list,
+        description="Responsabilidades principales del perfil dentro del proyecto.",
+    )
+    estimated_hours: Decimal | None = Field(
+        default=None,
+        description="Horas estimadas requeridas para este perfil durante la ejecución del proyecto.",
+    )
+
+class TimelineEstimation(BaseModel):
+    """
+    Estimación global de duración, esfuerzo y cronograma general del proyecto.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    total_duration_weeks: Decimal = Field(
+        description="Duración total estimada del proyecto expresada en semanas."
+    )
+    total_effort_hours: Decimal = Field(
+        description="Esfuerzo total estimado expresado en horas de trabajo."
+    )
+    summary: str = Field(
+        description="Resumen o descripción del cronograma de alto nivel y sus hitos principales."
+    )
 
 class DocumentationSource(BaseModel):
     model_config = ConfigDict(
