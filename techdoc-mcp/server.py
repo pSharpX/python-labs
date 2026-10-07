@@ -77,6 +77,9 @@ if __name__ == "__main__":
     techdoc_db_tools = TechDocDBTools()
     techdoc_graph_tools = TechDocGraphRAGTools()
 
+    mcp.add_tool(techdoc_db_tools.fetch_segmentation_criteria)
+    mcp.add_tool(techdoc_db_tools.fetch_business_lines)
+    mcp.add_tool(techdoc_db_tools.fetch_required_roles_by_business_line)
     mcp.add_tool(techdoc_db_tools.fetch_catalog_by_segment)
     mcp.add_tool(techdoc_db_tools.fetch_catalog_by_product)
     mcp.add_tool(techdoc_db_tools.calculate_tariff)
