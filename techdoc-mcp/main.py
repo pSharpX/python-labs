@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from rich import print
 
+from src.catalog.services.business_line_role_service import BusinessLineRoleService
 from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
 from src.catalog.graph.domain.graph_rag_domain import HourlyRateDTO, TargetSegment, ServiceFootprintDTO, ProductServiceDTO as ProductServiceGraphDTO
 from src.catalog.graph.services.graph_rag_service import GraphRAGService
@@ -37,6 +38,20 @@ def fetch_catalog():
     print(f">> Fetching Catalog by Product ({product_code})")
     product: Optional[ProductServiceDTO] = catalog.fetch_product_by_code(product_code)
     print(product)
+
+def fetch_roles():
+    catalog = BusinessLineRoleService()
+
+    print("=" * x_times)
+    print("Fetching Roles")
+    print("=" * x_times)
+
+    business_line = "Desarrollo Web y Móvil"
+    print(f">> Fetching Roles by Business line ({business_line})")
+
+    business_line_roles: list[ProductServiceDTO] = catalog.get_roles_by_business_line(business_line)
+    for role in business_line_roles:
+        print(role)
 
 def calculate_tariff():
     # Example query/calculation (Project Manager, Corporate segment, 10 hours, Sunday surcharge)
@@ -104,6 +119,7 @@ def main():
     print("Hello from techdoc-mcp!")
     fetch_catalog()
     calculate_tariff()
+    fetch_roles()
     get_graph_context()
 
 
