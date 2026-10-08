@@ -91,6 +91,34 @@ class TechDocDBTools:
         return products
 
     @tool(
+        name="obtener_catalogo_por_familias",
+        description=(
+                "Obtiene los productos y servicios del catálogo asociados a una o "
+                "más familias específicas. Recibe los IDs de las familias obtenidos "
+                "previamente mediante la herramienta obtener_lineas_de_negocio. "
+                "Utilízala después de identificar las familias relevantes para el "
+                "requerimiento técnico. Retorna únicamente los productos y servicios "
+                "pertenecientes a las familias solicitadas."
+        ),
+        tags={"catalog", "family", "product", "service", "search"},
+        meta={"version": "1.0", "author": "techdoc-team"},
+    )
+    def fetch_catalog_by_families(self, family_ids: list[int]) -> list[ProductServiceDTO]:
+        """Obtiene productos y servicios asociados a las familias indicadas.
+
+        Args:
+            family_ids: Lista de IDs de familias del catálogo. Estos IDs deben
+                provenir de la herramienta obtener_lineas_de_negocio.
+
+        Returns:
+            Lista de productos/servicios asociados a las familias solicitadas.
+        """
+
+        logger.info(">> Fetching Catalog by Families (%s)", family_ids)
+
+        return self.__catalog_service.fetch_catalog_for_families(family_ids)
+
+    @tool(
         name="obtener_catalogo_por_producto",
         description=(
             "Obtiene los detalles específicos de un producto o servicio "

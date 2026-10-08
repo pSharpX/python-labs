@@ -39,3 +39,11 @@ class CatalogService:
     def fetch_catalog_for_segment(self, segment: SEGMENT_CODE) -> List[ProductServiceDTO]:
         models = self.product_repository.get_all_by_segment(segment)
         return [ProductServiceMapper.to_dto(m) for m in models]
+
+    def fetch_catalog_for_families(self, family_ids: List[int]) -> List[ProductServiceDTO]:
+        models = self.product_repository.get_all_by_family_ids(family_ids)
+
+        return [
+            ProductServiceMapper.to_dto(model)
+            for model in models
+        ]

@@ -43,6 +43,17 @@ def fetch_catalog():
     for product in products:
         print(product)
 
+    print("=" * x_times)
+    print("Fetching Catalog by Families")
+    print("=" * x_times)
+
+    families = [1,2,3,4,5,6,7,8]
+    print(f">> Fetching Catalog by Families ({families})")
+
+    products: list[ProductServiceDTO] = catalog.fetch_catalog_for_families(families)
+    for product in products:
+        print(product)
+
     product_code = "AI-AGT-01"
     print(f">> Fetching Catalog by Product ({product_code})")
     product: Optional[ProductServiceDTO] = catalog.fetch_product_by_code(product_code)

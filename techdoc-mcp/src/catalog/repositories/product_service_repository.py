@@ -32,3 +32,27 @@ class ProductServiceRepository:
             stmt = stmt.where(ProductServiceModel.corp_applicable == True)
 
         return list(self.session.scalars(stmt).unique().all())
+
+    def get_all_by_family_ids(self, family_ids: List[int]) -> List[ProductServiceModel]:
+        """
+        Obtiene todos los productos/servicios asociados a las familias
+        especificadas.
+        """
+
+        if not family_ids:
+            return []
+
+        stmt = (
+            select(ProductServiceModel)
+            .options(
+                joinedload(ProductServiceModel.family)
+                .joinedload(FamilyModel.business_line)
+            )
+            .where(ProductServiceModel.family_id.in_(family_ids))
+            .order_by(
+                ProductServiceModel.family_id,
+                ProductServiceModel.name,
+            )
+        )
+
+        return list(self.session.scalars(stmt).unique().all())
