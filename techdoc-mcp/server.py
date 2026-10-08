@@ -82,6 +82,7 @@ if __name__ == "__main__":
     mcp.add_tool(techdoc_db_tools.fetch_required_roles_by_business_line)
     mcp.add_tool(techdoc_db_tools.fetch_catalog_by_segment)
     mcp.add_tool(techdoc_db_tools.fetch_catalog_by_product)
+    mcp.add_tool(techdoc_db_tools.fetch_catalog_by_families)
     mcp.add_tool(techdoc_db_tools.calculate_tariff)
 
     mcp.add_tool(techdoc_graph_tools.search_similar_roles)
