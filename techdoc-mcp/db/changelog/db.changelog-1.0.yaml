@@ -45,6 +45,9 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+              - column:
+                  name: main_families
+                  type: VARCHAR(1000)
   - changeSet:
       id: create-families-table
       author: christian.rivera
@@ -125,69 +128,188 @@ databaseChangeLog:
                   type: TEXT
 
   - changeSet:
-      id: insert-initial-catalog-data
+      id: insert-business_lines-data
       author: christian.rivera
-      comment: insert initial catalog data for testing
+      comment: seed business_lines catalog
       changes:
-        # Business Lines Insertion[cite: 1]
         - insert:
             tableName: business_lines
             columns:
               - column: { name: id, valueNumeric: 1 }
-              - column: { name: code, valueNumeric: 1 }
+              - column: { name: code, valueNumeric: 100 }
               - column: { name: name, value: "Modern Work y Microsoft 365" }
+              - column: { name: main_families, value: "Microsoft 365, Exchange Online, Entra ID, Intune, SharePoint Online, OneDrive, Teams" }
         - insert:
             tableName: business_lines
             columns:
               - column: { name: id, valueNumeric: 2 }
-              - column: { name: code, valueNumeric: 2 }
+              - column: { name: code, valueNumeric: 200 }
               - column: { name: name, value: "Cloud e Infraestructura" }
+              - column: { name: main_families, value: "Azure, Infraestructura Microsoft, Virtualización, Continuidad, Networking, Datacenter" }
         - insert:
             tableName: business_lines
             columns:
               - column: { name: id, valueNumeric: 3 }
-              - column: { name: code, valueNumeric: 3 }
+              - column: { name: code, valueNumeric: 300 }
               - column: { name: name, value: "Ciberseguridad" }
+              - column: { name: main_families, value: "Defender, Zero Trust, Purview, Azure Security" }
         - insert:
             tableName: business_lines
             columns:
               - column: { name: id, valueNumeric: 4 }
-              - column: { name: code, valueNumeric: 4 }
+              - column: { name: code, valueNumeric: 400 }
               - column: { name: name, value: "Datos e IA" }
-
-        # Families Insertion[cite: 1]
+              - column: { name: main_families, value: "Datos / SQL, Analytics, Power BI, Microsoft Fabric, Copilot, Copilot Studio, IA" }
         - insert:
-            tableName: families
-            columns:
-              - column: { name: id, valueNumeric: 1 }
-              - column: { name: line_id, valueNumeric: 1 }
-              - column: { name: name, value: "Microsoft 365" }
-        - insert:
-            tableName: families
-            columns:
-              - column: { name: id, valueNumeric: 2 }
-              - column: { name: line_id, valueNumeric: 1 }
-              - column: { name: name, value: "Exchange Online" }
-        - insert:
-            tableName: families
-            columns:
-              - column: { name: id, valueNumeric: 3 }
-              - column: { name: line_id, valueNumeric: 2 }
-              - column: { name: name, value: "Azure" }
-        - insert:
-            tableName: families
-            columns:
-              - column: { name: id, valueNumeric: 4 }
-              - column: { name: line_id, valueNumeric: 3 }
-              - column: { name: name, value: "Defender" }
-        - insert:
-            tableName: families
+            tableName: business_lines
             columns:
               - column: { name: id, valueNumeric: 5 }
-              - column: { name: line_id, valueNumeric: 4 }
-              - column: { name: name, value: "IA" }
+              - column: { name: code, valueNumeric: 500 }
+              - column: { name: name, value: "Automatización y Aplicaciones de Negocio" }
+              - column: { name: main_families, value: "Power Apps, Power Automate, Power Platform, Automatización, Integración" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 6 }
+              - column: { name: code, valueNumeric: 600 }
+              - column: { name: name, value: "Dynamics 365 CRM y ERP" }
+              - column: { name: main_families, value: "Dynamics 365" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 7 }
+              - column: { name: code, valueNumeric: 700 }
+              - column: { name: name, value: "Desarrollo Web y Móvil" }
+              - column: { name: main_families, value: "Web, Mobile, .NET, Mantenimiento" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 8 }
+              - column: { name: code, valueNumeric: 800 }
+              - column: { name: name, value: "DevOps" }
+              - column: { name: main_families, value: "Azure DevOps, CI/CD, DevSecOps" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 9 }
+              - column: { name: code, valueNumeric: 900 }
+              - column: { name: name, value: "Staff Augmentation y Hunting" }
+              - column: { name: main_families, value: "Staff Augmentation, Hunting, Outsourcing" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 10 }
+              - column: { name: code, valueNumeric: 1000 }
+              - column: { name: name, value: "Servicios Administrados y Mesa de Ayuda" }
+              - column: { name: main_families, value: "Soporte, Microsoft 365, Azure, Mesa de ayuda, Aplicaciones, Infraestructura" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 11 }
+              - column: { name: code, valueNumeric: 1100 }
+              - column: { name: name, value: "Estrategia e Innovación Digital" }
+              - column: { name: main_families, value: "Estrategia, Roadmap, Innovación, Gobierno TI" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 12 }
+              - column: { name: code, valueNumeric: 1200 }
+              - column: { name: name, value: "Licenciamiento y Suscripciones" }
+              - column: { name: main_families, value: "Microsoft, Software" }
+        - insert:
+            tableName: business_lines
+            columns:
+              - column: { name: id, valueNumeric: 13 }
+              - column: { name: code, valueNumeric: 1300 }
+              - column: { name: name, value: "Capacitación y Workshops" }
+              - column: { name: main_families, value: "Microsoft 365, Seguridad, Power Platform, Tecnología" }
 
-        # Products/Services Insertion Sample[cite: 1]
+  - changeSet:
+      id: insert-families-data
+      author: christian.rivera
+      comment: seed families catalog
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              INSERT INTO families (id, line_id, name) VALUES
+              -- Modern Work y Microsoft 365
+              (1, 1, 'Microsoft 365'),
+              (2, 1, 'Exchange Online'),
+              (3, 1, 'Entra ID'),
+              (4, 1, 'Intune'),
+              (5, 1, 'SharePoint Online'),
+              (6, 1, 'OneDrive'),
+              (7, 1, 'Teams'),
+              -- Cloud e Infraestructura
+              (8, 2, 'Azure'),
+              (9, 2, 'Infraestructura Microsoft'),
+              (10, 2, 'Virtualización'),
+              (11, 2, 'Continuidad'),
+              (12, 2, 'Networking'),
+              (13, 2, 'Datacenter'),
+              -- Ciberseguridad
+              (14, 3, 'Defender'),
+              (15, 3, 'Zero Trust'),
+              (16, 3, 'Purview'),
+              (17, 3, 'Azure Security'),
+              -- Datos e IA
+              (18, 4, 'Datos / SQL'),
+              (19, 4, 'Analytics'),
+              (20, 4, 'Power BI'),
+              (21, 4, 'Microsoft Fabric'),
+              (22, 4, 'Copilot'),
+              (23, 4, 'Copilot Studio'),
+              (24, 4, 'IA'),
+              -- Automatización y Aplicaciones de Negocio
+              (25, 5, 'Power Apps'),
+              (26, 5, 'Power Automate'),
+              (27, 5, 'Power Platform'),
+              (28, 5, 'Automatización'),
+              (29, 5, 'Integración'),
+              -- Dynamics 365 CRM y ERP
+              (30, 6, 'Dynamics 365'),
+              -- Desarrollo Web y Móvil
+              (31, 7, 'Web'),
+              (32, 7, 'Mobile'),
+              (33, 7, '.NET'),
+              (34, 7, 'Mantenimiento'),
+              -- DevOps
+              (35, 8, 'Azure DevOps'),
+              (36, 8, 'CI/CD'),
+              (37, 8, 'DevSecOps'),
+              -- Staff Augmentation y Hunting
+              (38, 9, 'Staff Augmentation'),
+              (39, 9, 'Hunting'),
+              (40, 9, 'Outsourcing'),
+              -- Servicios Administrados y Mesa de Ayuda
+              (41, 10, 'Soporte'),
+              (42, 10, 'Microsoft 365'),
+              (43, 10, 'Azure'),
+              (44, 10, 'Mesa de ayuda'),
+              (45, 10, 'Aplicaciones'),
+              (46, 10, 'Infraestructura'),
+              -- Estrategia e Innovación Digital
+              (47, 11, 'Estrategia'),
+              (48, 11, 'Roadmap'),
+              (49, 11, 'Innovación'),
+              (50, 11, 'Gobierno TI'),
+              -- Licenciamiento y Suscripciones
+              (51, 12, 'Microsoft'),
+              (52, 12, 'Software'),
+              -- Capacitación y Workshops
+              (53, 13, 'Microsoft 365'),
+              (54, 13, 'Seguridad'),
+              (55, 13, 'Power Platform'),
+              (56, 13, 'Tecnología');
+
+
+  - changeSet:
+      id: insert-products_services-data
+      author: christian.rivera
+      comment: seed products_services catalog
+      changes:
+        # Modern Work y Microsoft 365
         - insert:
             tableName: products_services
             columns:
@@ -201,6 +323,36 @@ databaseChangeLog:
         - insert:
             tableName: products_services
             columns:
+              - column: { name: family_id, valueNumeric: 1 }
+              - column: { name: code, value: "M365-IMP-01" }
+              - column: { name: name, value: "Implementación Microsoft 365" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Configuración y puesta en marcha de servicios Microsoft 365." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 1 }
+              - column: { name: code, value: "M365-MIG-01" }
+              - column: { name: name, value: "Migración a Microsoft 365" }
+              - column: { name: type, value: "Migración" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Migración de correo, archivos y servicios compatibles hacia Microsoft 365." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 1 }
+              - column: { name: code, value: "M365-OPT-01" }
+              - column: { name: name, value: "Optimización de tenant Microsoft 365" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Mejora de configuración, gobierno, seguridad y operación." }
+        - insert:
+            tableName: products_services
+            columns:
               - column: { name: family_id, valueNumeric: 2 }
               - column: { name: code, value: "EXO-MIG-01" }
               - column: { name: name, value: "Migración a Exchange Online" }
@@ -211,7 +363,179 @@ databaseChangeLog:
         - insert:
             tableName: products_services
             columns:
+              - column: { name: family_id, valueNumeric: 2 }
+              - column: { name: code, value: "EXO-SEC-01" }
+              - column: { name: name, value: "Seguridad y optimización de correo" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Protección, flujo de correo, autenticación y mejores prácticas." }
+        - insert:
+            tableName: products_services
+            columns:
               - column: { name: family_id, valueNumeric: 3 }
+              - column: { name: code, value: "ENTRA-ASS-01" }
+              - column: { name: name, value: "Assessment de identidad" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de identidad, autenticación, acceso y postura de seguridad." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 3 }
+              - column: { name: code, value: "ENTRA-IMP-01" }
+              - column: { name: name, value: "Implementación / optimización Entra ID" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Configuración y mejora de identidad cloud o híbrida." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 3 }
+              - column: { name: code, value: "ENTRA-CA-01" }
+              - column: { name: name, value: "Acceso Condicional" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño e implementación de políticas de acceso condicional." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 3 }
+              - column: { name: code, value: "ENTRA-HYB-01" }
+              - column: { name: name, value: "Identidad híbrida" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Integración de identidades locales y cloud." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 4 }
+              - column: { name: code, value: "INT-ASS-01" }
+              - column: { name: name, value: "Assessment Microsoft Intune" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de dispositivos, aplicaciones, cumplimiento y seguridad." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 4 }
+              - column: { name: code, value: "INT-IMP-01" }
+              - column: { name: name, value: "Implementación Microsoft Intune" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "MDM/MAM, perfiles, cumplimiento, aplicaciones y enrolamiento." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 4 }
+              - column: { name: code, value: "INT-SEC-01" }
+              - column: { name: name, value: "Hardening y políticas de seguridad" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Políticas de seguridad, BitLocker, ASR, firewall y controles relacionados." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 4 }
+              - column: { name: code, value: "INT-AUTO-01" }
+              - column: { name: name, value: "Windows Autopilot / Autopatch" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Automatización de aprovisionamiento y actualización." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 5 }
+              - column: { name: code, value: "SPO-ASS-01" }
+              - column: { name: name, value: "Assessment SharePoint Online" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de sitios, permisos, almacenamiento, versiones y gobierno." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 5 }
+              - column: { name: code, value: "SPO-IMP-01" }
+              - column: { name: name, value: "Implementación SharePoint Online" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño y configuración de sitios, bibliotecas y permisos." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 5 }
+              - column: { name: code, value: "SPO-MIG-01" }
+              - column: { name: name, value: "Migración a SharePoint Online" }
+              - column: { name: type, value: "Migración" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Migración de contenido desde fuentes compatibles." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 5 }
+              - column: { name: code, value: "SPO-GOV-01" }
+              - column: { name: name, value: "Gobierno y optimización SharePoint" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Gobierno, ciclo de vida, almacenamiento y permisos." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 6 }
+              - column: { name: code, value: "OD-MIG-01" }
+              - column: { name: name, value: "Migración a OneDrive" }
+              - column: { name: type, value: "Migración" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Migración de archivos hacia OneDrive." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 7 }
+              - column: { name: code, value: "TEAMS-IMP-01" }
+              - column: { name: name, value: "Implementación / optimización Teams" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Configuración de Teams, políticas, colaboración y gobierno." }
+
+        # Cloud e Infraestructura
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 8 }
+              - column: { name: code, value: "AZ-ASS-01" }
+              - column: { name: name, value: "Assessment Azure" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de arquitectura, consumo, seguridad, operación y optimización." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 8 }
+              - column: { name: code, value: "AZ-INF-01" }
+              - column: { name: name, value: "Implementación infraestructura Azure" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Despliegue de máquinas virtuales, redes y servicios cloud." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 8 }
               - column: { name: code, value: "AZ-MIG-01" }
               - column: { name: name, value: "Migración hacia Azure" }
               - column: { name: type, value: "Migración" }
@@ -221,7 +545,99 @@ databaseChangeLog:
         - insert:
             tableName: products_services
             columns:
-              - column: { name: family_id, valueNumeric: 4 }
+              - column: { name: family_id, valueNumeric: 8 }
+              - column: { name: code, value: "AZ-NET-01" }
+              - column: { name: name, value: "Redes y conectividad Azure" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "VNet, VPN, DNS, routing y conectividad cloud." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 8 }
+              - column: { name: code, value: "AZ-ARC-01" }
+              - column: { name: name, value: "Arquitectura de soluciones Azure" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño de arquitecturas alineadas al negocio." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 9 }
+              - column: { name: code, value: "WIN-IMP-01" }
+              - column: { name: name, value: "Windows Server" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Implementación y configuración de Windows Server." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 9 }
+              - column: { name: code, value: "AD-IMP-01" }
+              - column: { name: name, value: "Active Directory / GPO" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Implementación, optimización y configuración de AD y GPO." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 9 }
+              - column: { name: code, value: "DNS-IMP-01" }
+              - column: { name: name, value: "DNS / servicios de infraestructura" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Implementación y configuración de DNS y servicios relacionados." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 10 }
+              - column: { name: code, value: "VIRT-IMP-01" }
+              - column: { name: name, value: "Virtualización VMware / Hyper-V" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño, implementación u optimización de plataformas de virtualización." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 11 }
+              - column: { name: code, value: "BKP-DR-01" }
+              - column: { name: name, value: "Backup y Disaster Recovery" }
+              - column: { name: type, value: "Continuidad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño, implementación y revisión de respaldo y recuperación ante desastres." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 12 }
+              - column: { name: code, value: "NET-IMP-01" }
+              - column: { name: name, value: "Redes y conectividad empresarial" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Servicios de conectividad, redes LAN/WAN/WiFi y componentes asociados." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 13 }
+              - column: { name: code, value: "DC-INF-01" }
+              - column: { name: name, value: "Infraestructura de datacenter" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Servicios de infraestructura física/lógica de datacenter según alcance." }
+
+        # Ciberseguridad
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 14 }
               - column: { name: code, value: "DEF-END-01" }
               - column: { name: name, value: "Microsoft Defender for Endpoint" }
               - column: { name: type, value: "Seguridad" }
@@ -231,13 +647,563 @@ databaseChangeLog:
         - insert:
             tableName: products_services
             columns:
-              - column: { name: family_id, valueNumeric: 5 }
+              - column: { name: family_id, valueNumeric: 14 }
+              - column: { name: code, value: "DEF-O365-01" }
+              - column: { name: name, value: "Microsoft Defender for Office 365" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Protección avanzada para correo y colaboración." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 15 }
+              - column: { name: code, value: "SEC-ZT-01" }
+              - column: { name: name, value: "Assessment / Workshop Zero Trust" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diagnóstico y hoja de ruta Zero Trust." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 16 }
+              - column: { name: code, value: "PUR-ASS-01" }
+              - column: { name: name, value: "Assessment Microsoft Purview" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de gobierno, protección y cumplimiento de información." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 16 }
+              - column: { name: code, value: "PUR-DLP-01" }
+              - column: { name: name, value: "Implementación DLP" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño e implementación de prevención de pérdida de datos." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 16 }
+              - column: { name: code, value: "PUR-RET-01" }
+              - column: { name: name, value: "Retención, eDiscovery y Compliance" }
+              - column: { name: type, value: "Compliance" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Configuración de retención, eDiscovery y cumplimiento." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 17 }
+              - column: { name: code, value: "AZ-SEC-01" }
+              - column: { name: name, value: "Seguridad Azure" }
+              - column: { name: type, value: "Seguridad" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Hardening, postura, controles de acceso y servicios de seguridad." }
+
+        # Datos e IA
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 18 }
+              - column: { name: code, value: "SQL-ASS-01" }
+              - column: { name: name, value: "Assessment SQL Server" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de plataforma SQL, configuración, licenciamiento y recomendaciones." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 18 }
+              - column: { name: code, value: "SQL-IMP-01" }
+              - column: { name: name, value: "Implementación SQL Server" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Instalación, configuración y puesta en marcha de SQL Server." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 18 }
+              - column: { name: code, value: "SQL-MIG-01" }
+              - column: { name: name, value: "Migración SQL Server / Azure SQL" }
+              - column: { name: type, value: "Migración" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Migración o modernización de bases de datos." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 19 }
+              - column: { name: code, value: "DATA-ANL-01" }
+              - column: { name: name, value: "Analítica y visualización de datos" }
+              - column: { name: type, value: "Consultoría / Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Modelado, análisis y visualización para toma de decisiones." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 20 }
+              - column: { name: code, value: "PBI-IMP-01" }
+              - column: { name: name, value: "Implementación / desarrollo Power BI" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Modelos, dashboards e indicadores de negocio." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 21 }
+              - column: { name: code, value: "FAB-ASS-01" }
+              - column: { name: name, value: "Assessment / adopción Microsoft Fabric" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación y definición de arquitectura analítica con Fabric." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 22 }
+              - column: { name: code, value: "COP-M365-01" }
+              - column: { name: name, value: "Readiness Microsoft 365 Copilot" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Preparación técnica, seguridad, datos, licencias y adopción." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 22 }
+              - column: { name: code, value: "COP-GOV-01" }
+              - column: { name: name, value: "Gobierno de Microsoft 365 Copilot" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Gobierno, seguridad, controles y adopción de Copilot." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 23 }
+              - column: { name: code, value: "COP-CS-01" }
+              - column: { name: name, value: "Agentes con Copilot Studio" }
+              - column: { name: type, value: "Desarrollo IA" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño y construcción de agentes con Copilot Studio." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 24 }
               - column: { name: code, value: "AI-AGT-01" }
               - column: { name: name, value: "Desarrollo de agentes de IA" }
               - column: { name: type, value: "Desarrollo IA" }
               - column: { name: smb_applicable, valueBoolean: true }
               - column: { name: corp_applicable, valueBoolean: true }
               - column: { name: description, value: "Diseño e implementación de agentes y soluciones de IA." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 24 }
+              - column: { name: code, value: "AI-WKS-01" }
+              - column: { name: name, value: "Workshop de IA / Copilot" }
+              - column: { name: type, value: "Workshop" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Descubrimiento, casos de uso, gobierno y adopción." }
+
+        # Automatización y Aplicaciones de Negocio
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 25 }
+              - column: { name: code, value: "PP-APP-01" }
+              - column: { name: name, value: "Desarrollo Power Apps" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño, construcción y despliegue de aplicaciones." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 26 }
+              - column: { name: code, value: "PP-AUTO-01" }
+              - column: { name: name, value: "Automatización con Power Automate" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño y construcción de flujos de automatización." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 27 }
+              - column: { name: code, value: "PP-GOV-01" }
+              - column: { name: name, value: "Gobierno Power Platform" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Entornos, DLP, CoE, roles y gobierno." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 27 }
+              - column: { name: code, value: "PP-ASS-01" }
+              - column: { name: name, value: "Assessment Power Platform" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación de aplicaciones, flujos, entornos, conectores y capacidad." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 28 }
+              - column: { name: code, value: "AUTO-RPA-01" }
+              - column: { name: name, value: "Automatización de procesos / RPA" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Automatización de procesos repetitivos e integraciones de negocio." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 29 }
+              - column: { name: code, value: "INTG-APP-01" }
+              - column: { name: name, value: "Integración de aplicaciones y servicios" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Integración entre aplicaciones, servicios y APIs dentro del alcance aprobado." }
+
+        # Dynamics 365 CRM y ERP
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 30 }
+              - column: { name: code, value: "D365-CRM-01" }
+              - column: { name: name, value: "Dynamics 365 CRM" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Implementación, configuración o mejora de soluciones CRM." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 30 }
+              - column: { name: code, value: "D365-ERP-01" }
+              - column: { name: name, value: "Dynamics 365 ERP" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Servicios relacionados con soluciones ERP de Dynamics 365." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 30 }
+              - column: { name: code, value: "D365-ASS-01" }
+              - column: { name: name, value: "Assessment Dynamics 365" }
+              - column: { name: type, value: "Assessment" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Evaluación funcional/técnica y hoja de ruta Dynamics 365." }
+
+        # Desarrollo Web y Móvil
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 31 }
+              - column: { name: code, value: "DEV-WEB-01" }
+              - column: { name: name, value: "Desarrollo de aplicaciones web" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño y desarrollo de soluciones web personalizadas." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 32 }
+              - column: { name: code, value: "DEV-MOB-01" }
+              - column: { name: name, value: "Desarrollo de aplicaciones móviles" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño y desarrollo de aplicaciones móviles." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 33 }
+              - column: { name: code, value: "DEV-DOTNET-01" }
+              - column: { name: name, value: "Desarrollo .NET" }
+              - column: { name: type, value: "Desarrollo" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Desarrollo de aplicaciones y componentes sobre tecnologías .NET." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 34 }
+              - column: { name: code, value: "DEV-MNT-01" }
+              - column: { name: name, value: "Mantenimiento y soporte de aplicaciones" }
+              - column: { name: type, value: "Soporte" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Mantenimiento correctivo/evolutivo de aplicaciones dentro del alcance contratado." }
+
+        # DevOps
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 35 }
+              - column: { name: code, value: "ADO-IMP-01" }
+              - column: { name: name, value: "Implementación Azure DevOps" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Repositorios, boards, pipelines y prácticas DevOps." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 36 }
+              - column: { name: code, value: "ADO-CICD-01" }
+              - column: { name: name, value: "CI/CD y automatización de despliegues" }
+              - column: { name: type, value: "Implementación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diseño y configuración de integración y despliegue continuo." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 37 }
+              - column: { name: code, value: "ADO-SEC-01" }
+              - column: { name: name, value: "DevSecOps" }
+              - column: { name: type, value: "Seguridad / Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Integración de controles de seguridad en el ciclo de desarrollo." }
+
+        # Staff Augmentation y Hunting
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 38 }
+              - column: { name: code, value: "STAFF-TEC-01" }
+              - column: { name: name, value: "Staff Augmentation técnico" }
+              - column: { name: type, value: "Outsourcing" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Asignación temporal o recurrente de especialistas para operación o proyectos." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 39 }
+              - column: { name: code, value: "HUNT-IT-01" }
+              - column: { name: name, value: "Hunting de perfiles TI" }
+              - column: { name: type, value: "Recruiting" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Búsqueda y selección de perfiles tecnológicos según requerimiento." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 40 }
+              - column: { name: code, value: "OUT-M365-01" }
+              - column: { name: name, value: "Especialista Microsoft 365" }
+              - column: { name: type, value: "Outsourcing" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Asignación de especialista Microsoft 365 por periodo acordado." }
+
+        # Servicios Administrados y Mesa de Ayuda
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 41 }
+              - column: { name: code, value: "SOP-BOL-01" }
+              - column: { name: name, value: "Bolsa de horas especializada" }
+              - column: { name: type, value: "Soporte" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Atención bajo demanda con consumo de horas especializadas." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 42 }
+              - column: { name: code, value: "SOP-M365-01" }
+              - column: { name: name, value: "Soporte administrado Microsoft 365" }
+              - column: { name: type, value: "Managed Service" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Operación continua de Microsoft 365." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 43 }
+              - column: { name: code, value: "SOP-AZ-01" }
+              - column: { name: name, value: "Soporte administrado Azure" }
+              - column: { name: type, value: "Managed Service" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Soporte y administración de servicios Azure." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 44 }
+              - column: { name: code, value: "HD-M365-AZ-01" }
+              - column: { name: name, value: "Mesa de ayuda Microsoft 365 - Azure" }
+              - column: { name: type, value: "Managed Service" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Atención de incidencias y requerimientos de Microsoft 365 y Azure." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 45 }
+              - column: { name: code, value: "SOP-APP-01" }
+              - column: { name: name, value: "Mantenimiento y soporte de aplicaciones" }
+              - column: { name: type, value: "Managed Service" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Soporte recurrente de aplicaciones y servicios de software." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 46 }
+              - column: { name: code, value: "SOP-INF-01" }
+              - column: { name: name, value: "Soporte de infraestructura TI" }
+              - column: { name: type, value: "Managed Service" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Soporte técnico de infraestructura y plataformas incluidas en contrato." }
+
+        # Estrategia e Innovación Digital
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 47 }
+              - column: { name: code, value: "EST-DIG-01" }
+              - column: { name: name, value: "Assessment de madurez digital" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Diagnóstico de capacidades digitales y oportunidades de transformación." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 48 }
+              - column: { name: code, value: "EST-ROAD-01" }
+              - column: { name: name, value: "Roadmap de transformación digital" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Definición de iniciativas, prioridades y hoja de ruta tecnológica." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 49 }
+              - column: { name: code, value: "EST-INN-01" }
+              - column: { name: name, value: "Workshop de innovación tecnológica" }
+              - column: { name: type, value: "Workshop" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Identificación y priorización de iniciativas de innovación." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 50 }
+              - column: { name: code, value: "GOV-IT-01" }
+              - column: { name: name, value: "Gobierno y optimización de TI" }
+              - column: { name: type, value: "Consultoría" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Definición de gobierno, operación, indicadores y mejora continua." }
+
+        # Licenciamiento y Suscripciones
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 51 }
+              - column: { name: code, value: "LIC-M365-01" }
+              - column: { name: name, value: "Licenciamiento Microsoft 365" }
+              - column: { name: type, value: "Licenciamiento" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Suministro y asesoría de licencias Microsoft 365." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 51 }
+              - column: { name: code, value: "LIC-AZ-01" }
+              - column: { name: name, value: "Suscripciones y consumo Azure" }
+              - column: { name: type, value: "Licenciamiento" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Suministro y asesoría asociada a Azure." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 51 }
+              - column: { name: code, value: "LIC-SEC-01" }
+              - column: { name: name, value: "Licenciamiento de seguridad Microsoft" }
+              - column: { name: type, value: "Licenciamiento" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Defender, Entra, Intune, Purview y complementos relacionados." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 52 }
+              - column: { name: code, value: "LIC-SW-01" }
+              - column: { name: name, value: "Licenciamiento de software de terceros" }
+              - column: { name: type, value: "Licenciamiento" }
+              - column: { name: smb_applicable, valueBoolean: false }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Comercialización sujeta a partnership, autorización y disponibilidad." }
+
+        # Capacitación y Workshops
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 53 }
+              - column: { name: code, value: "CAP-M365-01" }
+              - column: { name: name, value: "Capacitación Microsoft 365" }
+              - column: { name: type, value: "Capacitación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Sesiones técnicas o funcionales." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 54 }
+              - column: { name: code, value: "CAP-SEC-01" }
+              - column: { name: name, value: "Capacitación Seguridad Microsoft" }
+              - column: { name: type, value: "Capacitación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Sesiones especializadas de seguridad y cumplimiento." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 55 }
+              - column: { name: code, value: "CAP-PP-01" }
+              - column: { name: name, value: "Capacitación Power Platform" }
+              - column: { name: type, value: "Capacitación" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Capacitación funcional o técnica." }
+        - insert:
+            tableName: products_services
+            columns:
+              - column: { name: family_id, valueNumeric: 56 }
+              - column: { name: code, value: "WKS-TEC-01" }
+              - column: { name: name, value: "Workshop tecnológico especializado" }
+              - column: { name: type, value: "Workshop" }
+              - column: { name: smb_applicable, valueBoolean: true }
+              - column: { name: corp_applicable, valueBoolean: true }
+              - column: { name: description, value: "Workshop de descubrimiento, arquitectura, estrategia o adopción." }
 
   - changeSet:
       id: create-hourly_rate-table
@@ -1334,107 +2300,3 @@ databaseChangeLog:
               - column: { name: support_roles, value: "HH-CONS-SR; HH-CHG; HH-ESP" }
               - column: { name: target_segment, value: "Ambos" }
               - column: { name: usage_description, value: "Capacitación técnica, funcional, workshops y adopción." }
-
-  - changeSet:
-      id: add-main_families-column-to-business_lines
-      author: christian.rivera
-      comment: add main_families column to business_lines table
-      changes:
-        - addColumn:
-            tableName: business_lines
-            columns:
-              - column:
-                  name: main_families
-                  type: VARCHAR(1000)
-
-  - changeSet:
-      id: update-and-insert-business_lines-data
-      author: christian.rivera
-      comment: update main_families for existing business lines and insert new entries
-      changes:
-        # Update existing records (IDs 1-4)
-        - update:
-            tableName: business_lines
-            where: id = 1
-            columns:
-              - column: { name: main_families, value: "Entra ID, Exchange Online, Intune, Microsoft 365, OneDrive, SharePoint Online, Teams" }
-        - update:
-            tableName: business_lines
-            where: id = 2
-            columns:
-              - column: { name: main_families, value: "Azure, Continuidad, Datacenter, Infraestructura Microsoft, Networking, Virtualización" }
-        - update:
-            tableName: business_lines
-            where: id = 3
-            columns:
-              - column: { name: main_families, value: "Azure Security, Defender, Purview, Zero Trust" }
-        - update:
-            tableName: business_lines
-            where: id = 4
-            columns:
-              - column: { name: main_families, value: "Analytics, Copilot, Copilot Studio, Datos / SQL, IA, Microsoft Fabric, Power BI" }
-
-        # Insert new records (IDs 5-13)
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 5 }
-              - column: { name: code, valueNumeric: 5 }
-              - column: { name: name, value: "Automatización y Aplicaciones de Negocio" }
-              - column: { name: main_families, value: "Automatización, Integración, Power Apps, Power Automate, Power Platform" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 6 }
-              - column: { name: code, valueNumeric: 6 }
-              - column: { name: name, value: "Dynamics 365 CRM y ERP" }
-              - column: { name: main_families, value: "Dynamics 365" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 7 }
-              - column: { name: code, valueNumeric: 7 }
-              - column: { name: name, value: "Desarrollo Web y Móvil" }
-              - column: { name: main_families, value: ".NET, Mantenimiento, Mobile, Web" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 8 }
-              - column: { name: code, valueNumeric: 8 }
-              - column: { name: name, value: "DevOps" }
-              - column: { name: main_families, value: "Azure DevOps, CI/CD, DevSecOps" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 9 }
-              - column: { name: code, valueNumeric: 9 }
-              - column: { name: name, value: "Staff Augmentation y Hunting" }
-              - column: { name: main_families, value: "Hunting, Outsourcing, Staff Augmentation" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 10 }
-              - column: { name: code, valueNumeric: 10 }
-              - column: { name: name, value: "Servicios Administrados y Mesa de Ayuda" }
-              - column: { name: main_families, value: "Aplicaciones, Azure, Infraestructura, Mesa de ayuda, Microsoft 365, Soporte" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 11 }
-              - column: { name: code, valueNumeric: 11 }
-              - column: { name: name, value: "Estrategia e Innovación Digital" }
-              - column: { name: main_families, value: "Estrategia, Gobierno TI, Innovación, Roadmap" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 12 }
-              - column: { name: code, valueNumeric: 12 }
-              - column: { name: name, value: "Licenciamiento y Suscripciones" }
-              - column: { name: main_families, value: "Microsoft, Software" }
-        - insert:
-            tableName: business_lines
-            columns:
-              - column: { name: id, valueNumeric: 13 }
-              - column: { name: code, valueNumeric: 13 }
-              - column: { name: name, value: "Capacitación y Workshops" }
-              - column: { name: main_families, value: "Microsoft 365, Power Platform, Seguridad, Tecnología" }

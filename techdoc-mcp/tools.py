@@ -113,7 +113,7 @@ class TechDocDBTools:
         return product
 
     @tool(
-        name="obtener_roles_por_line_negocio",
+        name="obtener_roles_por_linea_de_negocio",
         description=(
                 "Consulta los roles principales y de soporte requeridos para una línea "
                 "de negocio específica (y opcionalmente por segmento de cliente). Utillízalo "
