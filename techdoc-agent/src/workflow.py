@@ -1,6 +1,8 @@
+import functools
+import logging
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable, Awaitable
 
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableConfig
@@ -20,6 +22,34 @@ from src.state import WorkflowState
 from .state.architect import TechArchitectOutputSchema, TechArchitectAgentState
 from src.tools.mcp import MCPToolsAdapter
 from src.tools.requirements import SaveMarkdownTool
+
+
+logger = logging.getLogger(__name__)
+
+Update = dict[str, Any]
+
+def _error_update(state: WorkflowState, stage: Stage, message: str) -> Update:
+    logger.error("[%s] %s", stage.value, message)
+    return {
+        "status": ProposalStatus.ERROR,
+        "current_stage": stage,
+        "errors": [*state.get("errors", []), f"{stage.value}: {message}"],
+    }
+
+def guarded(stage: Stage) -> Callable[[Callable[..., Awaitable[Update]]], Callable[..., Awaitable[Update]]]:
+    """Turn any failure of an agent node into ``status=ERROR`` + a stored error. Never continue silently."""
+
+    def decorator(fn: Callable[..., Awaitable[Update]]) -> Callable[..., Awaitable[Update]]:
+        @functools.wraps(fn)
+        async def wrapper(self: "TechDocBuilderGraph", state: WorkflowState, config: RunnableConfig) -> Update:
+            try:
+                return await fn(self, state, config)
+            except Exception as exc:
+                logger.exception("Stage %s failed", stage.value)
+                return _error_update(state, stage, f"{type(exc).__name__}: {exc}")
+
+        return wrapper
+    return decorator
 
 
 @dataclass(frozen=True)
@@ -69,8 +99,8 @@ class TechDocBuilderGraph:
         # Initialize workflow
         self._graph = self._build()
 
-    @staticmethod
-    async def _initialize_proposal(state: WorkflowState):
+    @guarded(Stage.INITIALIZE)
+    async def _initialize_proposal(self, state: WorkflowState, config: RunnableConfig):
         revision_request = state.get("revision_request")
         if state.get("proposal_id") and revision_request:
             revision = state.get("revision", 0) + 1
@@ -118,6 +148,7 @@ class TechDocBuilderGraph:
             "revisions": state.get("revision_history", []),
         }
 
+    @guarded(Stage.REQUIREMENTS)
     async def _requirements_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
@@ -166,7 +197,8 @@ class TechDocBuilderGraph:
             "status": ProposalStatus.ANALYZING_REQUIREMENTS.value
         }
 
-    async def _tech_architect_agent_node(self, state: WorkflowState):
+    @guarded(Stage.TECHNICAL_ARCHITECTURE)
+    async def _tech_architect_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
 
         reqs = state["requirements"]
@@ -194,7 +226,8 @@ class TechDocBuilderGraph:
             "current_stage": "technical_architecture"
         }
 
-    async def _financial_estimator_agent_node(self, state: WorkflowState):
+    @guarded(Stage.FINANCIAL_ESTIMATION)
+    async def _financial_estimator_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Financial Estimator Node calculate the effort, the cost and commercial conditions."""
 
         reqs = state["requirements"]
@@ -292,8 +325,8 @@ class TechDocBuilderGraph:
             "status": ProposalStatus.ERROR.value
         }
 
-    @staticmethod
-    async def _complete_node(state: WorkflowState):
+    @guarded(Stage.APPROVAL)
+    async def _complete_node(self, state: WorkflowState, config: RunnableConfig):
         financial = state.get("financial_estimation") or {}
         if financial.get("approval_status") != "approved":
             raise ValueError("Cannot complete without financial approval")
