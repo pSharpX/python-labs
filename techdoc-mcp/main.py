@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from rich import print
 
+from src.catalog.domain.business_line import BusinessLineDTO
 from src.catalog.services.business_line_role_service import BusinessLineRoleService
 from src.catalog.domain.segmentation_criterion import SegmentationCriterionDTO
 from src.catalog.graph.domain.graph_rag_domain import HourlyRateDTO, TargetSegment, ServiceFootprintDTO, ProductServiceDTO as ProductServiceGraphDTO
@@ -14,6 +15,14 @@ x_times = 150
 
 def fetch_catalog():
     catalog = CatalogService()
+
+    print("=" * x_times)
+    print("Fetching Business Lines")
+    print("=" * x_times)
+
+    business_line_info: list[BusinessLineDTO] = catalog.get_all_business_lines()
+    for business_line in business_line_info:
+        print(business_line)
 
     print("=" * x_times)
     print("Fetching Segmentation Criterion")

@@ -1,5 +1,5 @@
 from typing import Sequence, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 
 from src.catalog.models.business_line import BusinessLineModel
@@ -11,7 +11,11 @@ class BusinessLineRepository:
 
     def get_all(self) -> Sequence[BusinessLineModel]:
         """Recupera todas las líneas de negocio registradas."""
-        stmt = select(BusinessLineModel)
+        stmt = (
+            select(BusinessLineModel)
+            .options(selectinload(BusinessLineModel.families))
+            .order_by(BusinessLineModel.id)
+        )
         return self.session.execute(stmt).scalars().all()
 
     def get_by_code(self, code: int) -> Optional[BusinessLineModel]:

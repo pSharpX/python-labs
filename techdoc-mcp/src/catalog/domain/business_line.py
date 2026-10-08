@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 
+from src.catalog.domain.family import FamilyDTO
+
 
 @dataclass
 class BusinessLineDTO:
@@ -13,11 +15,13 @@ class BusinessLineDTO:
     name: str = field(
         metadata={"description": "Nombre de la línea de negocio (ej. 'Cloud & Infraestructura', 'Ciberseguridad')."}
     )
-    main_families: Optional[str] = field(
-        default=None,
-        metadata={"description": "Descripción o texto de las familias de productos/servicios principales asociadas."}
-    )
-    main_families_list: List[str] = field(
+
+    families: List[FamilyDTO] = field(
         default_factory=list,
-        metadata={"description": "Lista parseada de las familias principales para fácil lectura del modelo."}
+        metadata={
+            "description": (
+                "Lista de familias de productos/servicios asociadas a esta "
+                "línea de negocio. Cada familia contiene únicamente su ID y nombre."
+            )
+        }
     )

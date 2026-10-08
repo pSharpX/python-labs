@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from src.catalog.infrastructure.family_mapper import FamilyMapper
 from src.catalog.domain.business_line import BusinessLineDTO
 from src.catalog.models.business_line import BusinessLineModel
 
@@ -19,6 +20,8 @@ class BusinessLineMapper:
             id=model.id,
             code=model.code,
             name=model.name,
-            main_families=model.main_families,
-            main_families_list=cls._parse_families(model.main_families)
+            families=[
+                FamilyMapper.to_dto(family)
+                for family in model.families
+            ],
         )

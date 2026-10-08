@@ -48,9 +48,11 @@ class TechDocDBTools:
     @tool(
         name="obtener_lineas_de_negocio",
         description=(
-                "Obtiene la lista completa de líneas de negocio disponibles en la organización "
-                "junto con sus familias principales de productos/servicios. Utillízala como primer "
-                "paso para identificar a qué área o línea pertenece el requerimiento técnico analizado."
+                "Obtiene todas las líneas de negocio disponibles en la organización. "
+                "Cada línea incluye su ID, código, nombre y la lista de familias "
+                "asociadas, donde cada familia contiene únicamente su ID y nombre. "
+                "Utilízala como primer paso para identificar la línea de negocio "
+                "y familia a la que pertenece un requerimiento técnico."
         ),
         tags={"catalog", "business_line", "identification"},
         meta={"version": "1.0", "author": "techdoc-team"}
