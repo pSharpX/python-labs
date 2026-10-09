@@ -8,3 +8,5 @@ install:
 
 run:
 	uv run main.py
+serve:
+	streamlit run app.py
