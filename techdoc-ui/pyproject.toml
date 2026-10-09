@@ -1,0 +1,7 @@
+[project]
+name = "techdoc-ui"
+version = "0.1.0"
+description = "An AI-powered assistant that transforms functional requirements into structured technical proposal."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
