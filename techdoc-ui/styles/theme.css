@@ -1,0 +1,58 @@
+/* Proposal Studio — calm enterprise theme. Colours mirror the Word document branding. */
+:root {
+  --ps-navy: #1F3A5F;
+  --ps-teal: #2E86AB;
+  --ps-ink: #1d2733;
+  --ps-muted: #66717f;
+  --ps-line: #e3e8ef;
+  --ps-soft: #f5f7fa;
+  --ps-ok: #1f8a5b;
+  --ps-warn: #b7791f;
+  --ps-bad: #c0392b;
+}
+
+.block-container { padding-top: 1.6rem; max-width: 1400px; }
+h1, h2, h3 { color: var(--ps-navy); letter-spacing: -0.01em; }
+
+/* Header */
+.ps-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: .25rem; }
+.ps-title { font-size: 1.55rem; font-weight: 700; color: var(--ps-navy); margin: 0; }
+.ps-sub { color: var(--ps-muted); font-size: .9rem; }
+.ps-pill { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600;
+           border: 1px solid var(--ps-line); background: var(--ps-soft); color: var(--ps-ink); }
+.ps-pill.ok { background: #e7f5ee; border-color: #bfe3d0; color: var(--ps-ok); }
+.ps-pill.warn { background: #fdf5e6; border-color: #f2dcb1; color: var(--ps-warn); }
+.ps-pill.bad { background: #fbeaea; border-color: #f0c4c0; color: var(--ps-bad); }
+.ps-pill.run { background: #e8f3f8; border-color: #bcdcea; color: var(--ps-teal); }
+
+/* Stage stepper */
+.ps-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: .4rem; margin: .8rem 0 1rem; }
+.ps-step { border: 1px solid var(--ps-line); border-radius: 10px; padding: .55rem .7rem; background: #fff; min-width: 0; }
+.ps-step .n { font-size: .7rem; color: var(--ps-muted); text-transform: uppercase; letter-spacing: .04em; }
+.ps-step .l { font-weight: 600; font-size: .88rem; color: var(--ps-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-step .s { font-size: .75rem; color: var(--ps-muted); }
+.ps-step.done { border-color: #bfe3d0; background: #f3fbf7; }
+.ps-step.done .s { color: var(--ps-ok); }
+.ps-step.active { border-color: var(--ps-teal); box-shadow: 0 0 0 2px rgba(46,134,171,.15); }
+.ps-step.active .s { color: var(--ps-teal); font-weight: 600; }
+.ps-step.blocked { border-color: #f2dcb1; background: #fffbf3; }
+.ps-step.blocked .s { color: var(--ps-warn); font-weight: 600; }
+.ps-step.stale { border-style: dashed; }
+@media (max-width: 900px) { .ps-steps { grid-template-columns: repeat(2, 1fr); } }
+
+/* Cards */
+.ps-card { border: 1px solid var(--ps-line); border-radius: 12px; padding: 1rem 1.1rem; background: #fff; margin-bottom: .8rem; }
+.ps-card h4 { margin: 0 0 .4rem; color: var(--ps-navy); font-size: 1rem; }
+.ps-kpi { font-size: 1.6rem; font-weight: 700; color: var(--ps-navy); line-height: 1.1; }
+.ps-kpi-label { font-size: .75rem; color: var(--ps-muted); text-transform: uppercase; letter-spacing: .04em; }
+.ps-approval { border: 1px solid var(--ps-teal); background: linear-gradient(180deg, #f2f9fc 0%, #fff 60%); }
+.ps-banner { border-radius: 10px; padding: .6rem .9rem; margin-bottom: .8rem; font-size: .9rem; }
+.ps-banner.warn { background: #fdf5e6; border: 1px solid #f2dcb1; }
+.ps-banner.info { background: #e8f3f8; border: 1px solid #bcdcea; }
+
+/* Chat */
+[data-testid="stChatMessage"] { border-radius: 12px; }
+.ps-kind { font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ps-muted); margin-bottom: .1rem; }
+
+/* Sidebar list */
+section[data-testid="stSidebar"] .stButton button { text-align: left; justify-content: flex-start; }

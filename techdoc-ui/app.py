@@ -1,189 +1,188 @@
+"""Proposal Studio — Streamlit chat client for the proposal workflow API.
+
+Run:  streamlit run app.py   (from the frontend/ folder, with the backend running)
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from pathlib import Path
+
 import streamlit as st
-import httpx
 
-from settings import AppSettings
-from src.client.proposal_client import ProposalAPIClient
+from api.client import ApiError, ProposalApiClient
+from api.schemas import ProposalSummary
+from components.approval_panel import render_approval_panel
+from components.chat import chat_placeholder, render_messages
+from components.document_panel import render_document_panel, render_versions
+from components.financial_estimate_view import render_estimate
+from components.requirements_view import render_requirements
+from components.sidebar import render_sidebar
+from components.technical_proposal_view import render_technical
+from components.workflow_status import RUNNING_TEXT, render_header
+from config import get_settings
+from state import init_session, restore_session, set_active
 
-settings = AppSettings()
-api_client = ProposalAPIClient(settings)
+settings = get_settings()
+st.set_page_config(page_title=settings.app_title, page_icon="📑", layout="wide", initial_sidebar_state="expanded")
+st.markdown(f"<style>{(Path(__file__).parent / 'styles' / 'theme.css').read_text()}</style>", unsafe_allow_html=True)
 
-st.set_page_config(
-    page_title="AI Technical Proposal Generator",
-    page_icon="💼",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
-# Initialize Session State
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "proposal_id" not in st.session_state:
-    st.session_state.proposal_id = None
-if "current_proposal_data" not in st.session_state:
-    st.session_state.current_proposal_data = None
+@st.cache_resource
+def get_client() -> ProposalApiClient:
+    return ProposalApiClient(settings)
 
-# Sidebar - Proposal Management & Navigation
-with st.sidebar:
-    st.title("💼 Presales Assistant")
-    st.markdown("---")
 
-    if st.button("➕ New Proposal", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.proposal_id = None
-        st.session_state.current_proposal_data = None
+client = get_client()
+init_session(st.session_state)
+if (warning := restore_session(st.session_state, st.query_params, client)) is not None:
+    st.session_state.flash = ("warning", warning)
+
+
+# ---- actions ------------------------------------------------------------------------------
+
+
+def wait_for_backend(pid: str) -> ProposalSummary | None:
+    """Show progress while the backend works, then return the settled summary."""
+    with st.status("Working on it…", expanded=False) as status:
+        def tick(s: ProposalSummary) -> None:
+            status.update(label=RUNNING_TEXT.get(s.current_stage, "Working…"))
+
+        summary = client.wait_until_idle(pid, on_tick=tick)
+        if summary.is_running:
+            status.update(label="Still working — this can take a few minutes. Refresh to check progress.", state="running")
+        elif summary.workflow_status == "failed":
+            status.update(label="A step failed", state="error")
+        else:
+            status.update(label="Done", state="complete")
+    return summary
+
+
+def perform(action: Callable[[], ProposalSummary], description: str) -> None:
+    try:
+        summary = action()
+        set_active(st.session_state, st.query_params, summary.proposal_id)
+        wait_for_backend(summary.proposal_id)
+        st.session_state.pop("last_failed", None)
+    except ApiError as exc:
+        st.session_state.flash = ("error", f"{description} failed: {exc}")
+        if exc.retryable:
+            st.session_state.last_failed = (action, description)
+    st.rerun()
+
+
+def select(pid: str | None) -> None:
+    set_active(st.session_state, st.query_params, pid)
+    st.rerun()
+
+
+def create(title: str, customer: str, need: str) -> None:
+    perform(lambda: client.create_proposal(title, customer, need), "Creating the proposal")
+
+
+# ---- layout -------------------------------------------------------------------------------
+
+active = st.session_state.active_proposal
+render_sidebar(client, active, select, create, settings.app_title)
+
+if st.session_state.flash:
+    level, text = st.session_state.flash
+    getattr(st, level)(text)
+    st.session_state.flash = None
+    if failed := st.session_state.get("last_failed"):
+        if st.button("↻ Retry"):
+            perform(*failed)
+
+if not active:
+    st.markdown(f"## Welcome to {settings.app_title}")
+    st.markdown(
+        "Describe a customer's business need in plain language. The assistant will:\n\n"
+        "1. **Clarify requirements** until they are complete\n"
+        "2. **Design the technical solution** using your service catalog and Microsoft Learn documentation\n"
+        "3. **Estimate effort and cost** from your authorised rate card\n"
+        "4. **Wait for your approval** — nothing is approved without your explicit decision\n"
+        "5. **Generate a polished Word proposal** you can download\n\n"
+        "Start with **➕ New proposal** in the sidebar."
+    )
+    try:
+        h = client.health()
+        st.caption(f"Service online · API v{h['version']} · Microsoft Learn {'connected' if h['mcp_available'] else 'unavailable: ' + str(h.get('mcp_detail'))}")
+    except ApiError as exc:
+        st.error(str(exc))
+    st.stop()
+
+try:
+    summary = client.get_proposal(active)
+except ApiError as exc:
+    st.error(str(exc))
+    c1, c2 = st.columns(2)
+    if c1.button("↻ Retry"):
         st.rerun()
+    if c2.button("Close proposal"):
+        select(None)
+    st.stop()
 
-    if st.session_state.proposal_id:
-        st.info(f"**Active ID:** {st.session_state.proposal_id}")
-        if st.button("🔄 Refresh Data", use_container_width=True):
-            data = api_client.get_proposal_full(st.session_state.proposal_id)
-            st.session_state.current_proposal_data = data
-            st.rerun()
+if summary.is_running:  # e.g. page refreshed mid-run
+    render_header(summary)
+    wait_for_backend(summary.proposal_id)
+    st.rerun()
 
-# Main Workspace Header
-st.title("Enterprise AI Technical Proposal Generator")
-st.caption("Driven by LangGraph, FastAPI, and Automated Word Generation")
+render_header(summary)
+try:
+    messages = client.messages(active)
+    versions = client.versions(active)
+    requirements = client.artifact(active, "requirements")
+    technical = client.artifact(active, "technical-proposal")
+    estimate = client.artifact(active, "estimate")
+except ApiError as exc:
+    st.error(f"Could not load proposal details: {exc}")
+    if st.button("↻ Retry loading"):
+        st.rerun()
+    st.stop()
 
-# Tabs Layout
-tab_chat, tab_req, tab_tech, tab_fin, tab_doc = st.tabs(
-    [
-        "💬 Conversational Chat",
-        "📋 Requirements Specification",
-        "🏗️ Technical Architecture",
-        "💰 Financial Estimate & Approval",
-        "📄 Generated Document",
-    ]
-)
+left, right = st.columns([5, 6], gap="large")
 
-# TAB 1: Chat Interface
-with tab_chat:
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+with left:
+    st.markdown("#### Conversation")
+    with st.container(height=620, border=True):
+        render_messages(messages)
 
-    if prompt := st.chat_input("Describe your project or answer questions..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
+with right:
+    render_approval_panel(
+        summary, estimate,
+        lambda decision, version, fb: perform(lambda: client.decide(active, decision, version, fb), "Submitting your decision"),
+    )
 
-        with st.spinner("Processing workflow stage..."):
-            try:
-                if not st.session_state.proposal_id:
-                    res = api_client.create_proposal(prompt)
-                    st.session_state.proposal_id = res["proposal_id"]
-                else:
-                    res = api_client.send_message(
-                        st.session_state.proposal_id, prompt
-                    )
+    if summary.workflow_status == "failed":
+        st.error(f"The last step failed. Your progress is saved. {summary.last_error or ''}")
+        if st.button("↻ Retry the failed step", type="primary"):
+            perform(lambda: client.resume(active, "retry"), "Retrying")
+    elif summary.awaiting == "clarification" and summary.current_stage in ("technical_design", "financial_estimation"):
+        st.markdown('<div class="ps-banner warn">The workflow is paused. Answer in the chat, or retry the step '
+                    'after the underlying issue (e.g. catalog or rate configuration) is fixed.</div>', unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        if c1.button("↻ Retry this step", use_container_width=True):
+            perform(lambda: client.resume(active, "retry"), "Retrying")
+        if c2.button("Cancel workflow", use_container_width=True):
+            perform(lambda: client.resume(active, "cancel"), "Cancelling")
+    elif summary.workflow_status == "rejected":
+        st.markdown('<div class="ps-banner warn">The estimate was rejected. Describe what should change in the chat, '
+                    'or re-estimate as is.</div>', unsafe_allow_html=True)
+        if st.button("↻ Re-estimate"):
+            perform(lambda: client.resume(active, "retry"), "Re-estimating")
 
-                # Update state snapshot
-                full_data = api_client.get_proposal_full(
-                    st.session_state.proposal_id
-                )
-                st.session_state.current_proposal_data = full_data
+    render_document_panel(client, summary, versions)
 
-                response_text = f"**Stage:** {res['current_stage'].upper()} | **Approval:** {res['approval_status']}\n\n"
-                if res.get("requirements_summary"):
-                    response_text += f"**Requirements:** {res['requirements_summary']}\n\n"
-                if res.get("technical_summary"):
-                    response_text += f"**Architecture:** {res['technical_summary']}\n\n"
-                if res.get("total_cost"):
-                    response_text += f"**Calculated Total:** ${res['total_cost']:,.2f}\n"
+    tabs = st.tabs(["📋 Requirements", "🏗️ Solution", "💰 Estimate", "🕘 Versions"])
+    with tabs[0]:
+        render_requirements(requirements)
+    with tabs[1]:
+        render_technical(technical)
+    with tabs[2]:
+        render_estimate(estimate)
+    with tabs[3]:
+        render_versions(versions)
 
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": response_text}
-                )
-                with st.chat_message("assistant"):
-                    st.write(response_text)
-                st.rerun()
-
-            except Exception as e:
-                st.error(f"Failed to communicate with API: {e}")
-
-# TAB 2: Requirements View
-with tab_req:
-    pdata = st.session_state.current_proposal_data
-    if pdata and pdata.get("requirements"):
-        req = pdata["requirements"]
-        st.subheader("Requirements Specification")
-        st.json(req)
-    else:
-        st.info("No validated requirements specification available yet.")
-
-# TAB 3: Technical Proposal View
-with tab_tech:
-    pdata = st.session_state.current_proposal_data
-    if pdata and pdata.get("technical_proposal"):
-        tech = pdata["technical_proposal"]
-        st.subheader(f"Service: {tech.get('requested_service')}")
-        st.markdown(f"**Segment:** {tech.get('segment')} | **Line:** {tech.get('business_line')}")
-        st.markdown("### Executive Summary")
-        st.write(tech.get("executive_summary"))
-        st.markdown("### Required Profiles")
-        st.write(", ".join(tech.get("required_profiles", [])))
-    else:
-        st.info("No technical proposal generated yet.")
-
-# TAB 4: Financial Estimate & Approval Panel
-with tab_fin:
-    pdata = st.session_state.current_proposal_data
-    if pdata and pdata.get("financial_estimate"):
-        fin = pdata["financial_estimate"]
-        st.subheader("Financial Estimate & Effort Breakdown")
-
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Subtotal", f"${fin.get('subtotal'):,.2f}")
-        col2.metric("Taxes / Contingency", f"${fin.get('taxes') + fin.get('contingency'):,.2f}")
-        col3.metric("Total Investment", f"${fin.get('total_cost'):,.2f}")
-
-        st.markdown("### Human-In-The-Loop Decision")
-        st.write(f"**Current Status:** {fin.get('approval_status')}")
-
-        c_app, c_rej = st.columns(2)
-        if c_app.button("✅ Approve Estimate", use_container_width=True):
-            res = api_client.submit_approval(
-                st.session_state.proposal_id, "approved"
-            )
-            st.success("Proposal approved! Generating Word document...")
-            st.session_state.current_proposal_data = api_client.get_proposal_full(
-                st.session_state.proposal_id
-            )
-            st.rerun()
-
-        if c_rej.button("❌ Request Scope Changes", use_container_width=True):
-            res = api_client.submit_approval(
-                st.session_state.proposal_id, "changes_requested"
-            )
-            st.warning("Scope changes requested. Routing back to Requirements.")
-            st.session_state.current_proposal_data = api_client.get_proposal_full(
-                st.session_state.proposal_id
-            )
-            st.rerun()
-    else:
-        st.info("No financial estimate generated yet.")
-
-# TAB 5: Word Document Download
-with tab_doc:
-    pdata = st.session_state.current_proposal_data
-    if pdata and pdata.get("final_document"):
-        doc_info = pdata["final_document"]
-        st.success("🎉 Word Document generated and ready!")
-        st.write(f"**Filename:** {doc_info.get('filename')}")
-        st.write(f"**SHA256 Hash:** `{doc_info.get('content_hash')}`")
-
-        download_url = api_client.get_document_download_url(
-            st.session_state.proposal_id
-        )
-        try:
-            file_bytes = httpx.get(download_url).content
-            st.download_button(
-                label="📥 Download Microsoft Word (.docx)",
-                data=file_bytes,
-                file_name=doc_info.get("filename"),
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-            )
-        except Exception as e:
-            st.error(f"Could not download document: {e}")
-    else:
-        st.info("Word document will be generated automatically once financial estimate is approved.")
+disabled = summary.is_running or summary.workflow_status == "cancelled"
+if prompt := st.chat_input(chat_placeholder(summary.awaiting, summary.workflow_status), disabled=disabled):
+    perform(lambda: client.send_message(active, prompt), "Sending your message")
