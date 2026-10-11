@@ -90,4 +90,4 @@ if __name__ == "__main__":
     mcp.add_tool(techdoc_graph_tools.get_full_taxonomy_context)
     mcp.add_tool(techdoc_graph_tools.get_service_delivery_footprint)
 
-    mcp.run(transport="http")
+    mcp.run(transport="http", port=8001)

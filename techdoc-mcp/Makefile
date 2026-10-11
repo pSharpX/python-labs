@@ -28,4 +28,4 @@ mcp:
 	uv run server.py
 
 server:
-	fastmcp run server.py:mcp --transport http --port 8000
+	fastmcp run server.py:mcp --transport http --port 8001
