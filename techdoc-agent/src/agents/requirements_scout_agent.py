@@ -60,7 +60,7 @@ class RequirementsScoutAgent:
                 ),
             ],
             name=self._name,
-            response_format=RequirementsSpecification,
+            response_format=Requirements,
             checkpointer=InMemorySaver(serde=serde)
         )
 
@@ -86,9 +86,11 @@ class RequirementsScoutAgent:
         messages = [HumanMessage(content=self._prompt(state))]
         for attempt in range(2):
             try:
-                content: Requirements = self._agent.invoke({
+                result = self._agent.invoke({
                     "messages": messages,
                 })
+                content: Requirements = Requirements.model_validate(result["structured_response"])
+
                 return RequirementsSpecification(
                     **content.model_dump(),
                     proposal_id=state.proposal_id,
@@ -110,12 +112,14 @@ class RequirementsScoutAgent:
 
     async def arun(self, state: RequirementsAgentState, config, version = 0) -> RequirementsSpecification:
         last_error: Exception | None = None
-        messages = [HumanMessage(content=state)]
+        messages = [HumanMessage(content=self._prompt(state))]
         for attempt in range(2):
             try:
-                content: Requirements = await self._agent.ainvoke({
+                result = await self._agent.ainvoke({
                     "messages": messages,
                 })
+                content: Requirements = Requirements.model_validate(result["structured_response"])
+
                 return RequirementsSpecification(
                     **content.model_dump(),
                     proposal_id=state.proposal_id,
