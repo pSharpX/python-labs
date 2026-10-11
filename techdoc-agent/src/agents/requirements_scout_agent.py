@@ -81,7 +81,7 @@ class RequirementsScoutAgent:
             "Devuelve la especificación actualizada completa."
         )
 
-    def run(self, state: RequirementsAgentState, config, version = 0) -> RequirementsSpecification:
+    def run(self, state: RequirementsAgentState, config, version: int) -> RequirementsSpecification:
         last_error: Exception | None = None
         messages = [HumanMessage(content=self._prompt(state))]
         for attempt in range(2):
@@ -110,7 +110,7 @@ class RequirementsScoutAgent:
 
 
 
-    async def arun(self, state: RequirementsAgentState, config, version = 0) -> RequirementsSpecification:
+    async def arun(self, state: RequirementsAgentState, config, version: int) -> RequirementsSpecification:
         last_error: Exception | None = None
         messages = [HumanMessage(content=self._prompt(state))]
         for attempt in range(2):

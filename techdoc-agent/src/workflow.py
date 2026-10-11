@@ -33,6 +33,7 @@ from src.state.requirements import RequirementsAgentState
 from src.state.state import get_estimate, get_approval, get_technical, get_requirements
 from src.tools.mcp import MCPToolsAdapter
 from src.utils.hashing import utcnow
+from src.utils.logging import proposal_id_var
 from .configs import langfuse_handler
 from .state.architect import TechArchitectAgentState
 
@@ -135,6 +136,7 @@ class TechDocBuilderGraph:
 
     @guarded(WorkflowStage.INITIALIZE)
     async def _initialize_proposal(self, state: WorkflowState, config: RunnableConfig):
+        proposal_id_var.set(state["proposal_id"])
         msg = state.get("incoming_message")
         update: dict[str, Any] = {"workflow_status": WorkflowStatus.RUNNING.value, "errors": []}
         if msg:
@@ -172,7 +174,7 @@ class TechDocBuilderGraph:
         }
 
     @guarded(WorkflowStage.REQUIREMENTS)
-    async def _requirements_validation(self, state: WorkflowState, config: RunnableConfig ) -> dict[str, Any]:
+    async def _requirements_validation(self, state: WorkflowState, config: RunnableConfig ):
         req_state = RequirementsAgentState.model_validate(state["requirements_state"])
         assert req_state.spec is not None
         spec = self._validator.apply(req_state.spec)
@@ -219,7 +221,6 @@ class TechDocBuilderGraph:
         )
         return update
 
-    @guarded(WorkflowStage.AWAIT_USER_INPUT)
     async def _awaiting_user_input(self, state: WorkflowState, config: RunnableConfig):
         payload = {
             "type": "user_input_required",
@@ -364,7 +365,6 @@ class TechDocBuilderGraph:
             "resume_stage": None,
         }
 
-    @guarded(WorkflowStage.APPROVAL)
     async def _request_approval(self, state: WorkflowState, config: RunnableConfig):
         """Human-in-the-loop: pause for approval of the CURRENT financial estimate."""
 

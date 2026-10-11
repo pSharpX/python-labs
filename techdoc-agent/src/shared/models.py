@@ -13,7 +13,6 @@ from .constants import Priority, ServiceCategory
 
 class WorkflowStatus(str, Enum):
     RUNNING = "running"
-    ANALYZING_REQUIREMENTS = "analyzing_requirements"
     AWAITING_USER = "awaiting_user"
     AWAITING_APPROVAL = "awaiting_approval"
     APPROVED = "approved"

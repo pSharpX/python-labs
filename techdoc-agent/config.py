@@ -9,7 +9,7 @@ serde = JsonPlusSerializer(
         ("src.state.models", "Requirement"),
         ("src.state.models", "Requirements"),
         ("src.shared.enums", "Stage"),
-        ("src.state.requirements.output", "RequirementsOutputSchema"),
         ("src.shared.enums", "UserAction"),
+        ("src.shared.enums", "WorkflowStage"),
     ]
 )

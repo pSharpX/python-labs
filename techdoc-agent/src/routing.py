@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from langgraph.constants import END
+from langgraph.graph import END
 
 from src.services.version_service import technical_is_current, requirements_fingerprint, technical_fingerprint, \
     approval_for_estimate, document_is_current
