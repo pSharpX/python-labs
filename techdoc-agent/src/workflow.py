@@ -8,35 +8,48 @@ from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt, Command
 
 from config import serde
 from settings import BaseModelSettings, ApplicationSettings
-from src.routing import N, route_after_requirements, route_after_technical, route_after_financial, route_after_approval
-from src.shared import ProposalRevision, ProposalStatus, UserApprovalAction, UserResponse, UserAction, Stage, PendingInput
-from src.state.financial_estimator import FinancialEstimatorOutputSchema, FinancialEstimatorAgentState
-from src.state.requirements import RequirementsOutputSchema, RequirementsAgentState
-from src.agents import TechArchitectAgent, RequirementsScoutAgent, FinancialEstimatorAgent
-from .configs import langfuse_handler
+from src.agents import TechArchitectAgent, RequirementsScoutAgent, FinancialEstimatorAgent, PresentationAgent
+from src.agents.requirements_scout_agent import RequirementsValidator
+from src.repositories.proposal_repository import ProposalRepository
+from src.routing import N, route_after_ingest, route_after_validation, READY_TARGETS, route_after_technical, \
+    route_after_financial, route_after_approval, route_after_await
+from src.services.document_service import _money, DocumentService
+from src.services.financial_service import FinancialService
+from src.services.version_service import requirements_fingerprint, VersionService, approval_for_estimate, \
+    technical_fingerprint, estimate_fingerprint, approval_is_valid
+from src.shared import WorkflowStatus, UserResponse, UserAction, WorkflowStage, PendingInput
+from src.shared.enums import ArtifactType, ApprovalStatus, RequirementStatus, TechnicalStatus, EstimateStatus, \
+    ApprovalDecision, DECISION_TO_STATUS
+from src.shared.models import ChatTurn, ApprovalRecord
 from src.state import WorkflowState
-from .state.architect import TechArchitectOutputSchema, TechArchitectAgentState
+from src.state.financial_estimator import FinancialEstimatorAgentState
+from src.state.presentation import PresentationAgentState
+from src.state.requirements import RequirementsAgentState
+from src.state.state import get_estimate, get_approval, get_technical, get_requirements
 from src.tools.mcp import MCPToolsAdapter
-from src.tools.requirements import SaveMarkdownTool
+from src.utils.hashing import utcnow
+from .configs import langfuse_handler
+from .state.architect import TechArchitectAgentState
 
 
 logger = logging.getLogger(__name__)
 
 Update = dict[str, Any]
 
-def _error_update(state: WorkflowState, stage: Stage, message: str) -> Update:
+def _error_update(state: WorkflowState, stage: WorkflowStage, message: str) -> Update:
     logger.error("[%s] %s", stage.value, message)
     return {
-        "status": ProposalStatus.ERROR,
+        "status": WorkflowStatus.FAILED,
         "current_stage": stage,
         "errors": [*state.get("errors", []), f"{stage.value}: {message}"],
     }
 
-def guarded(stage: Stage) -> Callable[[Callable[..., Awaitable[Update]]], Callable[..., Awaitable[Update]]]:
+def guarded(stage: WorkflowStage) -> Callable[[Callable[..., Awaitable[Update]]], Callable[..., Awaitable[Update]]]:
     """Turn any failure of an agent node into ``status=ERROR`` + a stored error. Never continue silently."""
 
     def decorator(fn: Callable[..., Awaitable[Update]]) -> Callable[..., Awaitable[Update]]:
@@ -51,7 +64,6 @@ def guarded(stage: Stage) -> Callable[[Callable[..., Awaitable[Update]]], Callab
         return wrapper
     return decorator
 
-
 @dataclass(frozen=True)
 class WorkflowSnapshot:
     """What a caller (API, UI, CLI) needs to know after every step."""
@@ -61,7 +73,7 @@ class WorkflowSnapshot:
     interrupt: dict[str, Any] | None  # payload the human must answer, if paused
 
     @property
-    def status(self) -> ProposalStatus | None:
+    def status(self) -> WorkflowStatus | None:
         return self.values.get("status")
 
     @property
@@ -72,7 +84,15 @@ class WorkflowSnapshot:
 class TechDocBuilderGraph:
     """A langgraph powered workflow that design and write technical-functional proposals and financial documents."""
 
-    def __init__(self, mcp_adapter: MCPToolsAdapter):
+    def __init__(
+            self,
+            mcp_adapter: MCPToolsAdapter,
+            version_service: VersionService,
+            validator: RequirementsValidator,
+            proposal_repository: ProposalRepository,
+            financial_service: FinancialService,
+            document_service: DocumentService,
+    ):
         self._app_settings = ApplicationSettings()
         self._model_settings = BaseModelSettings()
         self._model = init_chat_model(
@@ -86,7 +106,9 @@ class TechDocBuilderGraph:
         self._builder = StateGraph(
             state_schema=WorkflowState,
         )
-        self._tool = SaveMarkdownTool()
+        self._validator = validator
+        self._version_service = version_service
+        self._proposal_repository = proposal_repository
         self._mcp_adapter = mcp_adapter
 
         # Initialize agents
@@ -94,282 +116,349 @@ class TechDocBuilderGraph:
         self._tech_architect_agent = TechArchitectAgent(
             mcp_adapter=self._mcp_adapter
         )
-        self._financial_estimator_agent = FinancialEstimatorAgent()
+        self._financial_estimator_agent = FinancialEstimatorAgent(financial_service=financial_service)
+        self._presentation_agent = PresentationAgent(document_service=document_service)
 
         # Initialize workflow
-        self._graph = self._build()
+        self._graph: CompiledStateGraph = self._build()
 
-    @guarded(Stage.INITIALIZE)
+    async def _say(self, state: WorkflowState, text: str, kind: str = "chat") -> None:
+        await self._proposal_repository.add_message(state["proposal_id"], "assistant", text, kind)
+
+    @staticmethod
+    def _versions(state: WorkflowState, artifact: ArtifactType, version: int, fp: str,
+                  based_on: dict[str, str] | None = None) -> dict[str, dict[str, Any]]:
+        versions = dict(state.get("artifact_versions") or {})
+        versions[artifact.value] = {"version": version, "fingerprint": fp, "based_on": based_on or {},
+                                    "updated_at": utcnow().isoformat()}
+        return versions
+
+    @guarded(WorkflowStage.INITIALIZE)
     async def _initialize_proposal(self, state: WorkflowState, config: RunnableConfig):
-        revision_request = state.get("revision_request")
-        if state.get("proposal_id") and revision_request:
-            revision = state.get("revision", 0) + 1
-            previous = state.get("requirements") or {}
-            req_version = previous.get("version", revision - 1)
-            changed_fields = ["raw_requirements"]
-            new_req = dict(previous)
-            new_req["raw_requirements"] = revision_request
-            new_req["version"] = req_version + 1
-            new_req["ready_for_architecture"] = False
-            new_req["status"] = ProposalStatus.ANALYZING_REQUIREMENTS.value
-            tech = state.get("technical_architecture")
-            fin = state.get("financial_estimation")
-            if tech:
-                tech = dict(tech)
-                tech["stale"] = True
-                tech["status"] = "stale"
-            if fin:
-                fin = dict(fin)
-                fin["stale"] = True
-                fin["approval_status"] = "invalidated"
-                fin["status"] = "stale"
-            return {
-                "user_request": revision_request,
-                "revision_request": None,
-                "revision": revision,
-                "requirements": new_req,
-                "technical_architecture": tech,
-                "financial_estimation": fin,
-                "status": ProposalStatus.ANALYZING_REQUIREMENTS.value,
-                "current_stage": Stage.REQUIREMENTS,
-                "revisions": state.get("revision_history", []) + [ProposalRevision(
-                    revision=revision,
-                    changed_by="user",
-                    changed_fields=changed_fields,
-                    reason=state.get("revision_reason"),
-                )],
-            }
-        return {
-            "proposal_id": state.get("proposal_id", "proposal-unknown"),
-            "revision": state.get("revision", 1),
-            "status": ProposalStatus.ANALYZING_REQUIREMENTS.value,
-            "current_stage": Stage.REQUIREMENTS,
-            "errors": state.get("errors", []),
-            "revisions": state.get("revision_history", []),
-        }
+        msg = state.get("incoming_message")
+        update: dict[str, Any] = {"workflow_status": WorkflowStatus.RUNNING.value, "errors": []}
+        if msg:
+            update["conversation_history"] = [ChatTurn(role="user", content=msg).model_dump(mode="json")]
+            if not state.get("user_request"):
+                update["user_request"] = msg
+            # A message after a rejection or change request is feedback for the estimate revision.
+            est = get_estimate(state)
+            if approval_for_estimate(est, get_approval(state)) in (ApprovalStatus.REJECTED,
+                                                                   ApprovalStatus.CHANGES_REQUESTED):
+                update["user_feedback"] = msg
+        return update
 
-    @guarded(Stage.REQUIREMENTS)
+    @guarded(WorkflowStage.REQUIREMENTS)
     async def _requirements_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Requirements-scout Node capture business requirements, objectives and define acceptance criteria."""
 
-        req_state = state.get("requirements") or {}
-        raw = req_state.get("raw_requirements") or state.get("user_request", "")
-        version = req_state.get("version", state.get("revision", 1))
-
-        res: RequirementsOutputSchema = await self._req_scout_agent.arun(raw, config["configurable"])
-
+        raw = state.get("requirements_state")
+        req_state = RequirementsAgentState.model_validate(raw) if raw else RequirementsAgentState(
+            proposal_id=state["proposal_id"])
+        msg = state.get("incoming_message") or ""
+        req_state.conversation.append(ChatTurn(role="user", content=msg))
+        req_state.latest_user_message = msg
+        spec = await self._req_scout_agent.arun(req_state, config["configurable"], version=0)
+        fp = requirements_fingerprint(spec)
+        if req_state.spec is not None and fp == req_state.fingerprint:
+            spec.version = req_state.spec.version
+        else:
+            spec.version = await self._version_service.next_version(state["proposal_id"], ArtifactType.REQUIREMENTS)
+        req_state.spec, req_state.fingerprint = spec, fp
         return {
-            "requirements": {
-                **res.model_dump(),
-                "raw_requirements": raw,
-                "version": version,
-                "status": (
-                    ProposalStatus.REQUIREMENTS_READY.value if res.ready_for_architecture else ProposalStatus.AWAITING_REQUIREMENTS.value
-                )
-            },
-            "status": ProposalStatus.REQUIREMENTS_READY.value if res.ready_for_architecture else ProposalStatus.AWAITING_REQUIREMENTS.value
+            "requirements_state": req_state.model_dump(mode="json"),
+            "incoming_message": None,
+            "current_stage": WorkflowStage.REQUIREMENTS.value,
         }
 
-    @staticmethod
-    async def _awaiting_requirements(state: WorkflowState):
-        req: RequirementsAgentState = state["requirements"]
-        raw_response = interrupt({
-            "type": "requirements_clarification",
-            "proposal_id": state.get("proposal_id"),
-            "message": "Los requisitos aún están incompletos. Por favor, comparte la información que falta para que podamos continuar.",
-            "questions": req.get("client_questions", [ req.get("readiness_reason", "") ]),
-            "missing_information": [
-                x if isinstance(x, dict) else x.model_dump() for x in
-                                    req.get("missing_information", [])
-            ],
-            #"allowed_actions": [UserAction.PROVIDE_INFORMATION, UserAction.CHANGE_REQUIREMENTS],
-        })
-
-        response: UserResponse = UserResponse.model_validate(raw_response)
-        if not response.information:
-            raise ValueError("Resume payload must contain information")
-        merged = dict(req)
-        merged["raw_requirements"] = response.information
-
-        return {
-            "requirements": merged,
-            "user_request": response.information,
-            "status": ProposalStatus.ANALYZING_REQUIREMENTS.value
+    @guarded(WorkflowStage.REQUIREMENTS)
+    async def _requirements_validation(self, state: WorkflowState, config: RunnableConfig ) -> dict[str, Any]:
+        req_state = RequirementsAgentState.model_validate(state["requirements_state"])
+        assert req_state.spec is not None
+        spec = self._validator.apply(req_state.spec)
+        fp = requirements_fingerprint(spec)
+        req_state.spec, req_state.fingerprint = spec, fp
+        await self._version_service.record(state["proposal_id"], ArtifactType.REQUIREMENTS, spec, fp)
+        update: dict[str, Any] = {
+            "artifact_versions": self._versions(state, ArtifactType.REQUIREMENTS, spec.version, fp),
+            "current_stage": WorkflowStage.REQUIREMENTS.value,
         }
+        if spec.status != RequirementStatus.READY:
+            questions = spec.client_questions
+            reply = "Para preparar una propuesta precisa, necesito algunos detalles más:\n" + "\n".join(
+                f"- {q}" for q in questions)
+            req_state.conversation.append(ChatTurn(role="assistant", content=reply))
+            await self._say(state, reply, "clarification")
+            update.update(
+                requirements_state=req_state.model_dump(mode="json"),
+                pending_questions=questions,
+                workflow_status=WorkflowStatus.AWAITING_USER.value,
+                resume_stage=N.VALIDATION,
+            )
+            return update
 
-    @guarded(Stage.TECHNICAL_ARCHITECTURE)
+        tech_state = get_technical(state)
+        revision = state.get("revision_number", 0)
+        if tech_state is not None and tech_state.based_on_requirements_fingerprint != fp:
+            revision += 1
+            stale = ["technical proposal", "financial estimate"]
+            if get_approval(state) is not None:
+                stale += ["approval", "final document"]
+            await self._say(state,
+                            f"Requerimientos actualizados a v{spec.version} ({spec.change_summary or 'Cambios registrados'}). "
+                            f"Regenerating: {', '.join(stale)}.", "status")
+        elif tech_state is None:
+            await self._say(state, f"Requerimientos v{spec.version} están completos. Diseñando la solución técnica…",
+                            "status")
+        req_state.conversation.append(ChatTurn(role="assistant", content="Requerimientos confirmados como listos."))
+        update.update(
+            requirements_state=req_state.model_dump(mode="json"),
+            pending_questions=[],
+            revision_number=revision,
+            workflow_status=WorkflowStatus.RUNNING.value,
+        )
+        return update
+
+    @guarded(WorkflowStage.AWAIT_USER_INPUT)
+    async def _awaiting_user_input(self, state: WorkflowState, config: RunnableConfig):
+        payload = {
+            "type": "user_input_required",
+            "stage": state.get("current_stage"),
+            "questions": state.get("pending_questions") or [],
+            "resume_stage": state.get("resume_stage"),
+        }
+        response: dict[str, Any] = interrupt(payload)
+        kind = response.get("kind")
+        if kind == "message":
+            return {"incoming_message": response.get("text", ""), "workflow_status": WorkflowStatus.RUNNING.value}
+        if kind == "cancel":
+            await self._say(state, "Workflow cancelled. History and artifacts are preserved.", "status")
+            return {"workflow_status": WorkflowStatus.CANCELLED.value}
+        # retry / continue: re-run the stage that blocked
+        return {"workflow_status": WorkflowStatus.RUNNING.value}
+
+    @guarded(WorkflowStage.TECHNICAL_ARCHITECTURE)
     async def _tech_architect_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Technical Architect Node design and implement the technical solution based on functional requirements."""
-
-        reqs = state["requirements"]
-        current_ver = state["technical_architecture"]["version"] + 1 if state.get("technical_architecture") else 1
-
-        if not reqs or not reqs.get("ready_for_architecture"):
-            return {
-                "status": ProposalStatus.ERROR.value,
-                "errors": state.get("errors", []) + ["Datos incompletos para continuarr"]
-            }
-
-        res: TechArchitectOutputSchema = await self._tech_architect_agent.arun(reqs)
-
-        tech_state: TechArchitectAgentState = {
-            **res.model_dump(),
-            "requirements_version": reqs["version"],
-            "status": ProposalStatus.TECHNICAL_PROPOSAL_READY.value,
-            "stale": False,
-            "version": current_ver,
+        req = get_requirements(state)
+        assert req is not None and req.status == RequirementStatus.READY, "requirements must be ready"
+        req_fp = requirements_fingerprint(req)
+        version = await self._version_service.next_version(state["proposal_id"], ArtifactType.TECHNICAL_PROPOSAL)
+        tech_state = TechArchitectAgentState(proposal_id=state["proposal_id"], requirements=req,
+                                     requirements_fingerprint=req_fp)
+        tech_state = await self._tech_architect_agent.arun(tech_state, config, version)
+        tp = tech_state.output
+        assert tp is not None
+        fp = technical_fingerprint(tp)
+        tech_state.fingerprint = fp
+        await self._version_service.record(state["proposal_id"], ArtifactType.TECHNICAL_PROPOSAL, tp, fp,
+                                     {ArtifactType.REQUIREMENTS.value: req_fp})
+        update: dict[str, Any] = {
+            "technical_architecture_state": tech_state.model_dump(mode="json"),
+            "artifact_versions": self._versions(state, ArtifactType.TECHNICAL_PROPOSAL, tp.version, fp,
+                                                {ArtifactType.REQUIREMENTS.value: req_fp}),
+            "current_stage": WorkflowStage.TECHNICAL_ARCHITECTURE.value,
         }
+        if tp.status == TechnicalStatus.READY:
+            svc = tp.requested_service.catalog_service_option if tp.requested_service else "—"
+            await self._say(state,
+                            f"Propuesta técnica v{tp.version} completa: {svc}, {len(tp.implementation_phases)} fases, "
+                            f"{tp.timeline_estimation.total_duration_weeks if tp.timeline_estimation else '?'} semanas. Estimando esfuerzo y costo…",
+                            "status")
+            update["workflow_status"] = WorkflowStatus.RUNNING.value
+        else:
+            questions = [q.question for q in tp.open_questions if q.blocking] or tp.validation_issues
+            label = "needs clarification" if tp.status == TechnicalStatus.NEEDS_CLARIFICATION else "could not be completed"
+            await self._say(state, f"The technical design {label}:\n" + "\n".join(f"- {q}" for q in questions)
+                            + "\nResponde con los detalles faltantes o usa Reanudar para reintentar.", "clarification")
+            update.update(pending_questions=questions, workflow_status=WorkflowStatus.AWAITING_USER.value,
+                          resume_stage=N.ARCHITECT)
+        return update
 
-        return {
-            "technical_architecture": tech_state,
-            "status": ProposalStatus.TECHNICAL_PROPOSAL_READY.value,
-            "current_stage": "technical_architecture"
-        }
-
-    @guarded(Stage.FINANCIAL_ESTIMATION)
+    @guarded(WorkflowStage.FINANCIAL_ESTIMATION)
     async def _financial_estimator_agent_node(self, state: WorkflowState, config: RunnableConfig):
         """Financial Estimator Node calculate the effort, the cost and commercial conditions."""
 
-        reqs = state["requirements"]
-        tech = state["technical_architecture"]
-        current_ver = state["financial_estimation"]["version"] + 1 if state.get("financial_estimation") else 1
+        tp = get_technical(state)
+        assert tp is not None and tp.status == TechnicalStatus.READY, "technical proposal must be ready"
+        tp_fp = technical_fingerprint(tp)
+        prev = get_estimate(state)
+        feedback = state.get("user_feedback")
+        version = await self._version_service.next_version(state["proposal_id"], ArtifactType.FINANCIAL_ESTIMATE)
+        fs = FinancialEstimatorAgentState(proposal_id=state["proposal_id"], technical=tp, technical_fingerprint=tp_fp,
+                                     feedback=feedback, previous_estimate_version=prev.version if prev else None)
+        fs = await self._financial_estimator_agent.arun(fs, version)
 
-        if not reqs or not tech or tech.get("stale") or tech.get("requirements_version") != reqs.get("version"):
-            raise ValueError("No se puede estimar a partir de una propuesta técnica desactualizada.")
+        # Scope-changing feedback goes back upstream once; if requirements absorb it without
+        # change, the second pass treats it as an effort revision (prevents loops).
+        if fs.scope_change_detected and feedback and not state.get("scope_redirected"):
+            await self._say(state, "Your feedback changes the technical scope, so I'm updating the requirements first.",
+                            "status")
+            return {"incoming_message": f"[Change requested during estimate review] {feedback}", "user_feedback": None,
+                    "scope_redirected": True, "current_stage": WorkflowStage.FINANCIAL_ESTIMATION.value}
 
-        res: FinancialEstimatorOutputSchema = await self._financial_estimator_agent.arun(
-            requirements=reqs,
-            technical_proposal=tech,
-            catalog=[],
-         )
-
-        fin_state: FinancialEstimatorAgentState = {
-            "technical_proposal_version": tech["version"],
-            #"service_items": service_items,
-            "effort_breakdown": res.effort_breakdown,
-            #"hourly_rate": subtotal / total_hours if total_hours > 0 else Decimal("0.00"),
-            #"estimated_hours": total_hours,
-            "currency": "USD",
-            "assumptions": res.assumptions,
-            "financial_proposal": res.financial_proposal,
-            "approval_status": "pending",
+        est = fs.output
+        assert est is not None
+        fp = estimate_fingerprint(est)
+        fs.fingerprint = fp
+        based = {ArtifactType.TECHNICAL_PROPOSAL.value: tp_fp}
+        update: dict[str, Any] = {
+            "financial_estimate_state": fs.model_dump(mode="json"),
+            "artifact_versions": self._versions(state, ArtifactType.FINANCIAL_ESTIMATE, est.version, fp, based),
+            "current_stage": WorkflowStage.FINANCIAL_ESTIMATION.value,
             "user_feedback": None,
-            "status": ProposalStatus.AWAITING_FINANCIAL_APPROVAL.value,
-            "version": current_ver,
-            "stale": False,
+            "scope_redirected": False,
         }
+        if est.status == EstimateStatus.INVALID:
+            await self._version_service.record(state["proposal_id"], ArtifactType.FINANCIAL_ESTIMATE, est, fp, based)
+            await self._say(state, "The estimate could not be validated:\n" + "\n".join(
+                f"- {e}" for e in est.validation_errors)
+                            + "\nFix the configuration or reply with details, then Resume.", "clarification")
+            update.update(pending_questions=est.validation_errors, workflow_status=WorkflowStatus.AWAITING_USER.value,
+                          resume_stage=N.FINANCIAL, approval_status=ApprovalStatus.NOT_REQUESTED.value)
+            return update
 
-        financial = {
-            **res.model_dump(),
-            #"service_items": [x.model_dump() for x in services],
-            #"estimated_hours": sum((x.hours for x in services), Decimal("0")),
-            #"subtotal": subtotal,
-            #"taxes": taxes,
-            #"total": total,
-            "technical_proposal_version": tech["version"],
-            "version": current_ver,
-            "approval_status": "pending",
-            "status": ProposalStatus.AWAITING_FINANCIAL_APPROVAL.value,
-            "stale": False
-        }
+        # Persist the estimate before pausing for approval.
+        est.approval_status = ApprovalStatus.PENDING
+        fs.output = est
+        update["financial_estimate_state"] = fs.model_dump(mode="json")
+        await self._version_service.record(state["proposal_id"], ArtifactType.FINANCIAL_ESTIMATE, est, fp, based)
+        await self._say(state,
+                        f"Estimate v{est.version} ready for your approval: {_money(est.total_cost, est.currency)} "
+                        f"for {est.total_hours:g} hours over {est.estimated_duration or 'the planned duration'}.",
+                        "approval")
+        update.update(approval_status=ApprovalStatus.PENDING.value,
+                      workflow_status=WorkflowStatus.AWAITING_APPROVAL.value,
+                      pending_questions=[], resume_stage=N.APPROVAL)
+        return update
 
+    @guarded(WorkflowStage.DOCUMENT_GENERATION)
+    async def _document_generator_agent_node(self, state: WorkflowState, config: RunnableConfig):
+        """Presentation Agent"""
+
+        req, tp, est, ap = get_requirements(state), get_technical(state), get_estimate(state), get_approval(state)
+        if not approval_is_valid(req, tp, est, ap):
+            raise RuntimeError("Presentation requires a current approval of the current estimate")
+        assert req and tp and est
+        docs = await self._proposal_repository.list_documents(state["proposal_id"])
+        ps = PresentationAgentState(
+            proposal_id=state["proposal_id"], title=state.get("title") or "Technical-Functional Proposal",
+            customer_name=state.get("customer_name") or req.customer_name, requirements=req, technical=tp,
+            estimate=est, approval=ap,
+        )
+        ps = await self._presentation_agent.arun(ps, config=config, document_version=len(docs) + 1)
+        assert ps.document is not None
+        await self._proposal_repository.save_document(ps.document)
+        await self._version_service.record(state["proposal_id"], ArtifactType.DOCUMENT, ps.document, ps.document.content_hash,
+                                     {ArtifactType.FINANCIAL_ESTIMATE.value: estimate_fingerprint(est)})
+        await self._say(state, f"Proposal document v{ps.document.document_version} is ready to download.", "document")
         return {
-            "financial_estimation": financial,
-            "status": ProposalStatus.AWAITING_FINANCIAL_APPROVAL.value,
-            "current_stage": "financial_proposal_built"
+            "presentation_state": ps.model_dump(mode="json"),
+            "final_document": ps.document.model_dump(mode="json"),
+            "artifact_versions": self._versions(state, ArtifactType.DOCUMENT, ps.document.document_version,
+                                                ps.document.content_hash,
+                                                {ArtifactType.FINANCIAL_ESTIMATE.value: estimate_fingerprint(est)}),
+            "current_stage": WorkflowStage.COMPLETED.value,
+            "workflow_status": WorkflowStatus.COMPLETED.value,
+            "pending_questions": [],
+            "resume_stage": None,
         }
 
-    @staticmethod
-    async def _request_financial_approval(state: WorkflowState):
+    @guarded(WorkflowStage.APPROVAL)
+    async def _request_approval(self, state: WorkflowState, config: RunnableConfig):
         """Human-in-the-loop: pause for approval of the CURRENT financial estimate."""
 
-        financial = state["financial_estimation"]
-        raw_response = interrupt({
-            "type": "financial_approval",
-            "proposal_id": state.get("proposal_id"),
-            "financial_proposal": financial["financial_proposal"],
-            "proposal": financial,
-            "message": "Revise la propuesta financiera y apruébela o solicite cambios.",
-            "allowed_actions": [
-                UserAction.APPROVE,
-                UserAction.REQUEST_CHANGES,
-            ],
-        })
-        response = UserResponse.model_validate(raw_response)
-        action: UserAction = response.action
-        if action == UserAction.PROVIDE_INFORMATION:
-            raise ValueError("'provide_information' is not valid at financial approval")
-
-        if action == UserAction.APPROVE:
-            updated = dict(financial)
-            updated["approval_status"] = "approved"
-            updated["status"] = ProposalStatus.APPROVED.value
-            return {
-                "financial_estimation": updated,
-                "status": ProposalStatus.APPROVED.value
-            }
-        if action == UserAction.REQUEST_CHANGES:
-            updated = dict(financial)
-            updated["approval_status"] = "changes_requested"
-            updated["user_feedback"] = response.feedback
-            return {
-                "financial_estimation": updated,
-                "status": ProposalStatus.REVISION_REQUIRED.value
-            }
-        raise ValueError("action must be approve or request_changes")
-
-    @staticmethod
-    async def _failed_node(state: WorkflowState):
-        return {
-            "current_stage": "failed",
-            "status": ProposalStatus.ERROR.value
+        est = get_estimate(state)
+        tp = get_technical(state)
+        req = get_requirements(state)
+        assert est is not None and tp is not None and req is not None
+        payload = {
+            "type": "approval_required",
+            "estimate_version": est.version,
+            "currency": est.currency,
+            "total_cost": str(est.total_cost),
+            "total_hours": str(est.total_hours),
+            "estimated_duration": est.estimated_duration,
         }
+        # Pause. Nothing above this line has side effects (the node re-runs on resume).
+        response: dict[str, Any] = interrupt(payload)
 
-    @guarded(Stage.APPROVAL)
-    async def _complete_node(self, state: WorkflowState, config: RunnableConfig):
-        financial = state.get("financial_estimation") or {}
-        if financial.get("approval_status") != "approved":
-            raise ValueError("Cannot complete without financial approval")
-        return {
-            "status": ProposalStatus.COMPLETED.value,
-            "current_stage": "completed"
+        kind = response.get("kind")
+        if kind == "message":
+            return {"incoming_message": response.get("text", ""), "workflow_status": WorkflowStatus.RUNNING.value}
+        if kind == "cancel":
+            await self._say(state, "Workflow cancelled. History and artifacts are preserved.", "status")
+            return {"workflow_status": WorkflowStatus.CANCELLED.value,
+                    "approval_status": ApprovalStatus.CANCELLED.value}
+        if kind != "approval":
+            return {"errors": [f"Unsupported response at approval stage: {kind}"]}
+
+        decision = ApprovalDecision(response["decision"])
+        if int(response.get("estimate_version", -1)) != est.version:
+            # Stale decision (estimate changed in between): never apply it.
+            return {"errors": [
+                f"Decision referenced estimate v{response.get('estimate_version')} but current is v{est.version}"]}
+
+        record = ApprovalRecord(
+            decision=decision, status=DECISION_TO_STATUS[decision], estimate_version=est.version,
+            estimate_fingerprint=estimate_fingerprint(est), technical_version=tp.version,
+            technical_fingerprint=technical_fingerprint(tp), requirements_fingerprint=requirements_fingerprint(req),
+            user_id=str(response.get("user_id", "unknown")), feedback=response.get("feedback"),
+        )
+        await self._proposal_repository.save_approval(state["proposal_id"], record)
+        fs = dict(state["financial_estimation_state"] or {})
+        out = dict(fs["output"])
+        out["approval_status"] = record.status.value
+        out["approval_feedback"] = record.feedback
+        fs["output"] = out
+        update: dict[str, Any] = {
+            "approval_record": record.model_dump(mode="json"),
+            "approval_status": record.status.value,
+            "financial_estimate_state": fs,
+            "current_stage": WorkflowStage.APPROVAL.value,
         }
+        if decision == ApprovalDecision.APPROVE:
+            await self._say(state, f"Estimación v{est.version} aprobada. Generando el documento de la propuesta…", "status")
+            update["workflow_status"] = WorkflowStatus.RUNNING.value
+        elif decision == ApprovalDecision.REQUEST_CHANGES:
+            await self._say(state, "Cambios solicitados. Actualizando estimación según feedback", "status")
+            update.update(workflow_status=WorkflowStatus.RUNNING.value, user_feedback=record.feedback or "")
+        elif decision == ApprovalDecision.REJECT:
+            q = "La estimación fue rechazada. Describe qué debe cambiar (alcance, esfuerzo, supuestos) o selecciona Reanudar para volver a estimar."
+            await self._say(state, q, "clarification")
+            update.update(workflow_status=WorkflowStatus.REJECTED.value, pending_questions=[q],
+                          resume_stage=N.FINANCIAL)
+        else:
+            await self._say(state, "Workflow cancelled. History and artifacts are preserved.", "status")
+            update["workflow_status"] = WorkflowStatus.CANCELLED.value
+        return update
 
-    @staticmethod
-    def _is_technical_current(state: WorkflowState) -> bool:
-        req, tech = state.get("requirements"), state.get("technical_architecture")
-        return bool(req and tech and not tech.get("stale") and tech.get("requirements_version") == req.get("version"))
-
-    @staticmethod
-    def _is_financial_current(state: WorkflowState) -> bool:
-        tech, fin = state.get("technical_architecture"), state.get("financial_estimation")
-        return bool(TechDocBuilderGraph._is_technical_current(state) and fin and not fin.get("stale") and fin.get(
-            "technical_proposal_version") == tech.get("version"))
-
-    def _build(self):
+    def _build(self) -> CompiledStateGraph:
         self._builder.add_node(N.INITIALIZE, self._initialize_proposal)
         self._builder.add_node(N.REQUIREMENTS, self._requirements_agent_node)
-        self._builder.add_node(N.AWAITING_REQUIREMENTS, self._awaiting_requirements)
+        self._builder.add_node(N.VALIDATION, self._requirements_validation)
         self._builder.add_node(N.ARCHITECT, self._tech_architect_agent_node)
-        self._builder.add_node(N.ESTIMATOR, self._financial_estimator_agent_node)
-        self._builder.add_node(N.APPROVAL, self._request_financial_approval)
-        self._builder.add_node(N.COMPLETE, self._complete_node)
-        self._builder.add_node(N.FAILED, self._failed_node)
+        self._builder.add_node(N.FINANCIAL, self._financial_estimator_agent_node)
+        self._builder.add_node(N.PRESENTATION, self._document_generator_agent_node)
+        self._builder.add_node(N.APPROVAL, self._request_approval)
+        self._builder.add_node(N.AWAITING_USER, self._awaiting_user_input)
 
         self._builder.add_edge(START, N.INITIALIZE)
-        self._builder.add_edge(N.INITIALIZE, N.REQUIREMENTS)
-        self._builder.add_conditional_edges(N.REQUIREMENTS, route_after_requirements)
-        self._builder.add_edge(N.AWAITING_REQUIREMENTS, N.REQUIREMENTS)
-        self._builder.add_conditional_edges(N.ARCHITECT, route_after_technical)
-        self._builder.add_conditional_edges(N.ESTIMATOR, route_after_financial)
-        self._builder.add_conditional_edges(N.APPROVAL, route_after_approval, {
-            "complete": N.COMPLETE,
-            "financial_estimator": N.ESTIMATOR,
-        })
-        self._builder.add_edge(N.COMPLETE, END)
-        self._builder.add_edge(N.FAILED, END)
+        self._builder.add_conditional_edges(
+            N.INITIALIZE, route_after_ingest, [N.REQUIREMENTS, N.VALIDATION, N.AWAITING_USER]
+        )
+        self._builder.add_edge(N.REQUIREMENTS, N.VALIDATION)
+        self._builder.add_conditional_edges(N.VALIDATION, route_after_validation, READY_TARGETS)
+        self._builder.add_conditional_edges(N.ARCHITECT, route_after_technical, READY_TARGETS)
+        self._builder.add_conditional_edges(N.FINANCIAL, route_after_financial, [*READY_TARGETS, N.INITIALIZE])
+        self._builder.add_conditional_edges(N.APPROVAL, route_after_approval, [*READY_TARGETS, N.INITIALIZE])
 
-        return self._builder.compile(checkpointer=InMemorySaver(serde=serde))
+        self._builder.add_conditional_edges(
+            N.AWAITING_USER, route_after_await, [N.INITIALIZE, N.VALIDATION, *READY_TARGETS]
+        )
+        self._builder.add_edge(N.PRESENTATION, END)
+
+        return self._builder.compile(checkpointer=InMemorySaver(serde=serde), name="techdoc-workflow")
 
     def _get_config(self, user_id, session_id) -> dict[str, Any]:
         return {
@@ -436,93 +525,8 @@ class TechDocBuilderGraph:
         await self._graph.ainvoke({"pending_input": pending}, self._get_config(thread_id, thread_id))
         return await self.snapshot(thread_id)
 
-    def legacy_start(self, input_obj: dict, session_id: str):
-        print("Welcome to TechDoc Builder Workflow, your helpful assistant!")
-        print("Start typing ('c' for exit) >> ")
-        config = {
-            "configurable": {
-                "thread_id": session_id
-            }
-        }
-        proposal_id = f"proposal-{session_id}"
-        while True:
-            question = input()
-            if question == "c":
-                break
-            elif question.strip() == "":
-                continue
-
-            initial_input = {
-                "user_request": question,
-                "resources": input_obj.get("resources", []),
-                "proposal_id": input_obj.get("proposal_id", proposal_id),
-            }
-            print(f"=== Starting Proposal Workflow [{proposal_id}] ===")
-
-            state = self.invoke(
-                initial_input=initial_input,
-                session_id=session_id
-            )
-
-            print(f"\n[Stage 1] Current Status: {state['status']}")
-
-            # Check interrupt for missing info if requirements were incomplete
-            snapshot = self._graph.get_state(config)
-            if snapshot.next and "awaiting_requirements" in snapshot.next:
-                print("\n--> Interrupt Triggered: Missing Requirements Information")
-                print("Questions:", snapshot.tasks[0].interrupts[0].value["questions"])
-
-                # Resume with clarifications
-                self.invoke(
-                    initial_input=Command(resume={
-                        "raw_requirements": "The system must support 50,000 active daily users using OAuth2 / Microsoft Entra ID."
-                    }),
-                    session_id=session_id
-                )
-
-            # Check next snapshot (Financial Approval Interrupt)
-            snapshot = self._graph.get_state(config)
-            if snapshot.next and "request_financial_approval" in snapshot.next:
-                fin = snapshot.values["financial_estimation"]
-                print(f"\n--> Interrupt Triggered: Financial Approval Requested")
-                print(f"    Version: Technical v{fin['technical_proposal_version']}")
-                print(f"    Total Cost: ${fin['total']} {fin['currency']} ({fin['estimated_hours']} Hours)")
-
-                # Demonstrate Revision Flow: Request Requirement Change (Revisions v2)
-                print("\n--- User Requests Requirement Revision (v2) ---")
-                self.invoke(
-                    initial_input=Command(resume={
-                        "action": UserApprovalAction.REVISE_REQUIREMENTS.value,
-                        "feedback": "Add multi-region disaster recovery and Azure Cosmos DB storage."
-                    }),
-                    session_id=session_id
-                )
-
-            # Inspect refreshed financial state after auto-propagation of changes
-            snapshot = self._graph.get_state(config)
-            if snapshot.next and "request_financial_approval" in snapshot.next:
-                fin_v2 = snapshot.values["financial_estimation"]
-                req_v2 = snapshot.values["requirements"]
-                tech_v2 = snapshot.values["technical_architecture"]
-
-                print(f"\n--> Interrupt Triggered: Revised Proposal Approval Requested")
-                print(f"    Requirements Version: v{req_v2['version']}")
-                print(f"    Technical Version: v{tech_v2['version']} (Input Req v{tech_v2['requirements_version']})")
-                print(
-                    f"    Financial Version: v{fin_v2['version']} (Input Tech v{fin_v2['technical_proposal_version']})")
-                print(f"    New Total: ${fin_v2['total']} {fin_v2['currency']}")
-
-                # Final Approval
-                print("\n--- User Approves Financial Proposal ---")
-                final_state = self._graph.invoke(
-                    Command(resume={"action": UserApprovalAction.APPROVE.value}),
-                    config=config
-                )
-
-                print(f"\n=== Workflow Complete ===")
-                print(f"Final Status: {final_state['status']}")
-                print(
-                    f"Requirements v{final_state['requirements']['version']} -> Tech v{final_state['technical_architecture']['version']} -> Financial v{final_state['financial_estimation']['version']}")
+    def get_compiled_state_graph(self) -> CompiledStateGraph:
+        return self._graph
 
     def draw_workflow(self):
         self._graph.get_graph().draw_mermaid_png(output_file_path="techdoc_workflow.png")

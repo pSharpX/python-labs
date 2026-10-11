@@ -2,16 +2,16 @@
 services:
   pgvector:
     image: pgvector/pgvector:pg16
-    container_name: techdoc_db
+    container_name: techdoc-proposal-db
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5442:5432"
+      - "5443:5432"
     volumes:
-      - techdoc_data:/var/lib/postgresql/data
+      - techdoc_proposal_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
@@ -19,5 +19,24 @@ services:
       retries: 5
       start_period: 30s
 
+  liquibase:
+    container_name: techdoc-workflow-db-liquibase
+    profiles: [ workflow ]
+    build:
+      context: ./liquibase
+    depends_on:
+      pgvector:
+        condition: service_healthy
+    volumes:
+      - ${PWD}/db/changelog/:/liquibase/changelog
+    command: >
+      --changeLogFile=./db.changelog-1.0.yaml
+      --url=jdbc:postgresql://pgvector:5432/${DB_NAME}
+      --driver=org.postgresql.Driver
+      --classpath=/liquibase/changelog
+      --username=${DB_USER}
+      --password=${DB_PASS}
+      update
+
 volumes:
-  techdoc_data:
+  techdoc_proposal_data:

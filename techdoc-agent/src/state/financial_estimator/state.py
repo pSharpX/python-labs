@@ -1,21 +1,15 @@
-from typing import TypedDict, Optional
+from pydantic import BaseModel
+
+from src.shared.models import FinancialEstimate, TechnicalProposal
 
 
-class FinancialEstimatorAgentState(TypedDict):
-    technical_proposal_version: int
-    #service_items: list[ServiceItem]
-    #effort_breakdown: list[EffortItem]
-    hourly_rate: object | None
-    estimated_hours: object | None
-    subtotal: object | None
-    taxes: object | None
-    total: object | None
-    currency: str
-    assumptions: list[str]
-    financial_proposal: str | None
-    approval_status: str
-    user_feedback: str | None
-    status: str
-    version: int
-    stale: bool
+class FinancialEstimatorAgentState(BaseModel):
+    proposal_id: str
+    technical: TechnicalProposal
+    technical_fingerprint: str
+    feedback: str | None = None
+    previous_estimate_version: int | None = None
+    output: FinancialEstimate | None = None
+    fingerprint: str | None = None
+    scope_change_detected: bool = False
 

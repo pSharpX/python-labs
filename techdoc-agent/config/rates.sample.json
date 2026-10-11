@@ -1,0 +1,19 @@
+{
+  "_comment": "SAMPLE RATE CARD FOR LOCAL DEVELOPMENT ONLY. These are placeholder numbers, not real commercial rates. Point FINANCIAL__RATE_CARD_FILE at your authoritative rate card. A profile with no rate here causes a validation error; the estimator never guesses a rate.",
+  "currency": "USD",
+  "source": "sample-rate-card",
+  "effective_date": "2026-01-01",
+  "rates": {
+    "PRF-ARCH-SR": "100.00",
+    "PRF-INT-DEV": "70.00",
+    "PRF-DATA-ENG": "70.00",
+    "PRF-BI": "65.00",
+    "PRF-AI-ENG": "90.00",
+    "PRF-FS-DEV": "70.00",
+    "PRF-UX": "65.00",
+    "PRF-CLOUD-ENG": "75.00",
+    "PRF-DEVOPS": "75.00",
+    "PRF-QA": "55.00",
+    "PRF-PM": "80.00"
+  }
+}

@@ -1,6 +1,13 @@
 import asyncio
 import uuid
 
+from src.configs.database_config import async_session_maker, async_engine
+from src.repositories.sqlalchemy_proposal_repository import SQLAlchemyProposalRepository
+from settings import ApplicationSettings, DocumentSettings
+from src.agents.requirements_scout_agent import RequirementsValidator
+from src.services.document_service import DocumentService
+from src.services.financial_service import FinancialService, FileRateProvider, load_financial_rules
+from src.services.version_service import VersionService
 from src import TechDocBuilderGraph, WorkflowSnapshot
 from src.shared import UserResponse, UserAction
 from src.tools.mcp import MCPToolsAdapter, MCPSettings
@@ -33,8 +40,26 @@ def _ask(snap: WorkflowSnapshot) -> UserResponse:
 
 async def run_agent():
     mcp_settings = MCPSettings()
+    app_settings = ApplicationSettings()
+    document_settings = DocumentSettings()
+
     mcp_adapter = await MCPToolsAdapter.acreate(mcp_settings)
-    workflow = TechDocBuilderGraph(mcp_adapter)
+    proposal_repository = SQLAlchemyProposalRepository(
+        session_maker=async_session_maker,
+        engine=async_engine
+    ),
+
+    workflow = TechDocBuilderGraph(
+        mcp_adapter=mcp_adapter,
+        version_service=VersionService(repo=proposal_repository),
+        validator=RequirementsValidator.from_file(app_settings.validation_rules_file),
+        proposal_repository=proposal_repository,
+        financial_service=FinancialService(
+            rate_provider=FileRateProvider(app_settings.rate_card_file),
+            rules=load_financial_rules(app_settings.rules_file)
+        ),
+        document_service=DocumentService(document_settings, app_settings.documents_output_dir),
+    )
     workflow.draw_workflow()
 
     print("Welcome to TechDoc Builder Workflow, your helpful assistant!")

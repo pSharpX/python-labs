@@ -1,14 +1,15 @@
 from .reducers import replace_string, merge_strings, upsert_by_key, upsert_model_by_id, upsert_model_by_description, merge_status
 from .constants import AnalysisStatus, Criticality, Priority, STATUS_PRIORITY, ServiceCategory
 
-from .enums import UserAction, Stage
+from .enums import UserAction, WorkflowStage, ApprovalStatus, ApprovalDecision, DECISION_TO_STATUS
 
 from .models import (Requirements, ClientQuestion, MissingInformation, Assumption, Integration,
-                           NonFunctionalRequirement, Requirement, Process, ProposalScope, Actor, Risk,
-                           ProposalStatus, UserApprovalAction, ProposalRevision, DocumentationSource, Architecture,
-                            ServiceClassification, ProjectPhase, ResourceProfile, TimelineEstimation, ArchitectureComponent,
-                           TechnologyDecision, TechnicalIntegration, SecurityDesign, ScalabilityDesign, AvailabilityDesign,
-                           ObservabilityDesign, DeploymentDesign, DataArchitecture, ServiceItem, EffortItem, UserResponse, PendingInput)
+                     NonFunctionalRequirement, Requirement, Process, ProposalScope, Actor, Risk,
+                     WorkflowStatus, UserApprovalAction, ProposalRevision, DocumentationSource, Architecture,
+                     ServiceClassification, ProjectPhase, RequiredProfile, TimelineEstimation, ArchitectureComponent,
+                     TechnologyDecision, TechnicalIntegration, SecurityDesign, ScalabilityDesign, AvailabilityDesign,
+                     ObservabilityDesign, DeploymentDesign, DataArchitecture, ServiceItem, EffortItem, UserResponse,
+                     PendingInput, NarrativeDraft, DocumentMetadata)
 
 
 __all__ = [
@@ -33,7 +34,7 @@ __all__ = [
     "ProposalScope",
     "Actor",
     "Risk",
-    "ProposalStatus",
+    "WorkflowStatus",
     "UserApprovalAction",
     "ProposalRevision",
     "DocumentationSource",
@@ -51,11 +52,16 @@ __all__ = [
     "EffortItem",
     "UserAction",
     "UserResponse",
-    "Stage",
+    "WorkflowStage",
     "PendingInput",
     "ServiceCategory",
     "ServiceClassification",
     "ProjectPhase",
-    "ResourceProfile",
+    "RequiredProfile",
     "TimelineEstimation",
+    "ApprovalStatus",
+    "NarrativeDraft",
+    "DocumentMetadata",
+    "ApprovalDecision",
+    "DECISION_TO_STATUS"
 ]

@@ -27,7 +27,7 @@ class SaveMarkdownTool(BaseTool):
     )
     args_schema: Type[BaseModel] = SaveMarkdownInput
 
-    output_dir: str = "../../../docs/outcomes"
+    output_dir: str = "../../../docs/output"
 
     def _run(self, content: str, filename: str) -> str:
         output_path = Path(self.output_dir) / filename

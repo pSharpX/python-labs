@@ -1,0 +1,10 @@
+{
+  "_comment": "SAMPLE FINANCIAL RULES. Each adjustment is applied only when enabled. Rates are fractions (0.10 = 10%). Replace with your organisation's commercial policy.",
+  "currency": "USD",
+  "contingency": {"enabled": true, "rate": "0.10", "label": "Contingency"},
+  "discount": {"enabled": false, "rate": "0", "label": "Discount"},
+  "tax": {"enabled": false, "rate": "0", "label": "Sales tax"},
+  "rounding": {"quantum": "0.01", "mode": "ROUND_HALF_UP", "hours_quantum": "0.5"},
+  "max_hours_per_item": "2000",
+  "require_all_activities_estimated": true
+}

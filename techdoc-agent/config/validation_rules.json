@@ -1,0 +1,31 @@
+{
+  "_comment": "Requirements readiness rules. 'default' always applies; a category's rules are merged on top. Field names refer to RequirementsSpecification. min_items applies to list fields; required_text to string fields.",
+  "default": {
+    "required_text": ["business_problem"],
+    "min_items": {
+      "objectives": 1,
+      "functional_requirements": 1,
+      "scope.in_scope": 1
+    },
+    "block_on_blocking_missing_information": true
+  },
+  "categories": {
+    "integration": {
+      "min_items": { "integrations": 1 },
+      "required_text": ["data_and_volumetrics.transaction_volumes"]
+    },
+    "data_platform": {
+      "min_items": { "data_and_volumetrics.data_sources": 1 },
+      "required_text": ["data_and_volumetrics.data_volumes"]
+    },
+    "application_development": {
+      "min_items": { "actors": 1, "non_functional_requirements": 1 }
+    },
+    "cloud_migration": {
+      "min_items": { "constraints": 1, "non_functional_requirements": 1 }
+    },
+    "ai_solution": {
+      "min_items": { "data_and_volumetrics.data_sources": 1, "non_functional_requirements": 1 }
+    }
+  }
+}

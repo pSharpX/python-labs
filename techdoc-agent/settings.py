@@ -1,6 +1,13 @@
 from enum import Enum
-from pydantic import Field, field_validator
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from pydantic import Field, field_validator, BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[0]
 
 class ModelProvider(str, Enum):
     OPENAI = "openai"
@@ -37,10 +44,16 @@ class DatabaseSettings(BaseSettings, case_sensitive=False):
     model_config = SettingsConfigDict(env_prefix="db_", env_file=".env", env_file_encoding="utf-8", extra="allow")
 
     url: str = Field(max_length=200, min_length=5)
-    raw_url: str = Field(max_length=200, min_length=5)
     username: str = Field(max_length=20, min_length=2, alias="db_user")
     password: str = Field(max_length=20, min_length=2, alias="db_pass")
     database_name: str = Field(max_length=50, min_length=2, alias="db_name")
+
+class AuthSettings(BaseModel, case_sensitive=False):
+    mode: Literal["dev", "api_key"] = "dev"
+    dev_default_user: str = "dev-user"
+    # api_key mode: {"<api key>": "<user id>"}; supply via env as JSON.
+    api_keys: dict[str, str] = Field(default_factory=dict)
+    admin_users: list[str] = Field(default_factory=list)
 
 class ApplicationSettings(BaseSettings, case_sensitive=False):
     model_config = SettingsConfigDict(env_prefix="app_", env_file=".env", env_file_encoding="utf-8", extra="allow")
@@ -50,3 +63,29 @@ class ApplicationSettings(BaseSettings, case_sensitive=False):
     component: str = Field("builder-workflow", max_length=100, min_length=1)
     tags: list[str] = []
 
+    app_name: str = "Proposal Studio API"
+    api_prefix: str = "/api/v1"
+    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8501"])
+    log_level: str = "INFO"
+    log_json: bool = True
+
+    validation_rules_file: Path = BACKEND_ROOT / "config" / "validation_rules.json"
+    rate_card_file: Path = BACKEND_ROOT / "config" / "rates.sample.json"
+    rules_file: Path = BACKEND_ROOT / "config" / "financial_rules.sample.json"
+    documents_output_dir: Path = BACKEND_ROOT / "docs" / "output"
+
+    auth: AuthSettings = Field(default_factory=AuthSettings)
+
+class DocumentSettings(BaseSettings, case_sensitive=False):
+    model_config = SettingsConfigDict(env_prefix="doc_", env_file=".env", env_file_encoding="utf-8", extra="allow")
+
+    company_name: str = Field("Your Company", max_length=100, min_length=1)
+    primary_color: str = Field("1F3A5F", max_length=100, min_length=1)
+    accent_color: str = Field("2E86AB", max_length=100, min_length=1)
+    font_name: str = Field("Calibri", max_length=50, min_length=1)
+    logo_path: Path | None = None
+    footer_text: str = Field("Confidential — prepared for the named customer only", max_length=1000, min_length=1)
+
+@lru_cache
+def get_settings() -> ApplicationSettings:
+    return ApplicationSettings()

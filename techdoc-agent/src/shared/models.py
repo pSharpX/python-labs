@@ -1,26 +1,25 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import Literal, List, Optional, Self
+from typing import Literal, List, Optional, Self, ClassVar
 
 from pydantic import Field, BaseModel, model_validator, ConfigDict
 
-from .enums import UserAction
+from src.utils.hashing import utcnow
+from .enums import UserAction, ApprovalStatus, ApprovalDecision, ArtifactType, RequirementStatus, TechnicalStatus, \
+    Confidence, EstimateStatus
 from .constants import Priority, ServiceCategory
 
 
-class ProposalStatus(str, Enum):
-    INITIALIZING = "initializing"
+class WorkflowStatus(str, Enum):
+    RUNNING = "running"
     ANALYZING_REQUIREMENTS = "analyzing_requirements"
-    AWAITING_REQUIREMENTS = "awaiting_requirements"
-    REQUIREMENTS_READY = "requirements_ready"
-    BUILDING_TECHNICAL_PROPOSAL = "building_technical_proposal"
-    TECHNICAL_PROPOSAL_READY = "technical_proposal_ready"
-    BUILDING_FINANCIAL_PROPOSAL = "building_financial_proposal"
-    AWAITING_FINANCIAL_APPROVAL = "awaiting_financial_approval"
+    AWAITING_USER = "awaiting_user"
+    AWAITING_APPROVAL = "awaiting_approval"
     APPROVED = "approved"
-    REVISION_REQUIRED = "revision_required"
-    ERROR = "error"
+    FAILED = "failed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
     COMPLETED = "completed"
 
 class UserApprovalAction(str, Enum):
@@ -241,8 +240,8 @@ class Assumption(BaseModel):
 class MissingInformation(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    description: str = Field(
-        description="Detalle de la información no proporcionada o vacíos conceptuales detectados."
+    topic: str = Field(
+        description="Tema de la información no proporcionada o vacíos conceptuales detectados."
     )
     criticality: Literal["critical", "important", "desirable"] = Field(
         description="Nivel de criticidad del vacío de información para la estimación y diseño arquitectónico."
@@ -251,6 +250,7 @@ class MissingInformation(BaseModel):
         default=None,
         description="Explicación de por qué esta información faltante afecta la fase actual de la propuesta.",
     )
+    blocking: bool = Field(description="Verdadero cuando la arquitectura o la estimación no pueden continuar sin esto")
 
 class ClientQuestion(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -282,6 +282,16 @@ class ProposalScope(BaseModel):
         description="Elementos pendientes de validación o decisión por parte del cliente para determinar si entran en el alcance.",
     )
 
+class Stakeholder(BaseModel):
+    name: str = Field(description="Role or person")
+    interest: str = ""
+
+class DataVolumetrics(BaseModel):
+    data_sources: list[str] = Field(default_factory=list)
+    data_volumes: str = Field(default="", description="e.g. '2M records, 50 GB'; empty when unknown")
+    transaction_volumes: str = Field(default="", description="e.g. '10k orders/day'; empty when unknown")
+    growth_expectations: str = ""
+
 class Requirements(BaseModel):
     context: str = Field(
         default="",
@@ -292,6 +302,12 @@ class Requirements(BaseModel):
             "comprender el requerimiento."
         ),
     )
+    service_category: str = Field(
+        default="default",
+        description="Categoría general del servicio solicitado que se utiliza para seleccionar las reglas de validación "
+                    "(p. ej., integration, data_platform, application_development, cloud_migration, ai_solution, default)",
+    )
+    customer_name: str = ""
 
     problem_need: str = Field(
         default="",
@@ -328,6 +344,7 @@ class Requirements(BaseModel):
             "Incluye tanto actores internos como externos cuando corresponda."
         ),
     )
+    stakeholders: list[Stakeholder] = Field(default_factory=list)
 
     processes: list[Process] = Field(
         default_factory=list,
@@ -374,7 +391,7 @@ class Requirements(BaseModel):
         ),
     )
 
-    data_and_volumetrics: list[str] = Field(
+    data_and_volumetrics: DataVolumetrics = Field(
         default_factory=list,
         description=(
             "Información relacionada con los datos utilizados por la solución "
@@ -441,7 +458,7 @@ class Requirements(BaseModel):
         ),
     )
 
-    client_questions: list[ClientQuestion] = Field(
+    client_questions: list[str] = Field(
         default_factory=list,
         description=(
             "Preguntas que deben realizarse al cliente para aclarar "
@@ -449,39 +466,36 @@ class Requirements(BaseModel):
             "o tomar decisiones necesarias para continuar con el análisis."
         ),
     )
+    ready_for_architecture: bool = Field(
+        default=False,
+        description="Indica si la información proporcionada es suficiente y clara para proceder al diseño de la arquitectura técnica.",
+    )
 
-    @classmethod
-    def from_state(cls, state: dict) -> "Requirements":
-        return cls(
-            context=state.get("context", ""),
-            problem_need=state.get("problem_need", ""),
-            objectives=state.get("objectives", []),
-            expected_results=state.get("expected_results", []),
-            actors=state.get("actors", []),
-            processes=state.get("processes", []),
-            functional_requirements=state.get(
-                "functional_requirements", []
-            ),
-            non_functional_requirements=state.get(
-                "non_functional_requirements", []
-            ),
-            business_rules=state.get("business_rules", []),
-            integrations=state.get("integrations", []),
-            data_and_volumetrics=state.get(
-                "data_and_volumetrics", []
-            ),
-            scope=state.get("scope"),
-            dependencies=state.get("dependencies", []),
-            constraints=state.get("constraints", []),
-            risks=state.get("risks", []),
-            assumptions=state.get("assumptions", []),
-            missing_information=state.get(
-                "missing_information", []
-            ),
-            client_questions=state.get(
-                "client_questions", []
-            ),
-        )
+    readiness_reason: str = Field(
+        default="",
+        description="Justificación detallada de por qué el proyecto está o no está listo para continuar a la fase de arquitectura técnica.",
+    )
+    final_brief: str = Field(default="", description="Breve resumen para el arquitecto; se completa cuando está listo")
+    change_summary: str = Field(default="", description="Cambios respecto a la versión anterior, si los hay")
+
+class RequirementsSpecification(Requirements):
+    proposal_id: str
+    version: int = 1
+    status: RequirementStatus = RequirementStatus.IN_PROGRESS
+    waiting_for_customer: bool = False
+    validation_issues: list[str] = Field(default_factory=list)
+
+    # Fields excluded when fingerprinting (metadata, not content)
+    FINGERPRINT_EXCLUDE: ClassVar[tuple[str, ...]] = (
+        "proposal_id",
+        "version",
+        "status",
+        "waiting_for_customer",
+        "validation_issues",
+        "client_questions",
+        "analyst_assessment_ready",
+        "change_summary",
+    )
 
 class Architecture(BaseModel):
     """
@@ -512,8 +526,8 @@ class ServiceClassification(BaseModel):
 
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
-    categories: list[ServiceCategory] = Field(
-        description="Categorías del servicio identificadas (ej. ['Assessment', 'Design', 'Implementation'])."
+    category: ServiceCategory = Field(
+        description="Categoria del servicio identificado (ej. 'Assessment', 'Design', 'Implementation')."
     )
     catalog_service_option: str = Field(
         description="Opción o código oficial del Catálogo de Servicios que mejor se alinea con la solicitud."
@@ -521,7 +535,7 @@ class ServiceClassification(BaseModel):
     business_line: str = Field(
         description="Línea de negocio correspondiente (ej. 'Cloud & Infrastructure', 'Data & AI', 'Cybersecurity')."
     )
-    market_segmentation: str = Field(
+    segmentation: str = Field(
         description="Segmentación de mercado asociada (ej. 'Enterprise', 'Mid-Market', 'Public Sector')."
     )
     product_or_service: str = Field(
@@ -557,13 +571,14 @@ class ProjectPhase(BaseModel):
         description="Duración estimada de esta fase en semanas.",
     )
 
-class ResourceProfile(BaseModel):
+class RequiredProfile(BaseModel):
     """
     Perfil técnico o funcional requerido para el proyecto, consultado desde el catálogo.
     """
 
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
+    role_id: str
     role_title: str = Field(
         description="Título o rol del perfil requerido (ej. 'Arquitecto Cloud Senior', 'DevOps Engineer', 'Consultor Funcional')."
     )
@@ -731,6 +746,177 @@ class DataArchitecture(BaseModel):
         description="Estrategia general para el diseño, almacenamiento, modelado y ciclo de vida de los datos (ej. 'Arquitectura Polyglot Persistence con PostgreSQL para transacciones y MongoDB para documentos')."
     )
 
+class OpenQuestion(BaseModel):
+    question: str
+    blocking: bool = False
+
+class ImplementationPhase(BaseModel):
+    id: str = Field(description="e.g. PH-1")
+    name: str
+    objective: str = ""
+    order: int
+    duration_weeks: float = Field(ge=0)
+    depends_on: list[str] = Field(default_factory=list)
+
+class PhaseActivity(BaseModel):
+    id: str = Field(description="e.g. ACT-1.1")
+    phase_id: str
+    name: str
+    description: str = ""
+    tasks: list[str] = Field(default_factory=list)
+    profile_ids: list[str] = Field(default_factory=list, description="Ids from obtener_perfiles only")
+    deliverable_ids: list[str] = Field(default_factory=list)
+
+class Deliverable(BaseModel):
+    id: str = Field(description="e.g. DEL-1")
+    phase_id: str
+    name: str
+    description: str = ""
+
+class AcceptanceCriterion(BaseModel):
+    deliverable_id: str
+    description: str
+
+class Milestone(BaseModel):
+    name: str
+    phase_id: str
+    target_week: float = Field(ge=0)
+
+class TraceabilityLink(BaseModel):
+    requirement_id: str
+    covered_by: list[str] = Field(default_factory=list, description="Activity/component/deliverable ids")
+    notes: str = ""
+
+class RiskMitigation(BaseModel):
+    category: str = Field(description="architectural | technical | operational | security | delivery")
+    description: str
+    probability: str = "medium"
+    impact: str = "medium"
+    mitigation: str
+
+class TechnicalDesignContent(BaseModel):
+    """Fields authored by the architect LLM (structured output schema)."""
+
+    executive_summary: str = ""
+    architecture: Architecture | None = Field(
+        default=None,
+        description="Definición y detalles del diseño arquitectónico de la solución (estilo, síntesis y diagrama Mermaid).",
+    )
+    solution_overview: str = Field(
+        description="Resumen ejecutivo claro y conciso de la arquitectura propuesta, destacando cómo satisface las necesidades del negocio."
+    )
+    architecture_components: list[ArchitectureComponent] = Field(
+        default_factory=list,
+        description="Componentes o módulos principales que conforman la solución arquitectónica.",
+    )
+    technology_decisions: list[TechnologyDecision] = Field(
+        default_factory=list,
+        description="Decisiones tecnológicas clave (lenguajes, frameworks, bases de datos) junto con su justificación técnica.",
+    )
+    integrations: list[TechnicalIntegration] = Field(
+        default_factory=list,
+        description="Detalle de las integraciones técnicas con sistemas internos, externos o APIs de terceros.",
+    )
+    milestones: list[Milestone] = Field(default_factory=list)
+    requirements_traceability: list[TraceabilityLink] = Field(default_factory=list)
+    security: SecurityDesign | None = Field(
+        default=None,
+        description="Estrategia y mecanismos de seguridad (autenticación, autorización, cifrado, cumplimiento normativo).",
+    )
+    scalability: ScalabilityDesign | None = Field(
+        default=None,
+        description="Diseño para el escalamiento horizontal/vertical, manejo de carga y elasticidad de la arquitectura.",
+    )
+    availability: AvailabilityDesign | None = Field(
+        default=None,
+        description="Estrategia para garantizar la alta disponibilidad, tolerancia a fallos y recuperación ante desastres (DRP/HA).",
+    )
+    observability: ObservabilityDesign | None = Field(
+        default=None,
+        description="Estrategias e instrumentos de monitoreo, centralización de logs, trazabilidad distribuida y métricas.",
+    )
+    deployment: DeploymentDesign | None = Field(
+        default=None,
+        description="Estrategia de despliegue, infraestructura como código (IaC), contenedores y pipeline CI/CD.",
+    )
+    data_architecture: DataArchitecture | None = Field(
+        default=None,
+        description="Modelo y flujo de datos, estrategias de almacenamiento, persistencia, caché y migración de datos.",
+    )
+    implementation_approach: str | None = Field(
+        default=None,
+        description="Descripción ejecutiva de la estrategia de implementación y secuencia recomendada."
+    )
+    assumptions: list[str] = Field(
+        default_factory=list,
+        description="Supuestos y premisas técnicas consideradas verdaderas para fundamentar este diseño arquitectónico.",
+    )
+    constraints: list[str] = Field(default_factory=list)
+    # 8. Prerequisites
+    prerequisites: list[str] = Field(
+        default_factory=list,
+        description="Condiciones, insumos o accesos previos que deben cumplirse antes de iniciar el trabajo.",
+    )
+    dependencies: list[str] = Field(default_factory=list)
+    technical_risks: list[RiskMitigation] = Field(
+        default_factory=list,
+        description="Riesgos técnicos identificados que podrían impactar el desarrollo o la operación, junto a sus mitigaciones.",
+    )
+    scope: list[str] = Field(default_factory=list)
+    out_of_scope: list[str] = Field(default_factory=list)
+    documentation_sources: list[DocumentationSource] = Field(
+        default_factory=list,
+        description="Referencias o fuentes de documentación utilizadas o requeridas para este diseño.",
+    )
+    # 1. Service Classification & Identification
+    requested_service: ServiceClassification = Field(
+        description="Clasificación del servicio, mapeo a opciones del catálogo y alineación de dominio (Línea de Negocio, Segmentación, Producto)."
+    )
+
+    # 2, 3 & 4. Solution Phasing, Activity Mapping & Deliverables
+    implementation_phases: list[ImplementationPhase] = Field(
+        default_factory=list,
+        description="Fases estructuradas del proyecto, incluyendo actividades asociadas y entregables concretos por fase.",
+    )
+    phase_activities: list[PhaseActivity] = Field(default_factory=list)
+    deliverables: list[Deliverable] = Field(default_factory=list)
+    acceptance_criteria: list[AcceptanceCriterion] = Field(default_factory=list)
+
+    # 5. Resource & Profile Identification
+    required_profiles: list[RequiredProfile] = Field(
+        default_factory=list,
+        description="Perfiles técnicos y funcionales requeridos obtenidos según la regla de dependencia del catálogo.",
+    )
+    # 6. Project Timeline Estimation
+    timeline_estimation: TimelineEstimation = Field(
+        description="Estimación global de duración (semanas) y esfuerzo total (horas) para la ejecución del proyecto."
+    )
+    open_questions: list[OpenQuestion] = Field(default_factory=list)
+
+class TechnicalProposal(TechnicalDesignContent):
+    """
+    Esquema estructurado consolidado para la propuesta técnica-funcional y el diseño
+    de arquitectura de software.
+    """
+
+    model_config = ConfigDict(
+        extra="ignore",
+        str_strip_whitespace=True,
+        json_schema_extra={
+            "description": "Esquema estructurado para la propuesta técnica-funcional y de arquitectura."
+        },
+    )
+
+    proposal_id: str
+    version: int = 1
+    status: TechnicalStatus = TechnicalStatus.READY
+    based_on_requirements_fingerprint: str
+    based_on_requirements_version: int
+
+    validation_issues: list[str] = Field(default_factory=list)
+
+    FINGERPRINT_EXCLUDE: ClassVar[tuple[str, ...]] = ("proposal_id", "version", "status", "validation_issues")
+
 class ServiceItem(BaseModel):
     """
     Representa un ítem de servicio o entregable dentro de la propuesta económica,
@@ -778,3 +964,202 @@ class EffortItem(BaseModel):
     hours: Decimal = Field(
         description="Cantidad de horas asociadas a esta tarea o actividad en particular."
     )
+
+class EffortItemDraft(BaseModel):
+    activity_id: str = Field(description="ID de la actividad de la propuesta técnica")
+    profile_id: str = Field(description="ID del perfil autorizado de la propuesta técnica")
+    hours: float = Field(description="Esfuerzo estimado en horas para este perfil en esta actividad")
+    rationale: str = ""
+    confidence: Confidence = Confidence.MEDIUM
+
+class EffortMappingDraft(BaseModel):
+    items: list[EffortItemDraft]
+    estimation_method: str = Field(default="Bottom-up effort per activity and profile")
+    commercial_assumptions: list[str] = Field(default_factory=list)
+    exclusions: list[str] = Field(default_factory=list)
+    confidence_level: Confidence = Confidence.MEDIUM
+    missing_information: list[str] = Field(default_factory=list)
+    scope_change_detected: bool = Field(
+        default=False,
+        description="Verdadero si los comentarios del usuario cambian el alcance o los requerimientos técnicos y no solo el esfuerzo",
+    )
+    explanation: str = Field(default="", description="Explicación breve de la estimación para el usuario")
+
+
+# ---- Configured rules ---------------------------------------------------------------
+
+class RateCard(BaseModel):
+    currency: str
+    rates: dict[str, Decimal] = Field(description="profile_id -> hourly rate")
+    source: str = ""
+    effective_date: str = ""
+
+
+class PercentageRule(BaseModel):
+    enabled: bool = False
+    rate: Decimal = Decimal("0")
+    label: str = ""
+
+
+class RoundingRule(BaseModel):
+    quantum: Decimal = Decimal("0.01")
+    mode: str = Field(default="ROUND_HALF_UP", description="Any decimal rounding mode name")
+    hours_quantum: Decimal = Decimal("0.5")
+
+
+class FinancialRules(BaseModel):
+    currency: str
+    contingency: PercentageRule = Field(default_factory=PercentageRule)
+    discount: PercentageRule = Field(default_factory=PercentageRule)
+    tax: PercentageRule = Field(default_factory=PercentageRule)
+    rounding: RoundingRule = Field(default_factory=RoundingRule)
+    max_hours_per_item: Decimal = Decimal("2000")
+    require_all_activities_estimated: bool = True
+    formula_description: str = (
+        "line_amount = hours × hourly_rate; subtotal = Σ line_amount; "
+        "contingency = subtotal × contingency_rate (if enabled); "
+        "discount = (subtotal + contingency) × discount_rate (if enabled); "
+        "taxable_base = subtotal + contingency − discount; taxes = taxable_base × tax_rate (if enabled); "
+        "total = taxable_base + taxes"
+    )
+
+# ---- Computed estimate -------------------------------------------------------------
+
+
+class EstimateLineItem(BaseModel):
+    phase_id: str
+    phase_name: str
+    activity_id: str
+    activity_name: str
+    profile_id: str
+    profile_name: str
+    hours: Decimal
+    hourly_rate: Decimal
+    amount: Decimal
+    rationale: str = ""
+    confidence: Confidence = Confidence.MEDIUM
+
+
+class ProfileEstimate(BaseModel):
+    profile_id: str
+    profile_name: str
+    hours: Decimal
+    hourly_rate: Decimal
+    amount: Decimal
+
+
+class PhaseEstimate(BaseModel):
+    phase_id: str
+    phase_name: str
+    hours: Decimal
+    amount: Decimal
+
+
+class AdjustmentLine(BaseModel):
+    label: str
+    rate: Decimal
+    base: Decimal
+    amount: Decimal
+    applied: bool
+
+
+class FinancialEstimate(BaseModel):
+    """
+    Esquema de salida estructurada para la estimación financiera y desglose de costos
+    de la propuesta comercial / técnica.
+    """
+
+    model_config = ConfigDict(
+        extra="ignore",
+        str_strip_whitespace=True,
+    )
+
+    proposal_id: str
+    version: int = 1
+    status: EstimateStatus = EstimateStatus.READY_FOR_APPROVAL
+    based_on_technical_fingerprint: str
+    based_on_technical_version: int
+    based_on_requirements_fingerprint: str
+
+    currency: str
+    estimation_method: str
+    formula: str
+    rate_card_source: str = ""
+    activity_estimates: list[EstimateLineItem] = Field(default_factory=list)
+    profile_estimates: list[ProfileEstimate] = Field(default_factory=list)
+    phase_estimates: list[PhaseEstimate] = Field(default_factory=list)
+    hours_by_profile: dict[str, Decimal] = Field(default_factory=dict)
+    total_hours: Decimal = Decimal("0")
+    subtotal: Decimal = Decimal("0")
+    contingency: AdjustmentLine | None = None
+    discount: AdjustmentLine | None = None
+    taxes: AdjustmentLine | None = None
+    total_cost: Decimal = Decimal("0")
+    estimated_duration: str = ""
+    commercial_assumptions: list[str] = Field(default_factory=list)
+    exclusions: list[str] = Field(default_factory=list)
+    confidence_level: Confidence = Confidence.MEDIUM
+    explanation: str = ""
+    validation_errors: list[str] = Field(default_factory=list)
+    validation_warnings: list[str] = Field(default_factory=list)
+    approval_status: ApprovalStatus = ApprovalStatus.NOT_REQUESTED
+    approval_feedback: str | None = None
+    revision_feedback: str | None = Field(default=None, description="Feedback this version responded to")
+
+    FINGERPRINT_EXCLUDE: ClassVar[tuple[str, ...]] = (
+        "proposal_id",
+        "version",
+        "status",
+        "approval_status",
+        "approval_feedback",
+    )
+
+
+class ApprovalRecord(BaseModel):
+    decision: ApprovalDecision
+    status: ApprovalStatus
+    estimate_version: int
+    estimate_fingerprint: str
+    technical_version: int
+    technical_fingerprint: str
+    requirements_fingerprint: str
+    user_id: str
+    feedback: str | None = None
+    decided_at: datetime = Field(default_factory=utcnow)
+
+class NarrativeDraft(BaseModel):
+    """Explanatory prose authored by the LLM from approved data. Contains no new facts."""
+
+    proposal_title: str = Field(description="Short professional title for the proposal")
+    executive_summary: str
+    context_introduction: str = ""
+    solution_introduction: str = ""
+    delivery_introduction: str = ""
+    financial_introduction: str = Field(default="", description="Must not restate or alter any figure")
+    closing_statement: str = ""
+
+class DocumentMetadata(BaseModel):
+    proposal_id: str
+    document_version: int
+    filename: str
+    file_path: str = Field(description="Path relative to the configured output directory (never absolute)")
+    created_at: datetime
+    approval_status: ApprovalStatus
+    content_hash: str
+    requirements_version: int
+    technical_version: int
+    estimate_version: int
+    estimate_fingerprint: str
+
+class ChatTurn(BaseModel):
+    role: str = Field(description="user | assistant | system")
+    content: str
+    timestamp: datetime = Field(default_factory=utcnow)
+
+class ArtifactVersionInfo(BaseModel):
+    artifact_type: ArtifactType
+    version: int
+    fingerprint: str
+    based_on: dict[str, str] = Field(default_factory=dict, description="upstream artifact type -> fingerprint")
+    created_at: datetime = Field(default_factory=utcnow)
+

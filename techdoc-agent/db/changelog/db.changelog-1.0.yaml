@@ -1,0 +1,240 @@
+databaseChangeLog:
+  - property:
+      name: json.type
+      value: json
+      dbms: mysql, postgresql
+  - property:
+      name: json.type
+      value: clob
+      dbms: oracle, h2, mssql
+  - changeSet:
+      id: enable-pgvector
+      author: christian.rivera
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS vector;
+  - changeSet:
+      id: enable-pgcrypto
+      author: christian.rivera
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+  - changeSet:
+      id: 001-initial-schema
+      author: christian.rivera
+      comment: Create initial tables for proposals, messages, artifacts, approvals, documents, and idempotency
+      changes:
+        # --- Proposals Table ---
+        - createTable:
+            tableName: proposals
+            columns:
+              - column:
+                  name: proposal_id
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: run_state
+                  type: varchar(50)
+                  defaultValue: 'idle'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: proposals
+            indexName: ix_proposals_owner
+            columns:
+              - column:
+                  name: owner_id
+
+        # --- Messages Table ---
+        - createTable:
+            tableName: messages
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: proposal_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: kind
+                  type: varchar(50)
+                  defaultValue: 'chat'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: messages
+            indexName: ix_messages_pid
+            columns:
+              - column:
+                  name: proposal_id
+
+        # --- Artifacts Table ---
+        - createTable:
+            tableName: artifacts
+            columns:
+              - column:
+                  name: proposal_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: artifact_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fingerprint
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: based_on
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payload
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+            constraints:
+              primaryKey:
+                columns: proposal_id, artifact_type, version
+                primaryKeyName: pk_artifacts
+
+        # --- Approvals Table ---
+        - createTable:
+            tableName: approvals
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: proposal_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: approvals
+            indexName: ix_approvals_proposal_id
+            columns:
+              - column:
+                  name: proposal_id
+
+        # --- Documents Table ---
+        - createTable:
+            tableName: documents
+            columns:
+              - column:
+                  name: proposal_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: document_version
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data
+                  type: jsonb
+                  constraints:
+                    nullable: false
+            constraints:
+              primaryKey:
+                columns: proposal_id, document_version
+                primaryKeyName: pk_documents
+
+        # --- Idempotency Table ---
+        - createTable:
+            tableName: idempotency
+            columns:
+              - column:
+                  name: key
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: response
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+            constraints:
+              primaryKey:
+                columns: key, owner_id
+                primaryKeyName: pk_idempotency
