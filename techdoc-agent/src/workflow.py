@@ -6,12 +6,12 @@ from typing import Any, Callable, Awaitable
 
 from langchain.chat_models import init_chat_model
 from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt, Command
 
-from config import serde
 from settings import BaseModelSettings, ApplicationSettings
 from src.agents import TechArchitectAgent, RequirementsScoutAgent, FinancialEstimatorAgent, PresentationAgent
 from src.agents.requirements_scout_agent import RequirementsValidator
@@ -87,6 +87,7 @@ class TechDocBuilderGraph:
 
     def __init__(
             self,
+            checkpointer: BaseCheckpointSaver,
             mcp_adapter: MCPToolsAdapter,
             version_service: VersionService,
             validator: RequirementsValidator,
@@ -94,6 +95,7 @@ class TechDocBuilderGraph:
             financial_service: FinancialService,
             document_service: DocumentService,
     ):
+        self._checkpointer = checkpointer
         self._app_settings = ApplicationSettings()
         self._model_settings = BaseModelSettings()
         self._model = init_chat_model(
@@ -458,7 +460,7 @@ class TechDocBuilderGraph:
         )
         self._builder.add_edge(N.PRESENTATION, END)
 
-        return self._builder.compile(checkpointer=InMemorySaver(serde=serde), name="techdoc-workflow")
+        return self._builder.compile(checkpointer=self._checkpointer, name="techdoc-workflow")
 
     def _get_config(self, user_id, session_id) -> dict[str, Any]:
         return {

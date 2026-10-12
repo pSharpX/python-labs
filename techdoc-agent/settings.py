@@ -43,6 +43,8 @@ class BaseModelSettings(BaseSettings, case_sensitive=False):
 class DatabaseSettings(BaseSettings, case_sensitive=False):
     model_config = SettingsConfigDict(env_prefix="db_", env_file=".env", env_file_encoding="utf-8", extra="allow")
 
+    checkpoint_backend: str = Field("memory", max_length=20, min_length=1)
+    checkpoint_url: str = Field("localhost", max_length=200, min_length=1)
     url: str = Field(max_length=200, min_length=5)
     username: str = Field(max_length=20, min_length=2, alias="db_user")
     password: str = Field(max_length=20, min_length=2, alias="db_pass")
@@ -85,6 +87,10 @@ class DocumentSettings(BaseSettings, case_sensitive=False):
     font_name: str = Field("Calibri", max_length=50, min_length=1)
     logo_path: Path | None = None
     footer_text: str = Field("Confidential — prepared for the named customer only", max_length=1000, min_length=1)
+
+@lru_cache
+def get_db_settings() -> DatabaseSettings:
+    return DatabaseSettings()
 
 @lru_cache
 def get_settings() -> ApplicationSettings:

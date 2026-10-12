@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from settings import DatabaseSettings
+from settings import DatabaseSettings, get_db_settings
 
 # Default to PostgreSQL async URL format; can be overridden via environment variable
-db_settings = DatabaseSettings()
+db_settings: DatabaseSettings = get_db_settings()
 
 # Create the asynchronous SQLAlchemy engine
 async_engine = create_async_engine(

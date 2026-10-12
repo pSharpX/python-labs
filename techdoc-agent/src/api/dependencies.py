@@ -7,13 +7,14 @@ from dataclasses import dataclass
 
 from fastapi import Depends, Header, HTTPException, Request, status
 
+from settings import ApplicationSettings, DocumentSettings, DatabaseSettings
+from src import TechDocBuilderGraph
 from src.agents.requirements_scout_agent import RequirementsValidator
 from src.configs.database_config import async_session_maker, async_engine
+from src.repositories.checkpoint_repository import open_checkpointer
 from src.repositories.sqlalchemy_proposal_repository import SQLAlchemyProposalRepository
-from settings import ApplicationSettings, DocumentSettings
-from src import TechDocBuilderGraph
 from src.services.document_service import DocumentService
-from src.services.financial_service import FileRateProvider, FinancialService, RateProvider, load_financial_rules
+from src.services.financial_service import FileRateProvider, FinancialService, load_financial_rules
 from src.services.proposal_service import Principal, ProposalService
 from src.services.version_service import VersionService
 from src.tools.mcp import MCPSettings, MCPToolsAdapter
@@ -25,14 +26,18 @@ class AppContainer:
     repository: SQLAlchemyProposalRepository
     documents: DocumentService
     proposals: ProposalService
+    stack: AsyncExitStack
 
     async def aclose(self) -> None:
         await self.proposals.drain()
+        await self.stack.aclose()
 
 async def build_container(
-        settings: ApplicationSettings,
+        app_settings: ApplicationSettings,
+        db_settings: DatabaseSettings,
 ) -> AppContainer:
     """Build every component from settings. Overrides exist for tests and integrations."""
+    stack = AsyncExitStack()
     proposal_repository = SQLAlchemyProposalRepository(
         session_maker=async_session_maker,
         engine=async_engine
@@ -42,13 +47,14 @@ async def build_container(
     await proposal_repository.reset_stale_runs()
 
     mcp_settings = MCPSettings()
-    app_settings = ApplicationSettings()
     document_settings = DocumentSettings()
 
     mcp_adapter = await MCPToolsAdapter.acreate(mcp_settings)
     document_service = DocumentService(document_settings, app_settings.documents_output_dir)
+    checkpointer = await open_checkpointer(db_settings, stack)
 
     workflow = TechDocBuilderGraph(
+        checkpointer=checkpointer,
         mcp_adapter=mcp_adapter,
         version_service=VersionService(repo=proposal_repository),
         validator=RequirementsValidator.from_file(app_settings.validation_rules_file),
@@ -62,7 +68,7 @@ async def build_container(
     graph = workflow.get_compiled_state_graph()
     proposal_service = ProposalService(graph=graph, repo=proposal_repository)
 
-    return AppContainer(settings, proposal_repository, document_service, proposal_service)
+    return AppContainer(app_settings, proposal_repository, document_service, proposal_service, stack)
 
 
 # ---- request-scoped dependencies -----------------------------------------------------

@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from settings import ApplicationSettings, get_settings
+from settings import ApplicationSettings, get_settings, get_db_settings, DatabaseSettings
 from src.api.dependencies import AppContainer, build_container
 from src.api.routes.proposals import router as proposals_router
 from src.api.schemas import HealthResponse
@@ -34,14 +34,18 @@ def _error(status_code: int, code: str, message: str, details: Any = None) -> JS
     return JSONResponse(body, status_code=status_code, headers={"X-Trace-Id": trace_id_var.get()})
 
 
-def create_app(settings: ApplicationSettings | None = None, container_factory: ContainerFactory | None = None) -> FastAPI:
-    settings = settings or get_settings()
-    configure_logging(settings.log_level, settings.log_json)
+def create_app(
+        app_settings: ApplicationSettings | None = None,
+        db_settings: DatabaseSettings | None = None,
+        container_factory: ContainerFactory | None = None) -> FastAPI:
+    app_settings = app_settings or get_settings()
+    db_settings = db_settings or get_db_settings()
+    configure_logging(app_settings.log_level, app_settings.log_json)
     factory = container_factory or build_container
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        app.state.container = await factory(settings)
+        app.state.container = await factory(app_settings, db_settings)
         log.info("API started", extra={"event": {"mcp_available": True}})
         try:
             yield
@@ -49,7 +53,7 @@ def create_app(settings: ApplicationSettings | None = None, container_factory: C
             await app.state.container.aclose()
 
     app = FastAPI(
-        title=settings.app_name,
+        title=app_settings.app_name,
         version=API_VERSION,
         lifespan=lifespan,
         description="Workflow technical-functional proposal generation (LangGraph). "
@@ -57,7 +61,7 @@ def create_app(settings: ApplicationSettings | None = None, container_factory: C
         "GET /proposals/{id} until run_state is no longer 'running'.",
     )
     app.add_middleware(
-        CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"],
+        CORSMiddleware, allow_origins=app_settings.cors_origins, allow_methods=["*"], allow_headers=["*"],
         expose_headers=["X-Trace-Id", "X-Content-SHA256", "Content-Disposition"],
     )
 
@@ -100,7 +104,7 @@ def create_app(settings: ApplicationSettings | None = None, container_factory: C
         container: AppContainer = request.app.state.container
         return HealthResponse(status="ok", version=API_VERSION, mcp_available=True, mcp_detail="Techdoc-MCP")
 
-    app.include_router(proposals_router, prefix=settings.api_prefix)
+    app.include_router(proposals_router, prefix=app_settings.api_prefix)
     return app
 
 
