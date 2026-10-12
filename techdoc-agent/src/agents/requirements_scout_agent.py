@@ -81,35 +81,6 @@ class RequirementsScoutAgent:
             "Devuelve la especificación actualizada completa."
         )
 
-    def run(self, state: RequirementsAgentState, config, version: int) -> RequirementsSpecification:
-        last_error: Exception | None = None
-        messages = [HumanMessage(content=self._prompt(state))]
-        for attempt in range(2):
-            try:
-                result = self._agent.invoke({
-                    "messages": messages,
-                })
-                content: Requirements = Requirements.model_validate(result["structured_response"])
-
-                return RequirementsSpecification(
-                    **content.model_dump(),
-                    proposal_id=state.proposal_id,
-                    version=version,
-                    status=RequirementStatus.IN_PROGRESS,
-                )
-            except ValidationError as exc:
-                last_error = exc
-                log.warning("Structured output invalid for %s (attempt %d)", self._name, attempt + 1)
-                messages = messages + [
-                    HumanMessage(
-                        content=f"Tu respuesta anterior no coincide con el esquema: {exc.errors()[:5]}. Devuelve un objeto válido.")
-                ]
-            except Exception as exc:  # provider errors
-                raise LLMError(f"LLM call failed for {self._name}: {type(exc).__name__}") from exc
-        raise LLMError(f"LLM returned invalid structured output for {self._name}") from last_error
-
-
-
     async def arun(self, state: RequirementsAgentState, config, version: int) -> RequirementsSpecification:
         last_error: Exception | None = None
         messages = [HumanMessage(content=self._prompt(state))]

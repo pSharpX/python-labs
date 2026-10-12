@@ -91,56 +91,6 @@ class TechArchitectAgent:
             issues.append("Total duration must be positive")
         return issues
 
-    def run(self, state: TechArchitectAgentState, config, version: int) -> TechArchitectAgentState:
-        state = state.model_copy(deep=True)
-        req = state.requirements
-        base = dict(proposal_id=state.proposal_id, version=version,
-                    based_on_requirements_fingerprint=state.requirements_fingerprint,
-                    based_on_requirements_version=req.version)
-        last_error: Exception | None = None
-        issues: list[str] | None = None
-        messages = [HumanMessage(content=self._design_prompt(state, issues))]
-        for attempt in range(2):
-            try:
-                design: TechnicalDesignContent = self._agent.invoke({
-                    "messages": messages,
-                })
-                issues = self._structural_issues(design)
-                if not issues:
-                    break
-                if issues:
-                    status = TechnicalStatus.FAILED
-                elif any(q.blocking for q in design.open_questions):
-                    status = TechnicalStatus.NEEDS_CLARIFICATION
-                else:
-                    status = TechnicalStatus.READY
-                state.output = TechnicalProposal(
-                    **base, status=status,
-                    executive_summary=design.executive_summary, solution_overview=design.solution_overview,
-                    architecture=design.architecture, architecture_components=design.architecture_components,
-                    technology_decisions=design.technology_decisions, integrations=design.integrations,
-                    implementation_phases=sorted(design.implementation_phases, key=lambda p: p.order),
-                    phase_activities=design.phase_activities, deliverables=design.deliverables,
-                    acceptance_criteria=design.acceptance_criteria, required_profiles=design.required_profiles,
-                    timeline_estimation=design.timeline_estimation, prerequisites=design.prerequisites,
-                    technical_risks=design.technical_risks,
-                    scope=design.scope, out_of_scope=design.out_of_scope, assumptions=design.assumptions,
-                    constraints=design.constraints, documentation_sources=design.documentation_sources,
-                    open_questions=design.open_questions,
-                    validation_issues=issues,
-                )
-                return state
-            except ValidationError as exc:
-                last_error = exc
-                log.warning("Structured output invalid for %s (attempt %d)", self._name, attempt + 1)
-                messages = messages + [
-                    HumanMessage(
-                        content=f"Tu respuesta anterior no coincide con el esquema: {exc.errors()[:5]}. Devuelve un objeto válido.")
-                ]
-            except Exception as exc:  # provider errors
-                raise LLMError(f"LLM call failed for {self._name}: {type(exc).__name__}") from exc
-        raise LLMError(f"LLM returned invalid structured output for {self._name}") from last_error
-
     async def arun(self, state: TechArchitectAgentState, config, version: int) -> TechArchitectAgentState:
         state = state.model_copy(deep=True)
         req = state.requirements
@@ -152,12 +102,12 @@ class TechArchitectAgent:
         messages = [HumanMessage(content=self._design_prompt(state, issues))]
         for attempt in range(2):
             try:
-                design: TechnicalDesignContent = await self._agent.ainvoke({
+                result = self._agent.invoke({
                     "messages": messages,
                 })
+                design: TechnicalDesignContent = TechnicalDesignContent.model_validate(result["structured_response"])
                 issues = self._structural_issues(design)
-                if not issues:
-                    break
+
                 if issues:
                     status = TechnicalStatus.FAILED
                 elif any(q.blocking for q in design.open_questions):
