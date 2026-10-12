@@ -1,10 +1,14 @@
+import os
 from dataclasses import dataclass
 from typing import Any
 
 from langgraph.graph.state import CompiledStateGraph
 
+from src.configs.langfuse_config import langfuse_handler
+from settings import get_settings
 
 RECURSION_LIMIT = 60
+app_settings = get_settings()
 
 @dataclass
 class PendingInterrupt:
@@ -12,7 +16,24 @@ class PendingInterrupt:
     value: dict[str, Any]
 
 def thread_config(thread_id: str, trace_id: str | None = None) -> dict[str, Any]:
-    cfg: dict[str, Any] = {"configurable": {"thread_id": thread_id}, "recursion_limit": RECURSION_LIMIT}
+    cfg: dict[str, Any] = {
+        "callbacks": [
+            langfuse_handler
+        ],
+        "metadata": {
+            "langfuse_user_id": thread_id,
+            "langfuse_session_id": thread_id,
+            "langfuse_tags": [
+                f"environment:{os.getenv('ENVIRONMENT', "dev")}",
+                "framework:langgraph",
+                f"owner:{app_settings.owner}",
+                f"application:{app_settings.name}",
+                f"component:{app_settings.component}"
+            ]
+        },
+        "configurable": {"thread_id": thread_id},
+        "recursion_limit": RECURSION_LIMIT
+    }
     if trace_id:
         cfg["metadata"] = {"trace_id": trace_id}
         cfg["tags"] = [f"trace:{trace_id}"]

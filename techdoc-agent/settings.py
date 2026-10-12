@@ -63,7 +63,7 @@ class ApplicationSettings(BaseSettings, case_sensitive=False):
     component: str = Field("builder-workflow", max_length=100, min_length=1)
     tags: list[str] = []
 
-    app_name: str = "Proposal Studio API"
+    app_name: str = "Technical Proposal Builder API"
     api_prefix: str = "/api/v1"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8501"])
     log_level: str = "INFO"
