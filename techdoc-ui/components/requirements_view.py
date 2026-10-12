@@ -38,7 +38,7 @@ def render_requirements(req: dict[str, Any] | None) -> None:
         st.dataframe(reqs, hide_index=True, use_container_width=True)
     if req.get("integrations"):
         st.markdown("**Integrations**")
-        st.dataframe([{"System": i["system"], "Purpose": i["purpose"], "Direction": i["direction"], "Method": i["protocol_or_method"]}
+        st.dataframe([{"System": i["system"], "Purpose": i["purpose"], "Direction": i["direction"], "Frecuencia": i["frequency"]}
                       for i in req["integrations"]], hide_index=True, use_container_width=True)
     vol = req.get("data_and_volumetrics") or {}
     if any(vol.values()):
@@ -54,7 +54,7 @@ def render_requirements(req: dict[str, Any] | None) -> None:
         _bullets(scope.get("out_of_scope", []))
     with st.expander("Assumptions, constraints, risks and open items"):
         st.markdown("**Assumptions**")
-        _bullets(req.get("assumptions", []))
+        _bullets([a["description"] for a in req.get("assumptions", [])])
         st.markdown("**Constraints**")
         _bullets(req.get("constraints", []))
         st.markdown("**Risks**")

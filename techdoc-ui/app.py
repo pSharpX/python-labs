@@ -96,14 +96,15 @@ if st.session_state.flash:
 if not active:
     st.markdown(f"## Welcome to {settings.app_title}")
     st.markdown(
-        "Describe a customer's business need in plain language. The assistant will:\n\n"
-        "1. **Clarify requirements** until they are complete\n"
-        "2. **Design the technical solution** using your service catalog and Microsoft Learn documentation\n"
-        "3. **Estimate effort and cost** from your authorised rate card\n"
-        "4. **Wait for your approval** — nothing is approved without your explicit decision\n"
-        "5. **Generate a polished Word proposal** you can download\n\n"
-        "Start with **➕ New proposal** in the sidebar."
+        "Describe en lenguaje sencillo las necesidades de negocio de tu cliente. El asistente te ayudará a:\n\n"
+        "1. **Definir y validar los requerimientos** hasta que estén completos y listos para avanzar\n"
+        "2. **Diseñar la solución técnica** utilizando nuestro catálogo de servicios y la documentación oficial de Microsoft Learn.\n"
+        "3. **Estimar el esfuerzo y los costos** con base a nuestro tarifario autorizado.\n"
+        "4. **Revisar y aprobar la propuesta**: nada se aprobará sin tu autorización explícita.\n"
+        "5. **Generar una propuesta profesional en Word**, lista para descargar y compartir.\n\n"
+        "Para comenzar, selecciona **➕ Nueva propuesta** en la barra lateral."
     )
+
     try:
         h = client.health()
         st.caption(f"Service online · API v{h['version']} · Microsoft Learn {'connected' if h['mcp_available'] else 'unavailable: ' + str(h.get('mcp_detail'))}")
@@ -135,15 +136,15 @@ try:
     technical = client.artifact(active, "technical-proposal")
     estimate = client.artifact(active, "estimate")
 except ApiError as exc:
-    st.error(f"Could not load proposal details: {exc}")
-    if st.button("↻ Retry loading"):
+    st.error(f"No se pudieron cargar los detalles de la propuesta.: {exc}")
+    if st.button("↻ Reintentar la carga"):
         st.rerun()
     st.stop()
 
 left, right = st.columns([5, 6], gap="large")
 
 with left:
-    st.markdown("#### Conversation")
+    st.markdown("#### Conversación")
     with st.container(height=620, border=True):
         render_messages(messages)
 
@@ -155,11 +156,11 @@ with right:
 
     if summary.workflow_status == "failed":
         st.error(f"The last step failed. Your progress is saved. {summary.last_error or ''}")
-        if st.button("↻ Retry the failed step", type="primary"):
+        if st.button("↻ Reintentar el paso fallido", type="primary"):
             perform(lambda: client.resume(active, "retry"), "Retrying")
     elif summary.awaiting == "clarification" and summary.current_stage in ("technical_design", "financial_estimation"):
-        st.markdown('<div class="ps-banner warn">The workflow is paused. Answer in the chat, or retry the step '
-                    'after the underlying issue (e.g. catalog or rate configuration) is fixed.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ps-banner warn">El proceso está en pausa. Responde en el chat o vuelve a intentar el paso  '
+                    'después de solucionar el problema (e.g. catalog or rate configuration) .</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         if c1.button("↻ Retry this step", use_container_width=True):
             perform(lambda: client.resume(active, "retry"), "Retrying")
@@ -173,7 +174,7 @@ with right:
 
     render_document_panel(client, summary, versions)
 
-    tabs = st.tabs(["📋 Requirements", "🏗️ Solution", "💰 Estimate", "🕘 Versions"])
+    tabs = st.tabs(["📋 Requerimientos", "🏗️ Solución", "💰 Estimación", "🕘 Versiones"])
     with tabs[0]:
         render_requirements(requirements)
     with tabs[1]:

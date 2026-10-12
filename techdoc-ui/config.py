@@ -20,8 +20,8 @@ class FrontendSettings(BaseSettings):
 
     poll_interval_seconds: float = 1.5
     poll_timeout_seconds: float = 300.0
-    app_title: str = "Proposal Studio"
-    company_name: str = "Your Company"
+    app_title: str = "Technical Proposal Builder"
+    company_name: str = "ZEIT"
 
 
 @lru_cache

@@ -7,15 +7,15 @@ import streamlit as st
 from api.schemas import Message
 
 KIND_LABEL = {
-    "clarification": "Question", "status": "Update", "approval": "Approval needed",
-    "document": "Document", "error": "Problem", "decision": "Decision",
+    "clarification": "Pregunta", "status": "Actualizar", "approval": "Approval needed",
+    "document": "Documento", "error": "Problema", "decision": "Decisión",
 }
 AVATAR = {"user": "🧑‍💼", "assistant": "🤖"}
 
 
 def render_messages(messages: list[Message]) -> None:
     if not messages:
-        st.info("Describe the business need to get started.")
+        st.info("Describe la necesidad del negocio para comenzar.")
     for m in messages:
         role = "user" if m.role == "user" else "assistant"
         with st.chat_message(role, avatar=AVATAR[role]):
@@ -27,9 +27,9 @@ def render_messages(messages: list[Message]) -> None:
 
 def chat_placeholder(awaiting: str | None, workflow_status: str) -> str:
     if workflow_status == "completed":
-        return "Request a change to scope or requirements (a new version will need approval)…"
+        return "Solicita un cambio en el alcance o los requisitos (la nueva versión deberá ser aprobada)…"
     if awaiting == "approval":
-        return "Ask a question or change requirements — or use the approval panel…"
+        return "Haz una pregunta o modifica los requisitos, o utiliza el panel de aprobación…"
     if awaiting == "clarification":
-        return "Answer the questions above…"
-    return "Type a message…"
+        return "Responde las preguntas anteriores…"
+    return "Escribe un mensaje…"

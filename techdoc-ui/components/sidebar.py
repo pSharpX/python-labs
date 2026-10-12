@@ -18,30 +18,30 @@ def render_sidebar(client: ProposalApiClient, active: str | None, on_select: Cal
                    on_create: Callable[[str, str, str], None], app_title: str) -> None:
     with st.sidebar:
         st.markdown(f"### {app_title}")
-        st.caption("Technical-functional proposals, from conversation to approved Word document.")
+        st.caption("Propuestas técnico-funcionales, desde la conversación hasta el documento Word aprobado.")
 
-        with st.expander("➕ New proposal", expanded=active is None):
+        with st.expander("➕ Nueva propuesta", expanded=active is None):
             with st.form("new_proposal", clear_on_submit=True):
-                title = st.text_input("Proposal title", placeholder="e.g. ERP order integration")
-                customer = st.text_input("Customer", placeholder="e.g. Contoso Retail")
-                need = st.text_area("Describe the business need", height=140,
-                                    placeholder="What problem should we solve? Which systems, users and volumes are involved?")
-                if st.form_submit_button("Start proposal", type="primary", use_container_width=True):
+                title = st.text_input("Título de la propuesta", placeholder="e.g. ERP order integration")
+                customer = st.text_input("Cliente", placeholder="e.g. Contoso Retail")
+                need = st.text_area("Describe la necesidad del negocio", height=140,
+                                    placeholder="¿Qué problema debemos resolver? ¿Qué sistemas, usuarios y volúmenes están involucrados?")
+                if st.form_submit_button("Iniciar", type="primary", use_container_width=True):
                     if not title.strip() or not need.strip():
-                        st.warning("Title and business need are required.")
+                        st.warning("El título y la necesidad del negocio son obligatorios.")
                     else:
                         on_create(title.strip(), customer.strip(), need.strip())
 
-        st.markdown("#### Proposals")
+        st.markdown("#### Propuestas")
         try:
             items = client.list_proposals()
         except ApiError as exc:
             st.error(str(exc))
-            if st.button("Retry", key="retry_list"):
+            if st.button("Reintentar", key="retry_list"):
                 st.rerun()
             return
         if not items:
-            st.caption("No proposals yet.")
+            st.caption("Aún no hay propuestas.")
         for p in items:
             icon = STATUS_ICON.get("running" if p.run_state == "running" else p.workflow_status, "•")
             label = f"{icon} {p.title}" + (f" — {p.customer_name}" if p.customer_name else "")

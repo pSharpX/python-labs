@@ -9,31 +9,31 @@ import streamlit as st
 from api.schemas import ProposalSummary
 
 STEPS = [
-    ("requirements", "Requirements", "requirements"),
-    ("technical_design", "Technical design", "technical_proposal"),
-    ("financial_estimation", "Financial estimate", "financial_estimate"),
-    ("approval", "Approval", None),
-    ("document_generation", "Document", "document"),
+    ("requirements", "Requerimientos", "requirements"),
+    ("technical_design", "Diseño técnico", "technical_proposal"),
+    ("financial_estimation", "Estimación económica", "financial_estimate"),
+    ("approval", "Aprobación", None),
+    ("document_generation", "Documento", "document"),
 ]
 STAGE_INDEX = {key: i for i, (key, _, _) in enumerate(STEPS)} | {"completed": len(STEPS)}
 
 STATUS_LABEL = {
-    "running": ("Working", "run"),
-    "awaiting_user": ("Needs your input", "warn"),
-    "awaiting_approval": ("Awaiting approval", "warn"),
-    "rejected": ("Estimate rejected", "bad"),
-    "completed": ("Completed", "ok"),
-    "cancelled": ("Cancelled", "bad"),
+    "running": ("En curso", "run"),
+    "awaiting_user": ("Requiere tu intervención", "warn"),
+    "awaiting_approval": ("Pendiente de aprobación", "warn"),
+    "rejected": ("Estimación rechazada", "bad"),
+    "completed": ("Completado", "ok"),
+    "cancelled": ("Cancelado", "bad"),
     "failed": ("Step failed", "bad"),
 }
 
 RUNNING_TEXT = {
-    "requirements": "Analysing requirements…",
-    "technical_design": "Designing the technical solution…",
-    "financial_estimation": "Estimating effort and cost…",
-    "approval": "Recording your decision…",
-    "document_generation": "Generating the Word document…",
-    "completed": "Finishing…",
+    "requirements": "Analizando los requisitos…",
+    "technical_design": "Diseñando la solución técnica…",
+    "financial_estimation": "Estimando el esfuerzo y los costos…",
+    "approval": "Registrando tu decisión…",
+    "document_generation": "Generando el documento Word…",
+    "completed": "Finalizando…",
 }
 
 
