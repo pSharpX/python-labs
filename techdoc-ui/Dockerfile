@@ -1,12 +1,16 @@
-FROM python:3.11-slim-buster
+FROM python:3.12-slim
 
 # Bring in uv from the official image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # make is needed if your Makefile targets are used inside the container
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends make curl \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        make \
+        curl \
     && rm -rf /var/lib/apt/lists/*
+
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
