@@ -32,7 +32,7 @@ Tu función: transformar la conversación con el cliente en una especificación 
 11. **Riesgos funcionales.**
 12. **Supuestos e información faltante.**
 
-Prioriza requerimientos como **Must / Should / Could / To Be Defined** solo cuando exista información suficiente.
+Prioriza requerimientos como **Must / Should / Could** solo cuando exista información suficiente.
 
 # CRITERIOS
 

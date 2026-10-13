@@ -1,19 +1,16 @@
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import ValidationError
 
-from config import serde
-from src.core.exceptions import LLMError
 from settings import BaseModelSettings
+from src.core.exceptions import LLMError
+from src.prompts import ARCHITECT_SYSTEM_PROMPT
 from src.shared.enums import TechnicalStatus
 from src.shared.models import TechnicalDesignContent, TechnicalProposal
-from src.prompts import ARCHITECT_SYSTEM_PROMPT
-from src.tools.mcp import MCPSettings, MCPToolsAdapter
 from src.state.architect import TechArchitectAgentState
+from src.tools.mcp import MCPSettings, MCPToolsAdapter
 from src.utils.logging import get_logger
-
 
 log = get_logger(__name__)
 
@@ -60,8 +57,7 @@ class TechArchitectAgent:
             tools=tools,
             system_prompt=self._system_prompt,
             name=self._name,
-            response_format=TechnicalDesignContent,
-            checkpointer=InMemorySaver(serde=serde)
+            response_format=TechnicalDesignContent
         )
 
     @staticmethod
@@ -102,7 +98,7 @@ class TechArchitectAgent:
         messages = [HumanMessage(content=self._design_prompt(state, issues))]
         for attempt in range(2):
             try:
-                result = self._agent.invoke({
+                result = await self._agent.ainvoke({
                     "messages": messages,
                 })
                 design: TechnicalDesignContent = TechnicalDesignContent.model_validate(result["structured_response"])

@@ -73,8 +73,8 @@ class Requirement(BaseModel):
         description="Descripción clara, concisa y orientada a la acción de lo que el sistema debe hacer."
     )
     priority: Priority = Field(
-        default="to_be_defined",
-        description="Nivel de prioridad o urgencia del requerimiento para el proyecto.",
+        default="must",
+        description="Nivel de prioridad o urgencia del requerimiento para el proyecto (i.e 'must', 'should', 'could').",
     )
 
     actor: str | None = Field(

@@ -5,13 +5,11 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
 
-from config import serde
-from src.services.document_service import DocumentInput, DocumentService
 from settings import BaseModelSettings
-from src.shared import NarrativeDraft
 from src.prompts import PRESENTATION_SYSTEM_PROMPT
+from src.services.document_service import DocumentInput, DocumentService
+from src.shared import NarrativeDraft
 from src.state.presentation import PresentationAgentState
 
 tools = []
@@ -47,8 +45,7 @@ class PresentationAgent:
                 ),
             ],
             name=self._name,
-            response_format=NarrativeDraft,
-            checkpointer=InMemorySaver(serde=serde)
+            response_format=NarrativeDraft
         )
 
     @staticmethod
@@ -85,32 +82,6 @@ class PresentationAgent:
             financial_introduction=clean(n.financial_introduction),
             closing_statement=clean(n.closing_statement),
         )
-
-    def run(self, state: PresentationAgentState, config, document_version: int) -> PresentationAgentState:
-        state = state.model_copy(deep=True)
-        prompt = self._prompt(state)
-        draft: NarrativeDraft = self._agent.invoke({
-            "messages": [
-                HumanMessage(content=prompt)
-            ]
-        })
-        # draft["structured_response"]
-        state.narrative = self._sanitise(draft, state.title, state.estimate.currency)
-
-        state.document = self._document_service.generate(
-            DocumentInput(
-                proposal_id=state.proposal_id,
-                document_version=document_version,
-                title=state.title,
-                customer_name=state.customer_name,
-                requirements=state.requirements,
-                technical=state.technical,
-                estimate=state.estimate,
-                approval=state.approval,
-                narrative=state.narrative,
-            )
-        )
-        return state
 
     async def arun(self, state: PresentationAgentState, config, document_version: int) -> PresentationAgentState:
         state = state.model_copy(deep=True)

@@ -55,5 +55,7 @@ RESTRICCIÓN ABSOLUTA: No generes información económica (precios, costos, tari
 - [ ] Rigor Técnico: Capacidades críticas validadas con la documentación oficial correspondiente.
 - [ ] Cumplimiento Económico: Ausencia total de precios, costos, tarifas o ROI.
 
-RESULTADO: Devuelve únicamente el objeto o estructura técnica solicitada que satisfaga el esquema de salida.
+# OUTPUT
+
+Devuelve únicamente el objeto o estructura técnica solicitada que satisfaga el esquema de salida.
 """

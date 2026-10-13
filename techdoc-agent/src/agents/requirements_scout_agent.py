@@ -6,18 +6,15 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ToolRetryMiddleware
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import ValidationError
 
-from config import serde
-from src.core.exceptions import LLMError
 from settings import BaseModelSettings
+from src.core.exceptions import LLMError
+from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
 from src.shared.enums import RequirementStatus
 from src.shared.models import RequirementsSpecification, Requirements
-from src.prompts import REQUIREMENTS_SYSTEM_PROMPT
 from src.state.requirements import RequirementsAgentState
 from src.utils.logging import get_logger
-
 
 log = get_logger(__name__)
 
@@ -60,8 +57,7 @@ class RequirementsScoutAgent:
                 ),
             ],
             name=self._name,
-            response_format=Requirements,
-            checkpointer=InMemorySaver(serde=serde)
+            response_format=Requirements
         )
 
     def _prompt(self, state: RequirementsAgentState) -> str:
@@ -104,7 +100,7 @@ class RequirementsScoutAgent:
                     HumanMessage(
                         content=f"Tu respuesta anterior no coincide con el esquema: {exc.errors()[:5]}. Devuelve un objeto válido.")
                 ]
-            except Exception as exc:  # provider errors
+            except Exception as exc:
                 raise LLMError(f"LLM call failed for {self._name}: {type(exc).__name__}") from exc
         raise LLMError(f"LLM returned invalid structured output for {self._name}") from last_error
 

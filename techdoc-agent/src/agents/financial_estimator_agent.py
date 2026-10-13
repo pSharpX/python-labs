@@ -3,15 +3,13 @@ import json
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import ValidationError
 
-from config import serde
-from src.core.exceptions import LLMError
-from src.services.financial_service import FinancialService
 from settings import BaseModelSettings
-from src.shared.models import EffortMappingDraft
+from src.core.exceptions import LLMError
 from src.prompts import FINANCIAL_ESTIMATE_SYSTEM_PROMPT
+from src.services.financial_service import FinancialService
+from src.shared.models import EffortMappingDraft
 from src.state.financial_estimator import FinancialEstimatorAgentState
 from src.utils.logging import get_logger
 
@@ -41,7 +39,6 @@ class FinancialEstimatorAgent:
             system_prompt=self.__system_prompt,
             name=self._name,
             response_format=EffortMappingDraft,
-            checkpointer=InMemorySaver(serde=serde)
         )
 
     @staticmethod
@@ -67,38 +64,6 @@ class FinancialEstimatorAgent:
         if state.feedback:
             text += "\n\nComentarios del usuario sobre la estimación anterior:\n" + state.feedback
         return text
-
-    def run(self, state: FinancialEstimatorAgentState, version: int) -> FinancialEstimatorAgentState:
-        state = state.model_copy(deep=True)
-
-        prompt = self._prompt(state)
-        last_error: Exception | None = None
-        messages = [HumanMessage(content=prompt)]
-        for attempt in range(2):
-            try:
-                draft: EffortMappingDraft = self.__agent.invoke({
-                    "messages": messages,
-                })
-                state.scope_change_detected = bool(state.feedback) and draft.scope_change_detected
-                state.output = self._financial_service.calculate(
-                    proposal_id=state.proposal_id,
-                    version=version,
-                    draft=draft,
-                    technical=state.technical,
-                    technical_fingerprint=state.technical_fingerprint,
-                    revision_feedback=state.feedback,
-                )
-                return state
-            except ValidationError as exc:
-                last_error = exc
-                log.warning("Structured output invalid for %s (attempt %d)", self._name, attempt + 1)
-                messages = messages + [
-                    HumanMessage(
-                        content=f"Tu respuesta anterior no coincide con el esquema: {exc.errors()[:5]}. Devuelve un objeto válido.")
-                ]
-            except Exception as exc:  # provider errors
-                raise LLMError(f"LLM call failed for {self._name}: {type(exc).__name__}") from exc
-        raise LLMError(f"LLM returned invalid structured output for {self._name}") from last_error
 
     async def arun(self, state: FinancialEstimatorAgentState, version: int) -> FinancialEstimatorAgentState:
         state = state.model_copy(deep=True)

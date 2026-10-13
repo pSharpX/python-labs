@@ -1,6 +1,6 @@
 from typing import Literal
 
-Priority = Literal["must", "should", "could", "to_be_defined"]
+Priority = Literal["must", "should", "could"]
 Criticality = Literal["critical", "important", "desirable"]
 AnalysisStatus = Literal["analyzing", "awaiting_client_information", "ready_for_architecture"]
 
