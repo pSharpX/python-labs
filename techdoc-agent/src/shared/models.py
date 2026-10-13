@@ -518,27 +518,56 @@ class Architecture(BaseModel):
         description="Código o sintaxis del diagrama arquitectónico en formato Mermaid.js (ej. 'graph TD; A[Cliente] --> B[API Gateway];').",
     )
 
+class CustomerSegment(str, Enum):
+    SMB = "SMB"
+    CORPORATE = "Corporate"
+
+class CatalogItem(BaseModel):
+    """Producto o servicio seleccionado del catálogo comercial."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: str = Field(
+        description=(
+            "Nombre exacto del producto o servicio devuelto por "
+            "la herramienta obtener_catalogo_por_familias."
+        )
+    )
+    justification: str = Field(
+        description=(
+            "Justificación de la selección en función de los "
+            "requerimientos del cliente."
+        )
+    )
+
 class ServiceClassification(BaseModel):
     """
-    Clasificación del servicio solicitado y su alineación con el catálogo y dominio del negocio.
+    Resultados del análisis de clasificación comercial del requerimiento.
     """
 
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
-    category: ServiceCategory = Field(
-        description="Categoria del servicio identificado (ej. 'Assessment', 'Design', 'Implementation')."
-    )
-    catalog_service_option: str = Field(
-        description="Opción o código oficial del Catálogo de Servicios que mejor se alinea con la solicitud."
-    )
     business_line: str = Field(
-        description="Línea de negocio correspondiente (ej. 'Cloud & Infrastructure', 'Data & AI', 'Cybersecurity')."
+        description="Línea de negocio seleccionada entre las opciones devueltas por la herramienta correspondiente."
     )
-    segmentation: str = Field(
-        description="Segmentación de mercado asociada (ej. 'Enterprise', 'Mid-Market', 'Public Sector')."
+    segmentation: CustomerSegment = Field(
+        description=(
+            "Segmento seleccionado según los criterios devueltos "
+            "por obtener_criterio_segmentacion. Solo SMB o Corporate."
+        )
     )
-    product_or_service: str = Field(
-        description="Producto o servicio específico asociado a la propuesta (ej. 'AWS Cloud Migration', 'SAP S/4HANA Consulting')."
+    catalog_items: list[CatalogItem] = Field(
+        min_length=1,
+        description=(
+            "Productos y servicios seleccionados exclusivamente "
+            "del catálogo devuelto para la línea de negocio elegida."
+        )
+    )
+    classification_rationale: str = Field(
+        description=(
+            "Resumen conciso que justifica la segmentación, "
+            "la línea de negocio y la selección del catálogo."
+        )
     )
 
 class ProjectPhase(BaseModel):
@@ -746,40 +775,94 @@ class DataArchitecture(BaseModel):
     )
 
 class OpenQuestion(BaseModel):
-    question: str
-    blocking: bool = False
+    question: str = Field(
+        description="Pregunta abierta, duda técnica o ambigüedad pendiente de resolver con los stakeholders o el equipo de arquitectura."
+    )
+    blocking: bool = Field(
+        default=False,
+        description="Indica si la pregunta representa un bloqueador crítico que impide avanzar con el diseño detallado, la estimación o la ejecución."
+    )
 
 class ImplementationPhase(BaseModel):
-    id: str = Field(description="e.g. PH-1")
-    name: str
-    objective: str = ""
-    order: int
-    duration_weeks: float = Field(ge=0)
-    depends_on: list[str] = Field(default_factory=list)
+    id: str = Field(
+        description="Identificador único de la fase de implementación (e.g., 'PH-1')."
+    )
+    name: str = Field(
+        description="Nombre descriptivo de la fase dentro de la hoja de ruta de implementación."
+    )
+    objective: str = Field(
+        default="",
+        description="Meta o propósito principal que se busca alcanzar al finalizar esta fase."
+    )
+    order: int = Field(
+        description="Número secuencial que define el orden de ejecución de la fase en el cronograma."
+    )
+    duration_weeks: float = Field(
+        ge=0,
+        description="Duración estimada de la fase expresada en semanas."
+    )
+    depends_on: list[str] = Field(
+        default_factory=list,
+        description="Lista de IDs de otras fases que deben completarse o iniciarse antes de poder arrancar esta fase (dependencias de prelación)."
+    )
 
 class PhaseActivity(BaseModel):
-    id: str = Field(description="e.g. ACT-1.1")
-    phase_id: str
-    name: str
-    description: str = ""
-    tasks: list[str] = Field(default_factory=list)
-    profile_ids: list[str] = Field(default_factory=list, description="Ids from obtener_perfiles only")
-    deliverable_ids: list[str] = Field(default_factory=list)
+    id: str = Field(
+        description="Identificador único de la actividad (e.g., 'ACT-1.1')."
+    )
+    phase_id: str = Field(
+        description="Identificador de la fase (`ImplementationPhase`) a la cual pertenece esta actividad."
+    )
+    name: str = Field(
+        description="Nombre o título de la actividad a realizar."
+    )
+    description: str = Field(
+        default="",
+        description="Detalle o alcance de lo que comprende la ejecución de esta actividad."
+    )
+    tasks: list[str] = Field(
+        default_factory=list,
+        description="Lista de tareas técnicas o operativas específicas requeridas para completar la actividad."
+    )
+    profile_ids: list[str] = Field(
+        default_factory=list,
+        description="IDs correspondientes a los perfiles profesionales requeridos para ejecutar la actividad (provenientes de la función `obtener_perfiles`)."
+    )
+    deliverable_ids: list[str] = Field(
+        default_factory=list,
+        description="Lista de IDs de los entregables o productos esperados como resultado de la ejecución de esta actividad."
+    )
 
 class Deliverable(BaseModel):
-    id: str = Field(description="e.g. DEL-1")
-    phase_id: str
-    name: str
-    description: str = ""
+    id: str = Field(
+        description="Identificador único del entregable (e.g., 'DEL-1')."
+    )
+    phase_id: str = Field(
+        description="Identificador de la fase (`ImplementationPhase`) a la cual está asociado este entregable."
+    )
+    name: str = Field(
+        description="Nombre o título del entregable (e.g., 'Documento de Arquitectura Base', 'Diagrama de Despliegue')."
+    )
+    description: str = Field(
+        default="",
+        description="Descripción detallada del contenido, formato o criterios de aceptación del entregable esperado."
+    )
 
 class AcceptanceCriterion(BaseModel):
     deliverable_id: str
     description: str
 
 class Milestone(BaseModel):
-    name: str
-    phase_id: str
-    target_week: float = Field(ge=0)
+    name: str = Field(
+        description="Nombre o título del hito clave o punto de control (e.g., 'Aprobación de Arquitectura de Seguridad', 'Go-Live Fase 1')."
+    )
+    phase_id: str = Field(
+        description="Identificador de la fase (`ImplementationPhase`) a la cual está vinculado o en la que concluye este hito."
+    )
+    target_week: float = Field(
+        ge=0,
+        description="Semana proyectada en el cronograma en la que se debe alcanzar o cumplir este hito."
+    )
 
 class TraceabilityLink(BaseModel):
     requirement_id: str
@@ -812,7 +895,7 @@ class TechnicalDesignContent(BaseModel):
         default_factory=list,
         description="Decisiones tecnológicas clave (lenguajes, frameworks, bases de datos) junto con su justificación técnica.",
     )
-    integrations: list[TechnicalIntegration] = Field(
+    integrations: list[Integration] = Field(
         default_factory=list,
         description="Detalle de las integraciones técnicas con sistemas internos, externos o APIs de terceros.",
     )
@@ -846,7 +929,7 @@ class TechnicalDesignContent(BaseModel):
         default=None,
         description="Descripción ejecutiva de la estrategia de implementación y secuencia recomendada."
     )
-    assumptions: list[str] = Field(
+    assumptions: list[Assumption] = Field(
         default_factory=list,
         description="Supuestos y premisas técnicas consideradas verdaderas para fundamentar este diseño arquitectónico.",
     )
@@ -861,15 +944,21 @@ class TechnicalDesignContent(BaseModel):
         default_factory=list,
         description="Riesgos técnicos identificados que podrían impactar el desarrollo o la operación, junto a sus mitigaciones.",
     )
-    scope: list[str] = Field(default_factory=list)
-    out_of_scope: list[str] = Field(default_factory=list)
+    scope: list[str] = Field(
+        default_factory=list,
+        description="Lista de funcionalidades, componentes, sistemas o requerimientos incluidos formalmente dentro del alcance del diseño de arquitectura."
+    )
+    out_of_scope: list[str] = Field(
+        default_factory=list,
+        description="Lista de elementos, tecnologías, casos de uso o fases que quedan explícitamente excluidos para gestionar expectativas y prevenir desviaciones (scope creep)."
+    )
     documentation_sources: list[DocumentationSource] = Field(
         default_factory=list,
         description="Referencias o fuentes de documentación utilizadas o requeridas para este diseño.",
     )
     # 1. Service Classification & Identification
     requested_service: ServiceClassification = Field(
-        description="Clasificación del servicio, mapeo a opciones del catálogo y alineación de dominio (Línea de Negocio, Segmentación, Producto)."
+        description="Clasificación comercial del requerimiento según los resultados de las herramientas de segmentación, líneas de negocio y catálogo."
     )
 
     # 2, 3 & 4. Solution Phasing, Activity Mapping & Deliverables
