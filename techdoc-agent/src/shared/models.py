@@ -391,7 +391,7 @@ class Requirements(BaseModel):
     )
 
     data_and_volumetrics: DataVolumetrics = Field(
-        default_factory=list,
+        default_factory=DataVolumetrics,
         description=(
             "Información relacionada con los datos utilizados por la solución "
             "y sus volúmenes estimados. Puede incluir cantidad de registros, "
