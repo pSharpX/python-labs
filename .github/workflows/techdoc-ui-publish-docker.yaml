@@ -12,6 +12,9 @@ jobs:
     name: CI Release
     runs-on: ubuntu-latest
     environment: development
+    defaults:
+      run:
+        working-directory: ./techdoc-ui
 
     steps:
       - name: Check out the repo
@@ -37,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./techdoc-ui/Dockerfile
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
