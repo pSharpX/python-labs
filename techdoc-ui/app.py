@@ -77,7 +77,7 @@ def select(pid: str | None) -> None:
 
 
 def create(title: str, customer: str, need: str) -> None:
-    perform(lambda: client.create_proposal(title, customer, need), "Creating the proposal")
+    perform(lambda: client.create_proposal(title, customer, need), "Creando la propuesta")
 
 
 # ---- layout -------------------------------------------------------------------------------
@@ -90,11 +90,11 @@ if st.session_state.flash:
     getattr(st, level)(text)
     st.session_state.flash = None
     if failed := st.session_state.get("last_failed"):
-        if st.button("↻ Retry"):
+        if st.button("↻ Reintentar"):
             perform(*failed)
 
 if not active:
-    st.markdown(f"## Welcome to {settings.app_title}")
+    st.markdown(f"## Bienvenido a {settings.app_title}")
     st.markdown(
         "Describe en lenguaje sencillo las necesidades de negocio de tu cliente. El asistente te ayudará a:\n\n"
         "1. **Definir y validar los requerimientos** hasta que estén completos y listos para avanzar\n"
@@ -117,9 +117,9 @@ try:
 except ApiError as exc:
     st.error(str(exc))
     c1, c2 = st.columns(2)
-    if c1.button("↻ Retry"):
+    if c1.button("↻ Reintentar"):
         st.rerun()
-    if c2.button("Close proposal"):
+    if c2.button("Cerrar propuesta"):
         select(None)
     st.stop()
 
@@ -155,22 +155,22 @@ with right:
     )
 
     if summary.workflow_status == "failed":
-        st.error(f"The last step failed. Your progress is saved. {summary.last_error or ''}")
+        st.error(f"El último paso falló. Tu progreso está guardado. {summary.last_error or ''}")
         if st.button("↻ Reintentar el paso fallido", type="primary"):
             perform(lambda: client.resume(active, "retry"), "Retrying")
     elif summary.awaiting == "clarification" and summary.current_stage in ("technical_design", "financial_estimation"):
         st.markdown('<div class="ps-banner warn">El proceso está en pausa. Responde en el chat o vuelve a intentar el paso  '
                     'después de solucionar el problema (e.g. catalog or rate configuration) .</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
-        if c1.button("↻ Retry this step", use_container_width=True):
-            perform(lambda: client.resume(active, "retry"), "Retrying")
-        if c2.button("Cancel workflow", use_container_width=True):
-            perform(lambda: client.resume(active, "cancel"), "Cancelling")
+        if c1.button("↻ Reintentar este paso", use_container_width=True):
+            perform(lambda: client.resume(active, "retry"), "Reintentando...")
+        if c2.button("Cancelar workflow", use_container_width=True):
+            perform(lambda: client.resume(active, "cancel"), "Cancelando...")
     elif summary.workflow_status == "rejected":
-        st.markdown('<div class="ps-banner warn">The estimate was rejected. Describe what should change in the chat, '
-                    'or re-estimate as is.</div>', unsafe_allow_html=True)
-        if st.button("↻ Re-estimate"):
-            perform(lambda: client.resume(active, "retry"), "Re-estimating")
+        st.markdown('<div class="ps-banner warn">La estimación fue rechazada. Describe en el chat qué se debe cambiar, '
+                    'o volver a estimar tal como está.</div>', unsafe_allow_html=True)
+        if st.button("↻ Volver a estimar"):
+            perform(lambda: client.resume(active, "retry"), "Reestimando...")
 
     render_document_panel(client, summary, versions)
 
@@ -186,4 +186,4 @@ with right:
 
 disabled = summary.is_running or summary.workflow_status == "cancelled"
 if prompt := st.chat_input(chat_placeholder(summary.awaiting, summary.workflow_status), disabled=disabled):
-    perform(lambda: client.send_message(active, prompt), "Sending your message")
+    perform(lambda: client.send_message(active, prompt), "Enviando tu mensaje")

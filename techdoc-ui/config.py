@@ -20,7 +20,7 @@ class FrontendSettings(BaseSettings):
 
     poll_interval_seconds: float = 1.5
     poll_timeout_seconds: float = 300.0
-    app_title: str = "Technical Proposal Builder"
+    app_title: str = "ZEIT Proposal Builder"
     company_name: str = "ZEIT"
 
 
