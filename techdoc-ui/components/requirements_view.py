@@ -54,7 +54,7 @@ def render_requirements(req: dict[str, Any] | None) -> None:
         _bullets(scope.get("out_of_scope", []))
     with st.expander("Assumptions, constraints, risks and open items"):
         st.markdown("**Assumptions**")
-        _bullets([a["description"] for a in req.get("assumptions", [])])
+        _bullets(req.get("assumptions", []))
         st.markdown("**Constraints**")
         _bullets(req.get("constraints", []))
         st.markdown("**Risks**")
